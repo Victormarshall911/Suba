@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | SUBA — Automated Student VTU</title>
+  <meta name="description" content="Manage your wallet, purchase airtime and data, and track transactions live.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Desktop Sidebar Navigation -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item active" data-page="home">
+          <span class="sidebar-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="buy-data.html" class="sidebar-nav-item" data-page="buy-data">
+          <span class="sidebar-icon">📶</span>
+          <span>Buy Data</span>
+        </a>
+        <a href="buy-airtime.html" class="sidebar-nav-item" data-page="buy-airtime">
+          <span class="sidebar-icon">📱</span>
+          <span>Buy Airtime</span>
+        </a>
+        <a href="buy-electricity.html" class="sidebar-nav-item" data-page="buy-electricity">
+          <span class="sidebar-icon">⚡</span>
+          <span>Electricity</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="history">
+          <span class="sidebar-icon">📊</span>
+          <span>History</span>
+        </a>
+        <a href="ambassador.html" class="sidebar-nav-item" data-page="ambassador">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassador</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item" data-page="profile">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" id="desktopUserAvatar">TO</div>
+        <div>
+          <div class="sidebar-user-name" id="desktopUserName">Tobi Oyelami</div>
+          <div class="sidebar-user-role">Student Account</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Topbar greeting and notifications -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3 id="greetingMessage">Hey, Tobi 👋</h3>
+          <p>Ready to purchase your campus bundles today?</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="bell-btn" id="notificationBtn" aria-label="Notifications">
+            🔔
+            <span class="bell-badge"></span>
+          </button>
+          <a href="profile.html" class="avatar" id="topbarUserAvatar">TO</a>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid -->
+      <div class="dashboard-grid">
+        
+        <!-- Left Side Widgets -->
+        <div class="dashboard-left">
+          
+          <!-- Wallet Card Widget -->
+          <div class="wallet-card">
+            <div class="wallet-label">YOUR WALLET BALANCE</div>
+            <div class="wallet-balance"><span class="currency">₦</span><span id="walletBalance">4,250.00</span></div>
+            <div class="wallet-actions">
+              <button class="btn btn-white btn-sm" id="fundWalletBtn">⚡ Fund Wallet</button>
+              <a href="transactions.html" class="btn btn-dark btn-sm" style="background: rgba(255,255,255,0.15); border: none">Ledger</a>
+            </div>
+          </div>
+
+          <!-- Quick Actions Grid -->
+          <div>
+            <div class="dash-section-title">
+              <h4>Quick Services</h4>
+            </div>
+            <div class="quick-actions">
+              <a href="buy-data.html" class="quick-action-item">
+                <span class="quick-action-icon data">📶</span>
+                <span class="quick-action-label">Data Bundles</span>
+              </a>
+              <a href="buy-airtime.html" class="quick-action-item">
+                <span class="quick-action-icon airtime">📱</span>
+                <span class="quick-action-label">Airtime VTU</span>
+              </a>
+              <a href="buy-electricity.html" class="quick-action-item">
+                <span class="quick-action-icon electricity">⚡</span>
+                <span class="quick-action-label">Electricity</span>
+              </a>
+              <div class="quick-action-item disabled" title="Coming soon in Phase 2">
+                <span class="quick-action-icon tv" style="background: #F3F4F6; color: #9CA3AF">📺</span>
+                <span class="quick-action-label">Cable TV</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Saved Recipients List -->
+          <div>
+            <div class="dash-section-title">
+              <h4>Saved Recipients</h4>
+            </div>
+            <div class="recipients-scroll" id="savedRecipients">
+              <!-- Static plus dynamic actions -->
+              <div class="recipient-avatar-btn" id="addNewRecipientBtn">
+                <div class="recipient-circle" style="border-style: dashed">+</div>
+                <span class="recipient-name">Add New</span>
+              </div>
+              <div class="recipient-avatar-btn" data-phone="08031234567" data-network="MTN">
+                <div class="recipient-circle" style="background: #FFF9E6; color: #D9A300">MO</div>
+                <span class="recipient-name">Self (MTN)</span>
+              </div>
+              <div class="recipient-avatar-btn" data-phone="08027654321" data-network="Airtel">
+                <div class="recipient-circle" style="background: #FFEBEB; color: #E50000">AM</div>
+                <span class="recipient-name">Mum (Airtel)</span>
+              </div>
+              <div class="recipient-avatar-btn" data-phone="07051112223" data-network="Glo">
+                <div class="recipient-circle" style="background: #EAF9EA; color: #008A00">JD</div>
+                <span class="recipient-name">Joy (Glo)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Side Widgets -->
+        <div class="dashboard-right">
+          
+          <!-- Recent Transactions list -->
+          <div class="card" style="padding: var(--space-5)">
+            <div class="dash-section-title">
+              <h4>Recent Transactions</h4>
+              <a href="transactions.html">View All</a>
+            </div>
+            <div id="recentTxnsList">
+              <!-- Static placeholders or filled by javascript -->
+              <div class="txn-item" onclick="window.location.href='transactions.html'">
+                <div class="txn-icon data">📶</div>
+                <div class="txn-details">
+                  <div class="txn-title">Airtel 2GB Data</div>
+                  <div class="txn-subtitle">To 08027654321 • Success</div>
+                </div>
+                <div class="txn-right">
+                  <div class="txn-amount debit">-₦500</div>
+                  <div class="txn-subtitle">Just now</div>
+                </div>
+              </div>
+
+              <div class="txn-item" onclick="window.location.href='transactions.html'">
+                <div class="txn-icon airtime">📱</div>
+                <div class="txn-details">
+                  <div class="txn-title">MTN ₦200 Airtime</div>
+                  <div class="txn-subtitle">To 08031234567 • Success</div>
+                </div>
+                <div class="txn-right">
+                  <div class="txn-amount debit">-₦200</div>
+                  <div class="txn-subtitle">1 hour ago</div>
+                </div>
+              </div>
+
+              <div class="txn-item" onclick="window.location.href='transactions.html'">
+                <div class="txn-icon wallet">💰</div>
+                <div class="txn-details">
+                  <div class="txn-title">Funded Wallet</div>
+                  <div class="txn-subtitle">Via Paystack • Success</div>
+                </div>
+                <div class="txn-right">
+                  <div class="txn-amount credit">+₦5,000</div>
+                  <div class="txn-subtitle">3 hours ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Referral / Ambassador Promotion -->
+          <div class="card referral-card">
+            <h4>Become an Ambassador</h4>
+            <p style="margin-top: 4px; font-size: 13px">Earn 2% commission on every data and airtime bundle purchase made by students you refer.</p>
+            <div class="referral-share-box">
+              <span class="referral-code" id="referralCode">TOB1405</span>
+              <button class="referral-copy-btn" id="copyReferralBtn">Copy Link</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="bottom-nav-item active" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="buy-data.html" class="bottom-nav-item" data-page="buy-data">
+        <span class="nav-icon">📶</span>
+        <span>Buy Data</span>
+      </a>
+      <a href="buy-airtime.html" class="bottom-nav-item nav-buy" data-page="buy-airtime">
+        <div class="nav-icon-wrapper">
+          <span>📱</span>
+        </div>
+        <span style="margin-top: 4px">Airtime</span>
+      </a>
+      <a href="transactions.html" class="bottom-nav-item" data-page="history">
+        <span class="nav-icon">📊</span>
+        <span>History</span>
+      </a>
+      <a href="profile.html" class="bottom-nav-item" data-page="profile">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Wallet Funding Modal -->
+  <div class="modal-backdrop" id="fundWalletModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Fund Your Wallet</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('fundWalletModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="fundAmount" class="form-label">Enter Amount to Fund (₦)</label>
+          <input type="number" id="fundAmount" class="form-input" placeholder="e.g. 1000" min="100">
+          <div class="form-hint" style="margin-top: 6px">Minimum wallet funding is ₦100. Protected by Paystack.</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-6)">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fundAmount').value=500">₦500</button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fundAmount').value=1000">₦1,000</button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fundAmount').value=2000">₦2,000</button>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="confirmFundBtn">Pay Securely via Paystack</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Recipient Modal -->
+  <div class="modal-backdrop" id="addRecipientModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Save Recipient</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('addRecipientModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="recipientNameInput" class="form-label">Recipient Name</label>
+          <input type="text" id="recipientNameInput" class="form-input" placeholder="e.g. Joy Campus">
+        </div>
+        <div class="form-group">
+          <label for="recipientPhoneInput" class="form-label">Phone Number</label>
+          <div class="phone-input-wrapper">
+            <span class="phone-prefix">+234</span>
+            <input type="tel" id="recipientPhoneInput" class="form-input" placeholder="8031234567" maxlength="10">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="saveRecipientConfirmBtn">Save Recipient</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load user details from storage
+      const user = SUBAUtils.retrieve('user');
+      
+      // Redirect if not logged in
+      if (!user && !SUBAUtils.retrieve('token')) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (user) {
+        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+        document.getElementById('desktopUserAvatar').textContent = initials || 'TO';
+        document.getElementById('topbarUserAvatar').textContent = initials || 'TO';
+        document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('greetingMessage').textContent = `Hey, ${user.firstName} 👋`;
+        document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance / 100);
+        document.getElementById('referralCode').textContent = user.referralCode || 'SUBA001';
+      }
+
+      // Fund Wallet modal triggers
+      const fundWalletBtn = document.getElementById('fundWalletBtn');
+      const confirmFundBtn = document.getElementById('confirmFundBtn');
+      const fundAmount = document.getElementById('fundAmount');
+
+      fundWalletBtn.addEventListener('click', () => {
+        SUBAComponents.openModal('fundWalletModal');
+      });
+
+      confirmFundBtn.addEventListener('click', () => {
+        const val = parseFloat(fundAmount.value);
+        if (!val || val < 100) {
+          SUBAComponents.showToast({
+            title: 'Invalid Amount',
+            message: 'Please enter a funding amount of ₦100 or above.',
+            type: 'error'
+          });
+          return;
+        }
+
+        confirmFundBtn.classList.add('is-loading');
+        setTimeout(() => {
+          confirmFundBtn.classList.remove('is-loading');
+          SUBAComponents.closeModal('fundWalletModal');
+          
+          // Add to wallet balance simulation
+          if (user) {
+            user.balance += (val * 100);
+            SUBAUtils.store('user', user);
+            document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance / 100);
+          }
+
+          // Add to transaction log list (simulate a new credit transaction)
+          const list = document.getElementById('recentTxnsList');
+          const txn = document.createElement('div');
+          txn.className = 'txn-item';
+          txn.onclick = () => window.location.href = 'transactions.html';
+          txn.innerHTML = `
+            <div class="txn-icon wallet">💰</div>
+            <div class="txn-details">
+              <div class="txn-title">Funded Wallet</div>
+              <div class="txn-subtitle">Via Paystack • Success</div>
+            </div>
+            <div class="txn-right">
+              <div class="txn-amount credit">+₦${SUBAUtils.formatNumber(val)}</div>
+              <div class="txn-subtitle">Just now</div>
+            </div>
+          `;
+          list.insertBefore(txn, list.firstChild);
+
+          SUBAComponents.showToast({
+            title: 'Wallet Funded!',
+            message: `₦${SUBAUtils.formatNumber(val)} credited successfully.`,
+            type: 'success'
+          });
+          fundAmount.value = '';
+        }, 2000);
+      });
+
+      // Copy referral code link
+      const copyBtn = document.getElementById('copyReferralBtn');
+      copyBtn.addEventListener('click', () => {
+        const code = document.getElementById('referralCode').textContent;
+        const link = `${window.location.origin}/register.html?ref=${code}`;
+        SUBAUtils.copyToClipboard(link).then(success => {
+          if (success) {
+            copyBtn.textContent = 'Copied!';
+            SUBAComponents.showToast({
+              title: 'Link Copied',
+              message: 'Referral link copied to clipboard.',
+              type: 'success'
+            });
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy Link';
+            }, 2000);
+          }
+        });
+      });
+
+      // Add Saved Recipient trigger
+      const addNewRecipientBtn = document.getElementById('addNewRecipientBtn');
+      const saveRecipientConfirmBtn = document.getElementById('saveRecipientConfirmBtn');
+      const recipientNameInput = document.getElementById('recipientNameInput');
+      const recipientPhoneInput = document.getElementById('recipientPhoneInput');
+
+      addNewRecipientBtn.addEventListener('click', () => {
+        SUBAComponents.openModal('addRecipientModal');
+      });
+
+      saveRecipientConfirmBtn.addEventListener('click', () => {
+        const name = recipientNameInput.value.trim();
+        const rawPhone = recipientPhoneInput.value;
+        const formatted = SUBAUtils.formatPhone(rawPhone);
+
+        if (!name || !rawPhone || !SUBAUtils.isValidPhone('0' + formatted)) {
+          SUBAComponents.showToast({
+            title: 'Validation Failed',
+            message: 'Please enter a valid recipient name and phone number.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const network = SUBAUtils.detectNetwork('0' + formatted) || 'MTN';
+
+        saveRecipientConfirmBtn.classList.add('is-loading');
+        setTimeout(() => {
+          saveRecipientConfirmBtn.classList.remove('is-loading');
+          SUBAComponents.closeModal('addRecipientModal');
+
+          // Append to scrollable list
+          const container = document.getElementById('savedRecipients');
+          const item = document.createElement('div');
+          item.className = 'recipient-avatar-btn';
+          item.dataset.phone = '0' + formatted;
+          item.dataset.network = network;
+          
+          const networkColors = {
+            MTN: { bg: '#FFF9E6', text: '#D9A300' },
+            Airtel: { bg: '#FFEBEB', text: '#E50000' },
+            Glo: { bg: '#EAF9EA', text: '#008A00' },
+            '9mobile': { bg: '#E6F0EE', text: '#005F4B' }
+          };
+
+          const colors = networkColors[network] || { bg: '#FFF0E5', text: 'var(--clr-primary)' };
+          const initials = name.substring(0, 2).toUpperCase();
+
+          item.innerHTML = `
+            <div class="recipient-circle" style="background: ${colors.bg}; color: ${colors.text}">${initials}</div>
+            <span class="recipient-name">${name}</span>
+          `;
+          
+          // Insert after the Add New button
+          container.insertBefore(item, container.children[1]);
+
+          SUBAComponents.showToast({
+            title: 'Recipient Saved',
+            message: `${name} has been added to quick recipients.`,
+            type: 'success'
+          });
+
+          // Reset inputs
+          recipientNameInput.value = '';
+          recipientPhoneInput.value = '';
+
+          // Add quick click handler to new recipient
+          item.addEventListener('click', () => {
+            SUBAUtils.store('active_recipient', {
+              phone: '0' + formatted,
+              network: network
+            });
+            window.location.href = 'buy-data.html';
+          });
+
+        }, 1200);
+      });
+
+      // Quick recipient clicks
+      document.querySelectorAll('.recipient-avatar-btn[data-phone]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          SUBAUtils.store('active_recipient', {
+            phone: btn.dataset.phone,
+            network: btn.dataset.network
+          });
+          window.location.href = 'buy-data.html';
+        });
+      });
+    });
+  </script>
+</body>
+</html>

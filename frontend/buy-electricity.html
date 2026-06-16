@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buy Electricity | SUBA — Fast & Reliable Student Utilities</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/purchase.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item" data-page="home">
+          <span class="sidebar-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="buy-data.html" class="sidebar-nav-item" data-page="buy-data">
+          <span class="sidebar-icon">📶</span>
+          <span>Buy Data</span>
+        </a>
+        <a href="buy-airtime.html" class="sidebar-nav-item" data-page="buy-airtime">
+          <span class="sidebar-icon">📱</span>
+          <span>Buy Airtime</span>
+        </a>
+        <a href="buy-electricity.html" class="sidebar-nav-item active" data-page="buy-electricity">
+          <span class="sidebar-icon">⚡</span>
+          <span>Electricity</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="history">
+          <span class="sidebar-icon">📊</span>
+          <span>History</span>
+        </a>
+        <a href="ambassador.html" class="sidebar-nav-item" data-page="ambassador">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassador</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item" data-page="profile">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" id="desktopUserAvatar">TO</div>
+        <div>
+          <div class="sidebar-user-name" id="desktopUserName">Tobi Oyelami</div>
+          <div class="sidebar-user-role">Student Account</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Buy Electricity Token</h3>
+          <p>Instant prepaid/postpaid electricity token generation.</p>
+        </div>
+        <div class="topbar-actions">
+          <a href="dashboard.html" class="btn btn-ghost btn-sm" style="font-size: var(--text-sm); font-weight: 600">🏠 Dashboard</a>
+          <a href="profile.html" class="avatar" id="topbarUserAvatar">TO</a>
+        </div>
+      </div>
+
+      <div class="purchase-card card">
+        
+        <!-- Step indicator bar -->
+        <div class="step-indicator" id="purchaseSteps">
+          <div class="step active" id="pStep1">
+            <span class="step-dot">1</span>
+            <span class="step-label">Meter details</span>
+          </div>
+          <span class="step-line" id="pLine1"></span>
+          <div class="step" id="pStep2">
+            <span class="step-dot">2</span>
+            <span class="step-label">Review order</span>
+          </div>
+          <span class="step-line" id="pLine2"></span>
+          <div class="step" id="pStep3">
+            <span class="step-dot">3</span>
+            <span class="step-label">Token PIN</span>
+          </div>
+        </div>
+
+        <!-- STEP 1: Meter configuration Form -->
+        <div class="purchase-step active" id="step1Content">
+          
+          <!-- Disco selection dropdown -->
+          <div class="form-group">
+            <label for="discoSelector" class="form-label">Electricity Distribution Company (Disco)<span class="required">*</span></label>
+            <select id="discoSelector" class="form-select">
+              <option value="" disabled selected>Select Distribution Disco</option>
+              <option value="IKEDC">Ikeja Electricity (IKEDC)</option>
+              <option value="EKEDC">Eko Electricity (EKEDC)</option>
+              <option value="AEDC">Abuja Electricity (AEDC)</option>
+              <option value="KAEDCO">Kaduna Electricity (KAEDCO)</option>
+              <option value="IBEDC">Ibadan Electricity (IBEDC)</option>
+              <option value="PHED">Port Harcourt Electricity (PHED)</option>
+            </select>
+            <div class="form-error hidden" id="discoError"></div>
+          </div>
+
+          <!-- Prepaid vs Postpaid tab indicator -->
+          <div class="form-group">
+            <label class="form-label">Meter Type</label>
+            <div style="display: flex; gap: var(--space-3)">
+              <div class="checkbox-wrapper" id="typePrepaidWrapper">
+                <div class="checkbox checked" id="typePrepaidCheckbox" style="border-radius: 50%"></div>
+                <span class="checkbox-label">Prepaid</span>
+              </div>
+              <div class="checkbox-wrapper" id="typePostpaidWrapper">
+                <div class="checkbox" id="typePostpaidCheckbox" style="border-radius: 50%"></div>
+                <span class="checkbox-label">Postpaid</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meter Number input -->
+          <div class="form-group">
+            <label for="meterNumber" class="form-label">Meter Number<span class="required">*</span></label>
+            <input type="text" id="meterNumber" class="form-input" placeholder="e.g. 01011234567" maxlength="13">
+            <div class="form-error hidden" id="meterError"></div>
+            <div class="form-hint" id="meterDetectionHint">Enter meter number to initiate dynamic name lookup validation.</div>
+          </div>
+
+          <!-- Amount Input -->
+          <div class="form-group">
+            <label for="powerAmount" class="form-label">Amount (₦)<span class="required">*</span></label>
+            <input type="number" id="powerAmount" class="form-input" placeholder="Enter amount from ₦500 to ₦100,000" min="500" max="100000">
+            <div class="form-error hidden" id="amountError"></div>
+            <div class="form-hint">Service charges: ₦100 standard convenience fee applies.</div>
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg mt-6" id="goToStep2Btn">
+            Verify & Continue
+          </button>
+        </div>
+
+        <!-- STEP 2: Order Summary and Meter Owner details -->
+        <div class="purchase-step" id="step2Content">
+          <h4 style="font-size: var(--text-base); margin-bottom: var(--space-4)">Confirm Your Utility Details</h4>
+          
+          <div style="background: var(--clr-success-light); color: var(--clr-success-dark); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-5); display: flex; align-items: center; gap: var(--space-2)">
+            <span style="font-size: 18px">✓</span>
+            <div>
+              <div style="font-weight: 700; font-size: 13px">Meter Verification Succeeded</div>
+              <div style="font-size: 12px; font-weight: 500" id="verifiedCustomerName">CUSTOMER: ADENIYI GBOLAHAN</div>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-title">Order Summary</div>
+            <div class="summary-row">
+              <span class="summary-label">Service Disco</span>
+              <span class="summary-value" id="summaryDisco">Ikeja Electricity (IKEDC)</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Meter Number</span>
+              <span class="summary-value" id="summaryMeter">01011234567</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Customer Name</span>
+              <span class="summary-value" id="summaryCustomer">ADENIYI GBOLAHAN</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Selected Value</span>
+              <span class="summary-value" id="summaryPrice">₦2,000</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Convenience Fee</span>
+              <span class="summary-value">₦100</span>
+            </div>
+            <div class="summary-total">
+              <span>Total Amount</span>
+              <span class="total-price" id="summaryTotal">₦2,100</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Select Payment Method</label>
+            <div class="payment-methods">
+              <div class="payment-method-item active" data-method="wallet">
+                <div class="method-icon">💰</div>
+                <div class="method-details">
+                  <div class="method-title">Pay via SUBA Wallet</div>
+                  <div class="method-desc">Instant check. Balance: <span id="paymentWalletBalance">₦4,250.00</span></div>
+                </div>
+                <div class="method-select-dot"></div>
+              </div>
+              
+              <div class="payment-method-item" data-method="paystack">
+                <div class="method-icon">💳</div>
+                <div class="method-details">
+                  <div class="method-title">Pay via Paystack</div>
+                  <div class="method-desc">Card, Bank Transfer, USSD (Zero fees)</div>
+                </div>
+                <div class="method-select-dot"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group btn-group-stack">
+            <button class="btn btn-secondary btn-block btn-lg" id="backToStep1Btn">Back</button>
+            <button class="btn btn-primary btn-block btn-lg" id="confirmPaymentBtn">Confirm & Pay</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Automated Timeline Fulfillment and Token PIN Display -->
+        <div class="purchase-step" id="step3Content">
+          <div class="success-screen">
+            
+            <div id="fulfillmentLoading">
+              <div class="success-icon-wrapper" style="background: var(--clr-primary-light); color: var(--clr-primary)">
+                ⏳
+              </div>
+              <h3 id="fulfillmentStatusTitle">Fulfilling Electricity Order</h3>
+              <p>Please wait while our systems register and generate your token PIN.</p>
+            </div>
+
+            <div id="fulfillmentSuccess" class="hidden">
+              <div class="success-icon-wrapper">
+                ✓
+              </div>
+              <h3>Token Generated Successfully!</h3>
+              <p>Your prepaid meter token has been compiled and is ready for load-input.</p>
+              
+              <!-- Token Display Box -->
+              <div style="background: var(--gradient-dark); color: white; padding: var(--space-6); border-radius: var(--radius-xl); margin-bottom: var(--space-6); position: relative; overflow: hidden">
+                <div style="font-size: 11px; color: var(--clr-accent); text-transform: uppercase; font-weight: 800; letter-spacing: 0.1em; margin-bottom: var(--space-2)">PREPAID TOKEN PIN</div>
+                <div style="font-size: 26px; font-weight: 800; font-family: var(--font-mono); letter-spacing: 0.05em; color: white" id="prepaidTokenPin">4012 - 7652 - 0914 - 8820 - 4511</div>
+                <button class="btn btn-white btn-sm mt-4" id="copyTokenPinBtn" style="color: var(--clr-secondary); font-weight:700">Copy Token PIN</button>
+              </div>
+
+              <div style="background: var(--clr-bg); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-6); text-align: left; max-width: 380px; margin-inline: auto">
+                <div style="font-size: 11px; color: var(--clr-text-tertiary); text-transform: uppercase; font-weight: 700">Order Information</div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px">
+                  <span class="text-secondary">Meter Number:</span>
+                  <span class="fw-semibold" id="successMeter">01011234567</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px">
+                  <span class="text-secondary">Customer:</span>
+                  <span class="fw-semibold" id="successCustomer">ADENIYI GBOLAHAN</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px">
+                  <span class="text-secondary">Order Reference:</span>
+                  <span class="fw-semibold" id="successRef">SUBA-17850239</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery Timeline Progress Tracking -->
+            <div class="timeline">
+              <div class="timeline-item completed" id="timeStep1">
+                <div class="timeline-dot"></div>
+                <div class="timeline-info">
+                  <span class="timeline-title">Payment Confirmed</span>
+                  <span class="timeline-time" id="timeStep1Label">Just now</span>
+                </div>
+              </div>
+              <div class="timeline-item active" id="timeStep2">
+                <div class="timeline-dot"></div>
+                <div class="timeline-info">
+                  <span class="timeline-title" id="timeStep2Title">Verifying Disco Connection</span>
+                  <span class="timeline-time" id="timeStep2Label">Pending...</span>
+                </div>
+              </div>
+              <div class="timeline-item" id="timeStep3">
+                <div class="timeline-dot"></div>
+                <div class="timeline-info">
+                  <span class="timeline-title">Generating Token PIN</span>
+                  <span class="timeline-time">Pending...</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="btn-group btn-group-stack mt-8 hidden" id="successActions" style="justify-content: center">
+              <a href="dashboard.html" class="btn btn-secondary btn-lg">Back to Dashboard</a>
+              <button class="btn btn-primary btn-lg" onclick="window.location.reload()">Buy Again</button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="bottom-nav-item" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="buy-data.html" class="bottom-nav-item" data-page="buy-data">
+        <span class="nav-icon">📶</span>
+        <span>Buy Data</span>
+      </a>
+      <a href="buy-airtime.html" class="bottom-nav-item nav-buy" data-page="buy-airtime">
+        <div class="nav-icon-wrapper">
+          <span>📱</span>
+        </div>
+        <span style="margin-top: 4px">Airtime</span>
+      </a>
+      <a href="transactions.html" class="bottom-nav-item" data-page="history">
+        <span class="nav-icon">📊</span>
+        <span>History</span>
+      </a>
+      <a href="profile.html" class="bottom-nav-item active" data-page="profile">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let isPrepaid = true;
+      let activeMethod = 'wallet';
+      let totalBill = 0;
+
+      const user = SUBAUtils.retrieve('user');
+      if (user) {
+        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+        document.getElementById('desktopUserAvatar').textContent = initials;
+        document.getElementById('topbarUserAvatar').textContent = initials;
+        document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('paymentWalletBalance').textContent = SUBAUtils.formatCurrency(user.balance, true);
+      }
+
+      // Prepaid/Postpaid toggle buttons
+      const prepaidWrapper = document.getElementById('typePrepaidWrapper');
+      const postpaidWrapper = document.getElementById('typePostpaidWrapper');
+      const prepaidCheckbox = document.getElementById('typePrepaidCheckbox');
+      const postpaidCheckbox = document.getElementById('typePostpaidCheckbox');
+
+      prepaidWrapper.addEventListener('click', () => {
+        prepaidCheckbox.classList.add('checked');
+        postpaidCheckbox.classList.remove('checked');
+        isPrepaid = true;
+      });
+
+      postpaidWrapper.addEventListener('click', () => {
+        postpaidCheckbox.classList.add('checked');
+        prepaidCheckbox.classList.remove('checked');
+        isPrepaid = false;
+      });
+
+      // Step 1 validation
+      const goToStep2 = document.getElementById('goToStep2Btn');
+      const discoSelector = document.getElementById('discoSelector');
+      const meterNumber = document.getElementById('meterNumber');
+      const powerAmount = document.getElementById('powerAmount');
+
+      const discoError = document.getElementById('discoError');
+      const meterError = document.getElementById('meterError');
+      const amountError = document.getElementById('amountError');
+
+      goToStep2.addEventListener('click', () => {
+        let isValid = true;
+        
+        discoError.classList.add('hidden');
+        meterError.classList.add('hidden');
+        amountError.classList.add('hidden');
+        
+        discoSelector.classList.remove('is-error');
+        meterNumber.classList.remove('is-error');
+        powerAmount.classList.remove('is-error');
+
+        if (!discoSelector.value) {
+          discoSelector.classList.add('is-error');
+          discoError.textContent = 'Please choose a Distribution Disco';
+          discoError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        const meterVal = meterNumber.value.trim();
+        if (!meterVal) {
+          meterNumber.classList.add('is-error');
+          meterError.textContent = 'Meter number is required';
+          meterError.classList.remove('hidden');
+          isValid = false;
+        } else if (meterVal.length < 10 || isNaN(meterVal)) {
+          meterNumber.classList.add('is-error');
+          meterError.textContent = 'Please enter a valid numeric meter number (10-13 digits)';
+          meterError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        const amountVal = parseFloat(powerAmount.value);
+        if (!amountVal || isNaN(amountVal)) {
+          powerAmount.classList.add('is-error');
+          amountError.textContent = 'Please enter amount to purchase';
+          amountError.classList.remove('hidden');
+          isValid = false;
+        } else if (amountVal < 500 || amountVal > 100000) {
+          powerAmount.classList.add('is-error');
+          amountError.textContent = 'Utility purchases must be between ₦500 and ₦100,000';
+          amountError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (isValid) {
+          goToStep2.classList.add('is-loading');
+          
+          // Simulated Meter Name Lookup API
+          setTimeout(() => {
+            goToStep2.classList.remove('is-loading');
+
+            const customerNames = [
+              'ADENIYI GBOLAHAN',
+              'IBRAHIM HASSAN ALAO',
+              'OKEKE EMEKA CHINEDU',
+              'OLUWAFEMI AYOMIDE MARY'
+            ];
+            const name = customerNames[Math.floor(Math.random() * customerNames.length)];
+
+            document.getElementById('verifiedCustomerName').textContent = `CUSTOMER: ${name}`;
+            document.getElementById('summaryDisco').textContent = discoSelector.options[discoSelector.selectedIndex].text;
+            document.getElementById('summaryMeter').textContent = meterVal;
+            document.getElementById('summaryCustomer').textContent = name;
+            document.getElementById('summaryPrice').textContent = `₦${SUBAUtils.formatNumber(amountVal)}`;
+            
+            totalBill = amountVal + 100; // ₦100 fee
+            document.getElementById('summaryTotal').textContent = `₦${SUBAUtils.formatNumber(totalBill)}`;
+
+            transitionStep(2);
+          }, 1500);
+        }
+      });
+
+      // Step 2 buttons
+      document.getElementById('backToStep1Btn').addEventListener('click', () => {
+        transitionStep(1);
+      });
+
+      document.querySelectorAll('.payment-method-item').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.payment-method-item').forEach(p => p.classList.remove('active'));
+          item.classList.add('active');
+          activeMethod = item.dataset.method;
+        });
+      });
+
+      const confirmPayment = document.getElementById('confirmPaymentBtn');
+      confirmPayment.addEventListener('click', () => {
+        if (activeMethod === 'wallet' && user) {
+          const requiredKobo = totalBill * 100;
+          if (user.balance < requiredKobo) {
+            SUBAComponents.showToast({
+              title: 'Insufficient Funds',
+              message: 'Your wallet balance is low. Please choose Paystack or fund your wallet.',
+              type: 'error'
+            });
+            return;
+          }
+        }
+
+        confirmPayment.classList.add('is-loading');
+        setTimeout(() => {
+          confirmPayment.classList.remove('is-loading');
+          
+          if (activeMethod === 'wallet' && user) {
+            user.balance -= (totalBill * 100);
+            SUBAUtils.store('user', user);
+          }
+
+          transitionStep(3);
+          startSimulatedTimeline();
+        }, 1500);
+      });
+
+      function transitionStep(step) {
+        document.querySelectorAll('.purchase-step').forEach(c => c.classList.remove('active'));
+        document.getElementById(`step${step}Content`).classList.add('active');
+
+        const s1 = document.getElementById('pStep1');
+        const s2 = document.getElementById('pStep2');
+        const s3 = document.getElementById('pStep3');
+        const l1 = document.getElementById('pLine1');
+        const l2 = document.getElementById('pLine2');
+
+        if (step === 2) {
+          s1.className = 'step completed';
+          s2.className = 'step active';
+          l1.className = 'step-line completed';
+        } else if (step === 3) {
+          s1.className = 'step completed';
+          s2.className = 'step completed';
+          s3.className = 'step active';
+          l1.className = 'step-line completed';
+          l2.className = 'step-line completed';
+        } else {
+          s1.className = 'step active';
+          s2.className = 'step';
+          s3.className = 'step';
+          l1.className = 'step-line';
+          l2.className = 'step-line';
+        }
+      }
+
+      function startSimulatedTimeline() {
+        const tStep1 = document.getElementById('timeStep1');
+        const tStep2 = document.getElementById('timeStep2');
+        const tStep3 = document.getElementById('timeStep3');
+        const tStep1Label = document.getElementById('timeStep1Label');
+        const tStep2Label = document.getElementById('timeStep2Label');
+        const tStep2Title = document.getElementById('timeStep2Title');
+
+        const successMeter = document.getElementById('successMeter');
+        const successCustomer = document.getElementById('successCustomer');
+        const successRef = document.getElementById('successRef');
+        
+        successMeter.textContent = meterNumber.value;
+        successCustomer.textContent = document.getElementById('summaryCustomer').textContent;
+        
+        const generatedId = SUBAUtils.generateRequestId().substring(0,13);
+        successRef.textContent = generatedId;
+
+        tStep1.className = 'timeline-item completed';
+        tStep1Label.textContent = '1s ago';
+
+        setTimeout(() => {
+          tStep2.className = 'timeline-item completed';
+          tStep2Label.textContent = 'Success';
+          tStep2Title.textContent = `${discoSelector.value} Disco Connected`;
+
+          tStep3.className = 'timeline-item active';
+          tStep3.querySelector('.timeline-title').textContent = 'Generating Token PIN';
+          tStep3.querySelector('.timeline-time').textContent = 'Processing...';
+
+          setTimeout(() => {
+            tStep3.className = 'timeline-item completed';
+            tStep3.querySelector('.timeline-time').textContent = 'Success';
+
+            // Generate mock 20-digit prepaid token pin
+            let generatedPin = '';
+            for (let i = 0; i < 5; i++) {
+              generatedPin += Math.floor(1000 + Math.random() * 9000);
+              if (i < 4) generatedPin += ' - ';
+            }
+            
+            if (isPrepaid) {
+              document.getElementById('prepaidTokenPin').textContent = generatedPin;
+              document.getElementById('prepaidTokenPin').closest('div').style.display = 'block';
+            } else {
+              // Postpaid does not need a PIN token, it pays direct bill
+              document.getElementById('prepaidTokenPin').closest('div').style.display = 'none';
+            }
+
+            document.getElementById('fulfillmentLoading').classList.add('hidden');
+            document.getElementById('fulfillmentSuccess').classList.remove('hidden');
+            document.getElementById('successActions').classList.remove('hidden');
+
+            SUBAComponents.showToast({
+              title: 'Utility Funded!',
+              message: 'Electricity token processed successfully.',
+              type: 'success'
+            });
+
+          }, 2500);
+
+        }, 1500);
+      });
+
+      // Copy token PIN btn
+      const copyTokenBtn = document.getElementById('copyTokenPinBtn');
+      copyTokenBtn.addEventListener('click', () => {
+        const pin = document.getElementById('prepaidTokenPin').textContent;
+        SUBAUtils.copyToClipboard(pin.replace(/\s-\s/g, '')).then(success => {
+          if (success) {
+            copyTokenBtn.textContent = 'Copied!';
+            SUBAComponents.showToast({
+              title: 'Token PIN Copied',
+              type: 'success'
+            });
+            setTimeout(() => {
+              copyTokenBtn.textContent = 'Copy Token PIN';
+            }, 2000);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

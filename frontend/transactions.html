@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction History | SUBA — Automated Student VTU</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <style>
+    /* Collapsible transaction items styles */
+    .txn-details-pane {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--transition-smooth);
+      background: var(--clr-bg);
+      padding-inline: var(--space-6);
+    }
+    .txn-item-wrapper.active .txn-details-pane {
+      padding-bottom: var(--space-5);
+      border-bottom: 1px solid var(--clr-border-light);
+    }
+    .txn-arrow {
+      font-size: 10px;
+      color: var(--clr-text-tertiary);
+      transition: transform var(--transition-smooth);
+    }
+    .txn-item-wrapper.active .txn-arrow {
+      transform: rotate(180deg);
+    }
+    .txn-timeline-mini {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding-top: var(--space-4);
+      margin-top: var(--space-4);
+      border-top: 1px dashed var(--clr-border);
+    }
+    .timeline-node {
+      display: flex;
+      gap: var(--space-3);
+      font-size: var(--text-xs);
+    }
+    .timeline-node .node-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--clr-success);
+      margin-top: 2px;
+      position: relative;
+    }
+    .timeline-node .node-dot::after {
+      content: '';
+      position: absolute;
+      top: 12px;
+      left: 5px;
+      width: 2px;
+      height: 16px;
+      background: var(--clr-border);
+    }
+    .timeline-node:last-child .node-dot::after {
+      display: none;
+    }
+    .timeline-node.active .node-dot {
+      background: var(--clr-primary);
+    }
+    .timeline-node.pending .node-dot {
+      background: var(--clr-border);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item" data-page="home">
+          <span class="sidebar-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="buy-data.html" class="sidebar-nav-item" data-page="buy-data">
+          <span class="sidebar-icon">📶</span>
+          <span>Buy Data</span>
+        </a>
+        <a href="buy-airtime.html" class="sidebar-nav-item" data-page="buy-airtime">
+          <span class="sidebar-icon">📱</span>
+          <span>Buy Airtime</span>
+        </a>
+        <a href="buy-electricity.html" class="sidebar-nav-item" data-page="buy-electricity">
+          <span class="sidebar-icon">⚡</span>
+          <span>Electricity</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item active" data-page="history">
+          <span class="sidebar-icon">📊</span>
+          <span>History</span>
+        </a>
+        <a href="ambassador.html" class="sidebar-nav-item" data-page="ambassador">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassador</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item" data-page="profile">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" id="desktopUserAvatar">TO</div>
+        <div>
+          <div class="sidebar-user-name" id="desktopUserName">Tobi Oyelami</div>
+          <div class="sidebar-user-role">Student Account</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Header top -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Transaction History</h3>
+          <p>Monitor your purchases, wallet funding, and delivery status.</p>
+        </div>
+        <div class="topbar-actions">
+          <a href="dashboard.html" class="btn btn-ghost btn-sm" style="font-size: var(--text-sm); font-weight: 600">🏠 Dashboard</a>
+          <a href="profile.html" class="avatar" id="topbarUserAvatar">TO</a>
+        </div>
+      </div>
+
+      <!-- Filters & Lists container -->
+      <div class="card" style="padding: 0; overflow: hidden">
+        
+        <!-- Filters tab headers -->
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
+          
+          <!-- Live search input -->
+          <div class="search-bar" style="margin-bottom: var(--space-3)">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="txnSearchInput" placeholder="Search by recipient phone or reference ID...">
+          </div>
+
+          <!-- Type filter badges -->
+          <div class="plan-filters" style="margin-top:0; margin-bottom:0">
+            <div class="plan-filter active" data-type="all">All Services</div>
+            <div class="plan-filter" data-type="data">📶 Data</div>
+            <div class="plan-filter" data-type="airtime">📱 Airtime</div>
+            <div class="plan-filter" data-type="electricity">⚡ Utility</div>
+            <div class="plan-filter" data-type="wallet">💰 Funding</div>
+          </div>
+        </div>
+
+        <!-- Transactions interactive container -->
+        <div id="transactionsContainer" style="display: flex; flex-direction: column">
+          <!-- Will load items via javascript from storage -->
+        </div>
+
+        <!-- Empty state placeholder -->
+        <div id="emptyState" class="empty-state hidden">
+          <span class="empty-icon">📊</span>
+          <h4>No Transactions Found</h4>
+          <p>We couldn't find any transaction matches. Try modifying your filter options.</p>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="bottom-nav-item" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="buy-data.html" class="bottom-nav-item" data-page="buy-data">
+        <span class="nav-icon">📶</span>
+        <span>Buy Data</span>
+      </a>
+      <a href="buy-airtime.html" class="bottom-nav-item nav-buy" data-page="buy-airtime">
+        <div class="nav-icon-wrapper">
+          <span>📱</span>
+        </div>
+        <span style="margin-top: 4px">Airtime</span>
+      </a>
+      <a href="transactions.html" class="bottom-nav-item active" data-page="history">
+        <span class="nav-icon">📊</span>
+        <span>History</span>
+      </a>
+      <a href="profile.html" class="bottom-nav-item" data-page="profile">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mock history list database
+      let transactionsDb = [
+        { ref: 'SUBA-17850239', type: 'data', name: 'Airtel 2GB Data', dest: '08027654321', price: 500, status: 'successful', date: '2026-06-15T12:43:00-07:00' },
+        { ref: 'SUBA-17849822', type: 'airtime', name: 'MTN ₦200 Airtime', dest: '08031234567', price: 200, status: 'successful', date: '2026-06-15T11:45:00-07:00' },
+        { ref: 'SUBA-17847610', type: 'wallet', name: 'Funded Wallet', dest: 'Paystack Gateway', price: 5000, status: 'successful', date: '2026-06-15T09:30:00-07:00', method: 'credit' },
+        { ref: 'SUBA-17832045', type: 'electricity', name: 'IKEDC Token ₦2,000', dest: 'Meter 01011234567', price: 2100, status: 'successful', date: '2026-06-14T15:20:00-07:00' },
+        { ref: 'SUBA-17821104', type: 'data', name: 'MTN 1GB SME Data', dest: '08031234567', price: 260, status: 'successful', date: '2026-06-13T10:05:00-07:00' }
+      ];
+
+      const user = SUBAUtils.retrieve('user');
+      if (user) {
+        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+        document.getElementById('desktopUserAvatar').textContent = initials;
+        document.getElementById('topbarUserAvatar').textContent = initials;
+        document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
+
+        // If user has funded their wallet in this session, prepend a mock transaction
+        // Check if user has wallet balance change in storage (simulating live additions)
+        // If balance > 4250 (which was initial mock balance), mock addition
+        if (user.balance > 425000) {
+          const addedVal = (user.balance - 425000) / 100;
+          transactionsDb.unshift({
+            ref: SUBAUtils.generateRequestId().substring(0,13),
+            type: 'wallet',
+            name: 'Funded Wallet',
+            dest: 'Paystack Gateway',
+            price: addedVal,
+            status: 'successful',
+            date: new Date().toISOString(),
+            method: 'credit'
+          });
+        }
+      }
+
+      let activeFilterType = 'all';
+      let searchQuery = '';
+
+      function renderTransactions() {
+        const container = document.getElementById('transactionsContainer');
+        const emptyState = document.getElementById('emptyState');
+
+        // Filter database
+        let filtered = transactionsDb.filter(t => {
+          const matchesType = activeFilterType === 'all' || t.type === activeFilterType;
+          const matchesQuery = searchQuery === '' || 
+            t.dest.toLowerCase().includes(searchQuery) ||
+            t.ref.toLowerCase().includes(searchQuery) ||
+            t.name.toLowerCase().includes(searchQuery);
+          return matchesType && matchesQuery;
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+        
+        container.innerHTML = filtered.map(t => {
+          const isDebit = t.method !== 'credit';
+          const symbol = isDebit ? '-' : '+';
+          const amtClass = isDebit ? 'debit' : 'credit';
+          const statusText = SUBAUtils.getStatusText(t.status);
+          const badgeClass = SUBAUtils.getStatusClass(t.status);
+          const icon = SUBAUtils.getServiceIcon(t.type);
+
+          return `
+            <div class="txn-item-wrapper" id="wrapper-${t.ref}">
+              <div class="txn-item">
+                <div class="txn-icon ${t.type}">${icon}</div>
+                <div class="txn-details">
+                  <div class="txn-title" style="font-weight: 600">${t.name}</div>
+                  <div class="txn-subtitle" style="font-size: 11px">To ${t.dest} • <span class="badge ${badgeClass}" style="padding: 1px 6px; font-size: 9px">${statusText}</span></div>
+                </div>
+                <div class="txn-right" style="display:flex; align-items:center; gap: var(--space-3)">
+                  <div>
+                    <div class="txn-amount ${amtClass}">${symbol}₦${SUBAUtils.formatNumber(t.price)}</div>
+                    <div class="txn-subtitle" style="font-size: 11px">${SUBAUtils.timeAgo(t.date)}</div>
+                  </div>
+                  <span class="txn-arrow">▼</span>
+                </div>
+              </div>
+              
+              <!-- Collapsible Details pane -->
+              <div class="txn-details-pane" id="pane-${t.ref}">
+                <div style="background: white; padding: var(--space-4); border-radius: var(--radius-lg); border: 1px solid var(--clr-border-light); font-size: var(--text-sm)">
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 6px">
+                    <span class="text-secondary">Reference ID:</span>
+                    <span class="fw-semibold">${t.ref}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 6px">
+                    <span class="text-secondary">Convenience Fee:</span>
+                    <span class="fw-semibold">₦0</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 6px">
+                    <span class="text-secondary">Fulfillment Date:</span>
+                    <span class="fw-semibold">${SUBAUtils.formatDate(t.date)}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom: var(--space-4)">
+                    <span class="text-secondary">Status:</span>
+                    <span class="text-success fw-bold">Delivered</span>
+                  </div>
+
+                  <!-- Delivery Progress Timeline nodes -->
+                  <div class="txn-timeline-mini">
+                    <div class="timeline-node">
+                      <div class="node-dot"></div>
+                      <div>
+                        <div class="fw-semibold">Payment Confirmed</div>
+                        <div class="text-tertiary" style="font-size: 10px">${SUBAUtils.formatShortDate(t.date)}</div>
+                      </div>
+                    </div>
+                    <div class="timeline-node">
+                      <div class="node-dot"></div>
+                      <div>
+                        <div class="fw-semibold">VTU Order Dispatched</div>
+                        <div class="text-tertiary" style="font-size: 10px">Processed automatically</div>
+                      </div>
+                    </div>
+                    <div class="timeline-node">
+                      <div class="node-dot"></div>
+                      <div>
+                        <div class="fw-semibold">Fulfillment Success</div>
+                        <div class="text-tertiary" style="font-size: 10px">Delivered instantly</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="btn-group" style="margin-top: var(--space-4)">
+                    <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Receipt</button>
+                    <a href="https://wa.me/2340000000000?text=Dispute+Order+${t.ref}" class="btn btn-danger btn-sm" style="background:#EF4444; border-color:#EF4444">⚠️ Dispute</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Re-attach collapse click triggers
+        document.querySelectorAll('.txn-item-wrapper').forEach(wrapper => {
+          const item = wrapper.querySelector('.txn-item');
+          const pane = wrapper.querySelector('.txn-details-pane');
+          
+          item.addEventListener('click', () => {
+            const isActive = wrapper.classList.toggle('active');
+            pane.style.maxHeight = isActive ? pane.scrollHeight + 'px' : '0';
+          });
+        });
+      }
+
+      // Initial render
+      renderTransactions();
+
+      // Search typing trigger
+      const searchInput = document.getElementById('txnSearchInput');
+      searchInput.addEventListener('input', SUBAUtils.debounce((e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderTransactions();
+      }, 300));
+
+      // Filter tabs trigger
+      document.querySelectorAll('.plan-filter').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.plan-filter').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          activeFilterType = tab.dataset.type;
+          renderTransactions();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | SUBA — System Management</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item active" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>System Administrator Hub</h3>
+          <p>Real-time analytics and transaction health monitoring.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Production Node</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="admin-grid">
+        <div class="card stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value">₦342,500</div>
+          <div class="stat-label">TODAY'S REVENUE</div>
+          <span class="stat-trend up">▲ 14.2%</span>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value">1,420</div>
+          <div class="stat-label">ACTIVE USERS</div>
+          <span class="stat-trend up">▲ 8.6%</span>
+        </div>
+        <div class="card stat-card" style="border-color: var(--clr-error-light)">
+          <div class="stat-icon" style="background: var(--clr-error-light); color: var(--clr-error-dark)">⚠️</div>
+          <div class="stat-value" style="color: var(--clr-error-dark)">12</div>
+          <div class="stat-label">FAILED ORDERS</div>
+          <span class="stat-trend down" style="color: var(--clr-success-dark); background: var(--clr-success-light)">▼ 24.1%</span>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background: var(--clr-info-light); color: var(--clr-info)">🔌</div>
+          <div class="stat-value">99.8%</div>
+          <div class="stat-label">PROVIDER UPTIME</div>
+          <span class="stat-trend up">Stable</span>
+        </div>
+      </div>
+
+      <!-- Two column details grid -->
+      <div class="dashboard-grid">
+        
+        <!-- Left: Provider health checks -->
+        <div class="dashboard-left">
+          
+          <div class="dash-section-title">
+            <h4>VTU Provider Node Uptime</h4>
+            <a href="providers.html">Manage</a>
+          </div>
+
+          <div class="grid-2">
+            <!-- VTpass card -->
+            <div class="card provider-card healthy">
+              <div class="provider-header">
+                <h4 style="font-size: var(--text-base)">VTpass Gateways</h4>
+                <span class="provider-status-dot">ACTIVE</span>
+              </div>
+              <div class="divider divider-sm"></div>
+              <div style="display:flex; justify-content:space-between; font-size:var(--text-sm); margin-bottom:6px">
+                <span class="text-secondary">Uptime Rating:</span>
+                <span class="fw-semibold">99.92%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:var(--text-sm); margin-bottom:6px">
+                <span class="text-secondary">Avg Response:</span>
+                <span class="fw-semibold">1.2s</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:var(--text-sm)">
+                <span class="text-secondary">Priority:</span>
+                <span class="fw-semibold text-orange">Primary (0)</span>
+              </div>
+            </div>
+
+            <!-- Clubkonnect card -->
+            <div class="card provider-card warning">
+              <div class="provider-header">
+                <h4 style="font-size: var(--text-base)">Clubkonnect API</h4>
+                <span class="provider-status-dot">STANDBY</span>
+              </div>
+              <div class="divider divider-sm"></div>
+              <div style="display:flex; justify-content:space-between; font-size:var(--text-sm); margin-bottom:6px">
+                <span class="text-secondary">Uptime Rating:</span>
+                <span class="fw-semibold">98.45%</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:var(--text-sm); margin-bottom:6px">
+                <span class="text-secondary">Avg Response:</span>
+                <span class="fw-semibold">3.4s</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:var(--text-sm)">
+                <span class="text-secondary">Priority:</span>
+                <span class="fw-semibold">Secondary (1)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick System settings -->
+          <div class="card" style="margin-top: var(--space-4)">
+            <h4 style="font-size: var(--text-base); margin-bottom: var(--space-4)">System Settings</h4>
+            
+            <div class="admin-setting-row">
+              <div class="admin-setting-info">
+                <h5>Maintenance Mode</h5>
+                <p>Temporarily disable utility/VTU purchases for users.</p>
+              </div>
+              <div class="toggle-wrapper" id="maintenanceToggle">
+                <div class="toggle"></div>
+              </div>
+            </div>
+
+            <div class="admin-setting-row">
+              <div class="admin-setting-info">
+                <h5>Auto Failover Provider</h5>
+                <p>Switch to backup provider immediately on transaction delay.</p>
+              </div>
+              <div class="toggle-wrapper" id="failoverToggle">
+                <div class="toggle active"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Recent system log activity -->
+        <div class="dashboard-right">
+          
+          <div class="card" style="padding: var(--space-5)">
+            <div class="dash-section-title">
+              <h4>System Audit Logs</h4>
+              <a href="transactions.html">Logs</a>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: var(--space-3)">
+              <div style="font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div style="display: flex; justify-content: space-between; font-weight:600">
+                  <span>VTU Order Completed</span>
+                  <span class="text-success">Successful</span>
+                </div>
+                <div style="font-size: 11px; color: var(--clr-text-tertiary); margin-top:2px">Ref: SUBA-17850239 • MTN 1GB • 2s ago</div>
+              </div>
+
+              <div style="font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div style="display: flex; justify-content: space-between; font-weight:600">
+                  <span>Paystack Webhook Received</span>
+                  <span class="text-info" style="color:var(--clr-info)">Received</span>
+                </div>
+                <div style="font-size: 11px; color: var(--clr-text-tertiary); margin-top:2px">Signature verified • ₦5,000 Wallet funding • 1m ago</div>
+              </div>
+
+              <div style="font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div style="display: flex; justify-content: space-between; font-weight:600">
+                  <span>Primary API Provider Delay</span>
+                  <span class="text-error" style="color:var(--clr-error-dark)">Warning</span>
+                </div>
+                <div style="font-size: 11px; color: var(--clr-text-tertiary); margin-top:2px">VTpass response delay (4.5s) • Auto failover stand-by • 5m ago</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Toggle interaction logic in admin
+      document.querySelectorAll('.toggle-wrapper').forEach(wrap => {
+        wrap.addEventListener('click', () => {
+          const toggle = wrap.querySelector('.toggle');
+          toggle.classList.toggle('active');
+          
+          const isAct = toggle.classList.contains('active');
+          SUBAComponents.showToast({
+            title: 'Config Updated',
+            message: `Setting changed successfully.`,
+            type: 'success'
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

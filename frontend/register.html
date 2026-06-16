@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | SUBA — Cheap & Fast VTU Services</title>
+  <meta name="description" content="Create an account on SUBA to access affordable automated VTU services for Nigerian students.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+  <div class="auth-layout">
+    
+    <!-- Left panel (Visuals on Desktop) -->
+    <div class="auth-visual">
+      <div class="auth-visual-brand">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img auth-panel-logo"></a>
+      </div>
+      <div class="auth-visual-body">
+        <h2>VTU Re-imagined For University Campuses.</h2>
+        <p>Refer friends, earn commissions, and get your mobile data sent instantly without stressing. Welcome to the automated campus fintech.</p>
+      </div>
+      <div class="auth-visual-footer">
+        &copy; 2026 SUBA. Automated VTU System.
+      </div>
+    </div>
+
+    <!-- Right panel (Auth Form) -->
+    <div class="auth-content">
+      <div class="auth-card">
+        
+        <a href="index.html" class="auth-back">
+          <span>←</span> Back to Home
+        </a>
+
+        <div class="auth-header">
+          <img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img auth-card-logo">
+          <h3>Create Account</h3>
+          <p id="stepDescription">Step 1: Verify your phone number via OTP.</p>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator" style="margin-bottom: var(--space-6)">
+          <div class="step active" id="indicator1">
+            <span class="step-dot">1</span>
+            <span class="step-label">Verify</span>
+          </div>
+          <span class="step-line" id="line1"></span>
+          <div class="step" id="indicator2">
+            <span class="step-dot">2</span>
+            <span class="step-label">Profile</span>
+          </div>
+          <span class="step-line" id="line2"></span>
+          <div class="step" id="indicator3">
+            <span class="step-dot">3</span>
+            <span class="step-label">Finish</span>
+          </div>
+        </div>
+
+        <!-- Registration Step Forms -->
+        <div id="registerForm">
+          
+          <!-- STEP 1: Phone and OTP Verification -->
+          <div class="auth-step active" id="step1">
+            <div class="form-group">
+              <label for="regPhone" class="form-label">Phone Number<span class="required">*</span></label>
+              <div class="phone-input-wrapper">
+                <span class="phone-prefix">+234</span>
+                <input type="tel" id="regPhone" class="form-input" placeholder="8031234567" maxlength="10">
+              </div>
+              <div class="form-error hidden" id="regPhoneError"></div>
+              <div class="form-hint">A 6-digit verification code will be sent.</div>
+            </div>
+
+            <!-- OTP Input Section (Hidden initially) -->
+            <div id="otpSection" class="hidden" style="margin-top: var(--space-5)">
+              <label class="form-label text-center block mb-3">Enter 6-Digit OTP</label>
+              <div class="otp-inputs">
+                <input type="text" class="otp-input" maxlength="1" pattern="\d" aria-label="Digit 1">
+                <input type="text" class="otp-input" maxlength="1" pattern="\d" aria-label="Digit 2">
+                <input type="text" class="otp-input" maxlength="1" pattern="\d" aria-label="Digit 3">
+                <input type="text" class="otp-input" maxlength="1" pattern="\d" aria-label="Digit 4">
+                <input type="text" class="otp-input" maxlength="1" pattern="\d" aria-label="Digit 5">
+                <input type="text" class="otp-input" maxlength="1" pattern="\d" aria-label="Digit 6">
+              </div>
+              <div class="form-error hidden text-center justify-center mt-2" id="otpError"></div>
+              <div class="resend-otp">
+                Didn't get the code? <button type="button" class="resend-otp-btn" id="resendOtpBtn" disabled>Resend in <span id="timer">30</span>s</button>
+              </div>
+            </div>
+
+            <!-- CTA Buttons for Step 1 -->
+            <button type="button" class="btn btn-primary btn-block btn-lg mt-6" id="step1NextBtn">
+              <span class="btn-text">Send Verification Code</span>
+            </button>
+          </div>
+
+          <!-- STEP 2: Profile Details -->
+          <div class="auth-step" id="step2">
+            <div class="grid-2 mb-4">
+              <div class="form-group" style="margin-bottom: 0">
+                <label for="firstName" class="form-label">First Name<span class="required">*</span></label>
+                <input type="text" id="firstName" class="form-input" placeholder="John">
+                <div class="form-error hidden" id="firstNameError"></div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0">
+                <label for="lastName" class="form-label">Last Name<span class="required">*</span></label>
+                <input type="text" id="lastName" class="form-input" placeholder="Doe">
+                <div class="form-error hidden" id="lastNameError"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email" class="form-label">Email Address<span class="required">*</span></label>
+              <input type="email" id="email" class="form-input" placeholder="john.doe@unilag.edu.ng">
+              <div class="form-error hidden" id="emailError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="regPassword" class="form-label">Password<span class="required">*</span></label>
+              <div class="password-input-wrapper">
+                <input type="password" id="regPassword" class="form-input" placeholder="••••••••">
+                <button type="button" class="password-toggle" id="regPasswordToggle" aria-label="Toggle Password">👁️</button>
+              </div>
+              <div class="form-error hidden" id="regPasswordError"></div>
+              <div class="form-hint" id="passwordStrength">At least 8 chars, 1 uppercase & 1 number.</div>
+            </div>
+
+            <!-- Terms and conditions checkbox -->
+            <div class="checkbox-wrapper mb-6" id="termsWrapper">
+              <div class="checkbox" id="termsCheckbox"></div>
+              <span class="checkbox-label">I agree to SUBA's <a href="#" class="text-orange">Terms of Service</a> & <a href="#" class="text-orange">Privacy Policy</a></span>
+            </div>
+            <div class="form-error hidden mb-4" id="termsError"></div>
+
+            <button type="button" class="btn btn-primary btn-block btn-lg" id="step2NextBtn">
+              <span class="btn-text">Continue</span>
+            </button>
+          </div>
+
+          <!-- STEP 3: Referral & Finish -->
+          <div class="auth-step" id="step3">
+            <div class="form-group">
+              <label for="referralCode" class="form-label">Referral Code (Optional)</label>
+              <input type="text" id="referralCode" class="form-input" placeholder="e.g. TOB1405" style="text-transform: uppercase">
+              <div class="form-error hidden" id="referralError"></div>
+              <div class="form-hint">Enter the referral code of the ambassador who referred you to earn a discount.</div>
+            </div>
+
+            <div style="background: var(--clr-primary-light); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-6); border: 1px solid var(--clr-primary-subtle)">
+              <h5 style="color: var(--clr-primary); font-size: var(--text-sm); margin-bottom: var(--space-1)">🎉 Ready to get started?</h5>
+              <p style="font-size: var(--text-xs); line-height: 1.4">By registering, you get a direct wallet account, live order tracking, and cheaper rates than standard resellers.</p>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block btn-lg" id="step3FinishBtn">
+              <span class="btn-text">Create Account</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Toggle to Login -->
+        <p class="text-sm text-center mt-6 text-secondary" id="loginToggleArea">
+          Already have an account? <a href="login.html" class="text-orange fw-medium" style="text-decoration: none">Log In</a>
+        </p>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Toggle password
+      const passwordToggle = document.getElementById('regPasswordToggle');
+      const passwordInput = document.getElementById('regPassword');
+      passwordToggle.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        passwordToggle.textContent = type === 'password' ? '👁️' : '🙈';
+      });
+
+      // Terms interaction
+      const termsCheckbox = document.getElementById('termsCheckbox');
+      const termsWrapper = document.getElementById('termsWrapper');
+      termsWrapper.addEventListener('click', () => {
+        termsCheckbox.classList.toggle('checked');
+      });
+
+      // State managers
+      let verifiedPhone = '';
+      let activeStep = 1;
+      let timerVal = 30;
+      let timerInterval;
+
+      const phoneInput = document.getElementById('regPhone');
+      const regPhoneError = document.getElementById('regPhoneError');
+      const step1NextBtn = document.getElementById('step1NextBtn');
+      const otpSection = document.getElementById('otpSection');
+      const otpError = document.getElementById('otpError');
+      const resendBtn = document.getElementById('resendOtpBtn');
+      const timerSpan = document.getElementById('timer');
+
+      const otpInputs = document.querySelectorAll('.otp-input');
+
+      // Initialize components module OTP interaction
+      if (window.SUBAComponents && window.SUBAComponents.initOTPInputs) {
+        window.SUBAComponents.initOTPInputs();
+      }
+
+      function startTimer() {
+        timerVal = 30;
+        resendBtn.disabled = true;
+        timerSpan.textContent = timerVal;
+        
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          timerVal--;
+          timerSpan.textContent = timerVal;
+          if (timerVal <= 0) {
+            clearInterval(timerInterval);
+            resendBtn.disabled = false;
+            resendBtn.innerHTML = 'Resend OTP';
+          }
+        }, 1000);
+      }
+
+      // Step 1 Click Action
+      step1NextBtn.addEventListener('click', () => {
+        // Reset errors
+        regPhoneError.classList.add('hidden');
+        otpError.classList.add('hidden');
+        phoneInput.classList.remove('is-error');
+
+        // Check phone validity
+        const rawPhone = phoneInput.value;
+        const formatted = SUBAUtils.formatPhone(rawPhone);
+        
+        if (!rawPhone) {
+          phoneInput.classList.add('is-error');
+          regPhoneError.textContent = 'Phone number is required';
+          regPhoneError.classList.remove('hidden');
+          return;
+        }
+
+        if (!SUBAUtils.isValidPhone('0' + formatted)) {
+          phoneInput.classList.add('is-error');
+          regPhoneError.textContent = 'Please enter a valid Nigerian phone number';
+          regPhoneError.classList.remove('hidden');
+          return;
+        }
+
+        // If OTP Section is already showing, it means user wants to verify OTP
+        if (!otpSection.classList.contains('hidden')) {
+          let code = '';
+          otpInputs.forEach(input => code += input.value);
+          
+          if (code.length < 6) {
+            otpError.textContent = 'Please enter the complete 6-digit OTP';
+            otpError.classList.remove('hidden');
+            return;
+          }
+
+          step1NextBtn.classList.add('is-loading');
+          
+          // Verify code simulation
+          setTimeout(() => {
+            step1NextBtn.classList.remove('is-loading');
+            if (code === '123456') { // Mock verification bypass
+              verifiedPhone = '0' + formatted;
+              SUBAComponents.showToast({
+                title: 'Phone Verified',
+                message: 'Setting up your credentials...',
+                type: 'success'
+              });
+              transitionStep(2);
+            } else {
+              otpError.textContent = 'Incorrect verification code. Use 123456 to bypass.';
+              otpError.classList.remove('hidden');
+            }
+          }, 1500);
+
+        } else {
+          // Send OTP Simulation
+          step1NextBtn.classList.add('is-loading');
+          setTimeout(() => {
+            step1NextBtn.classList.remove('is-loading');
+            otpSection.classList.remove('hidden');
+            step1NextBtn.querySelector('.btn-text').textContent = 'Verify Code';
+            phoneInput.disabled = true;
+            SUBAComponents.showToast({
+              title: 'OTP Sent',
+              message: 'Check your phone messages for verification code 123456.',
+              type: 'info'
+            });
+            startTimer();
+          }, 1500);
+        }
+      });
+
+      // Resend OTP Action
+      resendBtn.addEventListener('click', () => {
+        SUBAComponents.showToast({
+          title: 'OTP Resent',
+          message: 'Check your phone messages for verification code 123456.',
+          type: 'info'
+        });
+        startTimer();
+      });
+
+      // Step 2 Click Action
+      const firstNameInput = document.getElementById('firstName');
+      const lastNameInput = document.getElementById('lastName');
+      const emailInput = document.getElementById('email');
+      const step2NextBtn = document.getElementById('step2NextBtn');
+
+      const firstNameError = document.getElementById('firstNameError');
+      const lastNameError = document.getElementById('lastNameError');
+      const emailError = document.getElementById('emailError');
+      const passwordError = document.getElementById('regPasswordError');
+      const termsError = document.getElementById('termsError');
+
+      step2NextBtn.addEventListener('click', () => {
+        // Reset errors
+        firstNameError.classList.add('hidden');
+        lastNameError.classList.add('hidden');
+        emailError.classList.add('hidden');
+        passwordError.classList.add('hidden');
+        termsError.classList.add('hidden');
+
+        firstNameInput.classList.remove('is-error');
+        lastNameInput.classList.remove('is-error');
+        emailInput.classList.remove('is-error');
+        passwordInput.classList.remove('is-error');
+
+        let isValid = true;
+
+        if (!firstNameInput.value.trim()) {
+          firstNameInput.classList.add('is-error');
+          firstNameError.textContent = 'First name is required';
+          firstNameError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (!lastNameInput.value.trim()) {
+          lastNameInput.classList.add('is-error');
+          lastNameError.textContent = 'Last name is required';
+          lastNameError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (!emailInput.value.trim()) {
+          emailInput.classList.add('is-error');
+          emailError.textContent = 'Email is required';
+          emailError.classList.remove('hidden');
+          isValid = false;
+        } else if (!SUBAUtils.isValidEmail(emailInput.value.trim())) {
+          emailInput.classList.add('is-error');
+          emailError.textContent = 'Please enter a valid email address';
+          emailError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        const passwordStrength = SUBAUtils.validatePassword(passwordInput.value);
+        if (!passwordInput.value) {
+          passwordInput.classList.add('is-error');
+          passwordError.textContent = 'Password is required';
+          passwordError.classList.remove('hidden');
+          isValid = false;
+        } else if (!passwordStrength.valid) {
+          passwordInput.classList.add('is-error');
+          passwordError.textContent = passwordStrength.message;
+          passwordError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (!termsCheckbox.classList.contains('checked')) {
+          termsError.textContent = 'You must accept the Terms of Service';
+          termsError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (isValid) {
+          transitionStep(3);
+        }
+      });
+
+      // Step 3 Click Action
+      const referralInput = document.getElementById('referralCode');
+      const referralError = document.getElementById('referralError');
+      const step3FinishBtn = document.getElementById('step3FinishBtn');
+
+      step3FinishBtn.addEventListener('click', () => {
+        step3FinishBtn.classList.add('is-loading');
+        
+        setTimeout(() => {
+          step3FinishBtn.classList.remove('is-loading');
+          
+          // Store registered user credentials
+          SUBAUtils.store('token', 'mock_jwt_token');
+          SUBAUtils.store('user', {
+            firstName: firstNameInput.value.trim(),
+            lastName: lastNameInput.value.trim(),
+            phone: verifiedPhone,
+            email: emailInput.value.trim(),
+            referralCode: SUBAUtils.generateReferralCode(firstNameInput.value.trim()),
+            balance: 0 // New account starts with 0 balance
+          });
+
+          SUBAComponents.showToast({
+            title: 'Account Created!',
+            message: 'Redirecting to your dashboard...',
+            type: 'success'
+          });
+
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        }, 1500);
+      });
+
+      function transitionStep(step) {
+        activeStep = step;
+        
+        // Hide all steps
+        document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+        
+        // Show active step
+        document.getElementById(`step${step}`).classList.add('active');
+
+        // Update indicator styles
+        const line1 = document.getElementById('line1');
+        const line2 = document.getElementById('line2');
+        const ind1 = document.getElementById('indicator1');
+        const ind2 = document.getElementById('indicator2');
+        const ind3 = document.getElementById('indicator3');
+        const stepDesc = document.getElementById('stepDescription');
+
+        if (step === 2) {
+          ind1.classList.add('completed');
+          ind2.classList.add('active');
+          line1.classList.add('completed');
+          stepDesc.textContent = 'Step 2: Enter your personal details.';
+        } else if (step === 3) {
+          ind1.classList.add('completed');
+          ind2.classList.add('completed');
+          ind3.classList.add('active');
+          line1.classList.add('completed');
+          line2.classList.add('completed');
+          stepDesc.textContent = 'Step 3: Setup your referral code & finish.';
+          
+          // Hide login link toggle
+          document.getElementById('loginToggleArea').classList.add('hidden');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

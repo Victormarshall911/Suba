@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management | SUBA — System Management</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item active" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>User Directory</h3>
+          <p>Search users, edit details, adjust wallet balance, or update role permissions.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Production Node</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+
+      <!-- User filters & Datatable card -->
+      <div class="card" style="padding: 0; overflow: hidden">
+        
+        <!-- Search and header actions -->
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="userSearchInput" placeholder="Search by name, phone number, or email...">
+          </div>
+        </div>
+
+        <!-- Admin User Datatable -->
+        <div class="admin-table-container" style="border:none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone Number</th>
+                <th>Email Address</th>
+                <th>Wallet Balance</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty search state -->
+        <div id="emptyUsersState" class="empty-state hidden">
+          <span class="empty-icon">👥</span>
+          <h4>No Users Match</h4>
+          <p>We couldn't find any user accounts matching your criteria.</p>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Wallet Credit Modal -->
+  <div class="modal-backdrop" id="creditUserModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Adjust User Wallet</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('creditUserModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: var(--clr-bg); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-5)">
+          <div style="font-size: 11px; color: var(--clr-text-tertiary); font-weight: 700">TARGET ACCOUNT</div>
+          <div style="font-weight: 700; font-size: 14px; margin-top:2px" id="creditTargetName">Tobi Oyelami</div>
+          <div style="font-size: 12px; color: var(--clr-text-secondary)" id="creditTargetPhone">08031234567</div>
+        </div>
+
+        <div class="form-group">
+          <label for="creditAmountInput" class="form-label">Credit Amount (₦)</label>
+          <input type="number" id="creditAmountInput" class="form-input" placeholder="e.g. 500">
+          <div class="form-hint" style="margin-top: 6px">To debit, enter a negative number (e.g. -500).</div>
+        </div>
+
+        <button class="btn btn-primary btn-block btn-lg" id="creditConfirmBtn">Apply Adjustment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mock Users Database
+      const usersDb = [
+        { id: 'u1', name: 'Tobi Oyelami', phone: '08031234567', email: 'tobi@unilag.edu.ng', balance: 4250, role: 'AMBASSADOR', isActive: true },
+        { id: 'u2', name: 'Chidinma Egwu', phone: '08027654321', email: 'chidinma@unn.edu.ng', balance: 1200, role: 'USER', isActive: true },
+        { id: 'u3', name: 'Ibrahim Hassan', phone: '07051112223', email: 'ibrahim@abu.edu.ng', balance: 0, role: 'USER', isActive: true },
+        { id: 'u4', name: 'Aliyu Abubakar', phone: '08109876543', email: 'aliyu@futa.edu.ng', balance: 12500, role: 'AMBASSADOR', isActive: true },
+        { id: 'u5', name: 'Abbey Gold', phone: '09012223334', email: 'abbey@lasu.edu.ng', balance: 250, role: 'USER', isActive: false }
+      ];
+
+      let activeTargetUser = null;
+      let searchQuery = '';
+
+      function renderUsers() {
+        const body = document.getElementById('userTableBody');
+        const emptyState = document.getElementById('emptyUsersState');
+
+        const filtered = usersDb.filter(u => {
+          return searchQuery === '' ||
+            u.name.toLowerCase().includes(searchQuery) ||
+            u.phone.includes(searchQuery) ||
+            u.email.toLowerCase().includes(searchQuery);
+        });
+
+        if (filtered.length === 0) {
+          body.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        body.innerHTML = filtered.map(u => {
+          const roleClass = u.role === 'ADMIN' ? 'badge-dark' : (u.role === 'AMBASSADOR' ? 'badge-orange' : 'badge-pending');
+          const statusClass = u.isActive ? 'badge-success' : 'badge-failed';
+          const statusText = u.isActive ? 'Active' : 'Banned';
+
+          return `
+            <tr>
+              <td><span style="font-weight:700">${u.name}</span></td>
+              <td>${u.phone}</td>
+              <td>${u.email}</td>
+              <td><span style="font-weight:700">₦${SUBAUtils.formatNumber(u.balance)}</span></td>
+              <td><span class="badge ${roleClass}">${u.role}</span></td>
+              <td><span class="badge ${statusClass}">${statusText}</span></td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="triggerCredit('${u.id}')">👛 Balance</button>
+                  <button class="btn ${u.isActive ? 'btn-danger' : 'btn-success'} btn-sm" style="${u.isActive ? 'background:#EF4444; border-color:#EF4444' : ''}" onclick="toggleBan('${u.id}')">
+                    ${u.isActive ? 'Ban Account' : 'Activate'}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Initial Render
+      renderUsers();
+
+      // Search typing logic
+      document.getElementById('userSearchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderUsers();
+      });
+
+      // Expose balance adjustment modal
+      window.triggerCredit = function(id) {
+        activeTargetUser = usersDb.find(u => u.id === id);
+        if (!activeTargetUser) return;
+
+        document.getElementById('creditTargetName').textContent = activeTargetUser.name;
+        document.getElementById('creditTargetPhone').textContent = activeTargetUser.phone;
+        document.getElementById('creditAmountInput').value = '';
+        
+        SUBAComponents.openModal('creditUserModal');
+      };
+
+      // Confirm credit adjustment
+      document.getElementById('creditConfirmBtn').addEventListener('click', () => {
+        const val = parseFloat(document.getElementById('creditAmountInput').value);
+        if (!val || isNaN(val)) {
+          SUBAComponents.showToast({
+            title: 'Low Amount',
+            message: 'Please enter a valid numeric currency adjustment.',
+            type: 'error'
+          });
+          return;
+        }
+
+        activeTargetUser.balance += val;
+        
+        // If updating logged in user, apply simulation live to session
+        const sessUser = SUBAUtils.retrieve('user');
+        if (sessUser && sessUser.phone === activeTargetUser.phone) {
+          sessUser.balance = activeTargetUser.balance * 100; // kobo
+          SUBAUtils.store('user', sessUser);
+        }
+
+        SUBAComponents.closeModal('creditUserModal');
+        SUBAComponents.showToast({
+          title: 'Wallet Updated',
+          message: `${activeTargetUser.name} balance adjusted by ₦${val}.`,
+          type: 'success'
+        });
+        renderUsers();
+      });
+
+      // Ban/Unban user toggler
+      window.toggleBan = function(id) {
+        const userNode = usersDb.find(u => u.id === id);
+        if (!userNode) return;
+
+        userNode.isActive = !userNode.isActive;
+        SUBAComponents.showToast({
+          title: userNode.isActive ? 'User Activated' : 'User Banned',
+          message: `${userNode.name} status updated successfully.`,
+          type: userNode.isActive ? 'success' : 'warning'
+        });
+        renderUsers();
+      };
+    });
+  </script>
+</body>
+</html>

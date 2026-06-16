@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambassador Management | SUBA — System Management</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item active" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Ambassador Management</h3>
+          <p>Supervise referral performance, total earnings, and approve outstanding commission cashout transfers.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Production Node</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+
+      <!-- Ambassador Datatable card -->
+      <div class="card" style="padding: 0; overflow: hidden">
+        
+        <div style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--clr-border-light)">
+          <h4 style="font-size: var(--text-base)">Campus Ambassadors</h4>
+        </div>
+
+        <!-- Admin Ambassadors Datatable -->
+        <div class="admin-table-container" style="border:none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Ambassador</th>
+                <th>Referral Code</th>
+                <th>Total Signups</th>
+                <th>Total Earned</th>
+                <th>Pending Cashout</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ambassadorsTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mock Ambassadors database
+      const ambassadorsDb = [
+        { id: 'a1', name: 'Femi O. (UI)', code: 'FEM9012', signups: 142, earned: 25400, pending: 1200 },
+        { id: 'a2', name: 'Aliyu A. (ABU)', code: 'ALI4451', signups: 98, earned: 18200, pending: 0 },
+        { id: 'a3', name: 'Chidinma E. (UNN)', code: 'CHI0982', signups: 74, earned: 12650, pending: 850 },
+        { id: 'a4', name: 'Tobi Oyelami (UNILAG)', code: 'TOB1405', signups: 32, earned: 4520, pending: 0 }
+      ];
+
+      function renderAmbassadors() {
+        const body = document.getElementById('ambassadorsTableBody');
+        
+        body.innerHTML = ambassadorsDb.map(a => {
+          return `
+            <tr id="row-${a.id}">
+              <td><span style="font-weight:700">${a.name}</span></td>
+              <td><span style="font-family:var(--font-mono); font-weight:700">${a.code}</span></td>
+              <td>${a.signups} students</td>
+              <td><span style="font-weight:700">₦${SUBAUtils.formatNumber(a.earned)}</span></td>
+              <td><span style="font-weight:700; color:${a.pending > 0 ? 'var(--clr-primary)' : 'var(--clr-text-tertiary)'}">₦${SUBAUtils.formatNumber(a.pending)}</span></td>
+              <td>
+                <div class="table-actions">
+                  ${a.pending > 0 ? `
+                    <button class="btn btn-success btn-sm" onclick="approvePayout('${a.id}')">✓ Approve Cashout</button>
+                  ` : `<span style="color:var(--clr-text-tertiary); font-size:12px">All cleared</span>`}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      renderAmbassadors();
+
+      // Approve Payout
+      window.approvePayout = function(id) {
+        const amb = ambassadorsDb.find(a => a.id === id);
+        if (!amb) return;
+
+        SUBAComponents.showToast({
+          title: 'Processing Payout',
+          message: `Transferring ₦${amb.pending} commission to bank card...`,
+          type: 'info'
+        });
+
+        setTimeout(() => {
+          SUBAComponents.showToast({
+            title: 'Payout Dispatched',
+            message: `₦${amb.pending} commission cleared for ${amb.name}.`,
+            type: 'success'
+          });
+          
+          amb.earned += amb.pending;
+          amb.pending = 0;
+          renderAmbassadors();
+        }, 1500);
+      };
+
+    });
+  </script>
+</body>
+</html>

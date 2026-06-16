@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUBA — Fast, Reliable & Automated VTU for Nigerian Students</title>
+  <meta name="description" content="Buy mobile data, airtime, and electricity tokens instantly. SUBA is the trusted, secure VTU platform built specifically for Nigerian students.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/homepage.css">
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="header-logo">
+        <img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img">
+      </a>
+      
+      <nav class="header-nav">
+        <a href="#home" class="active">Home</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      
+      <div class="header-actions">
+        <a href="login.html" class="btn btn-ghost btn-sm desktop-only">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+        <button class="mobile-menu-btn" aria-label="Toggle Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu">
+    <a href="#home">Home</a>
+    <a href="#pricing">Pricing Plans</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#faq">FAQ</a>
+    <div class="mobile-menu-cta">
+      <a href="login.html" class="btn btn-secondary">Login</a>
+      <a href="register.html" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+
+  <main class="page-content" id="home">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            100% Automated VTU Delivery
+          </div>
+          <h1>Buy Data in <span class="highlight">Seconds.</span></h1>
+          <p class="hero-subtitle">Fast, reliable, and secure data, airtime, and utility purchases tailored for Nigerian students.</p>
+          <div class="hero-actions">
+            <a href="register.html" class="btn btn-primary btn-lg">Buy Data Now</a>
+            <a href="#pricing" class="btn btn-secondary btn-lg">View Pricing</a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="stat-number" data-counter="50000" data-counter-suffix="+">0</div>
+              <div class="stat-label">Transactions</div>
+            </div>
+            <div class="hero-stat">
+              <div class="stat-number" data-counter="5" data-counter-suffix="s">0</div>
+              <div class="stat-label">Avg. Delivery</div>
+            </div>
+            <div class="hero-stat">
+              <div class="stat-number" data-counter="99" data-counter-suffix=".9%">0</div>
+              <div class="stat-label">Uptime Rate</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="hero-visual">
+          <!-- Floating cards around phone mockup -->
+          <div class="floating-card card-1">
+            <div class="float-icon" style="background: var(--clr-success-light); color: var(--clr-success-dark)">📶</div>
+            <div>
+              <div style="font-weight: 700">MTN 1GB</div>
+              <div class="text-tertiary" style="font-size: 10px">Delivered instantly</div>
+            </div>
+          </div>
+          <div class="floating-card card-2">
+            <div class="float-icon" style="background: var(--clr-accent-light); color: var(--clr-accent-hover)">⚡</div>
+            <div>
+              <div style="font-weight: 700">₦2,000 Token</div>
+              <div class="text-tertiary" style="font-size: 10px">Token generated</div>
+            </div>
+          </div>
+
+          <!-- Phone Mockup with SUBA App Preview -->
+          <div class="hero-phone-mockup">
+            <div class="hero-phone-screen">
+              <div class="hero-phone-notch"></div>
+              <div class="hero-phone-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
+                  <span style="font-size: 10px; font-weight: 700">SUBA</span>
+                  <span style="font-size: 10px">🔋 98%</span>
+                </div>
+                
+                <!-- Mini Dashboard Wallet -->
+                <div class="mini-wallet">
+                  <div class="mini-label">WALLET BALANCE</div>
+                  <div class="mini-balance">₦4,250.00</div>
+                </div>
+
+                <!-- Mini Quick Actions -->
+                <div class="mini-actions">
+                  <div class="mini-action">
+                    <span class="mini-action-icon">📶</span>
+                    <span>Data</span>
+                  </div>
+                  <div class="mini-action">
+                    <span class="mini-action-icon">📱</span>
+                    <span>Airtime</span>
+                  </div>
+                  <div class="mini-action">
+                    <span class="mini-action-icon">⚡</span>
+                    <span>Power</span>
+                  </div>
+                  <div class="mini-action" style="opacity: 0.5">
+                    <span class="mini-action-icon">📺</span>
+                    <span>TV</span>
+                  </div>
+                </div>
+
+                <!-- Mini Recent Transactions -->
+                <div style="margin-top: 16px">
+                  <div style="font-size: 10px; font-weight: 700; margin-bottom: 8px">RECENT TRANSACTIONS</div>
+                  
+                  <div class="mini-txn">
+                    <div class="mini-txn-dot" style="background: #FFF0E5">📶</div>
+                    <div class="mini-txn-info">
+                      <div class="mini-txn-name">Airtel 2GB (0802...)</div>
+                      <div class="mini-txn-date">2 mins ago</div>
+                    </div>
+                    <div class="mini-txn-amount text-success">-₦500</div>
+                  </div>
+                  
+                  <div class="mini-txn">
+                    <div class="mini-txn-dot" style="background: #E5F9ED">📱</div>
+                    <div class="mini-txn-info">
+                      <div class="mini-txn-name">MTN Airtime (0803...)</div>
+                      <div class="mini-txn-date">1 hour ago</div>
+                    </div>
+                    <div class="mini-txn-amount text-success">-₦200</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust indicators grid -->
+    <section class="section section-sm trust-section">
+      <div class="container trust-grid">
+        <div class="trust-item">
+          <div class="trust-icon">⚡</div>
+          <h4>Instant Delivery</h4>
+          <p>Automated VTU processing delivers your purchases in seconds.</p>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">🔒</div>
+          <h4>Secure Payments</h4>
+          <p>Protected by Paystack, Africa's leading payment gateway.</p>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">📊</div>
+          <h4>Order Tracking</h4>
+          <p>Track delivery status live from initiation to fulfillment.</p>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">💬</div>
+          <h4>WhatsApp Support</h4>
+          <p>Fast dispute resolution and support via official WhatsApp.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Preview Section -->
+    <section class="section pricing-section" id="pricing">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Pricing Plans</span>
+          <h2>Affordable Student Rates</h2>
+          <p>Select your preferred network provider to see our standard student rates.</p>
+        </div>
+
+        <div class="pricing-tabs" id="networkTabs">
+          <div class="pricing-tab active" data-tab="mtn">
+            <span class="tab-logo" style="background: #FFCC00; display: inline-block; width: 16px; height: 16px; border-radius: 50%"></span>
+            MTN
+          </div>
+          <div class="pricing-tab" data-tab="airtel">
+            <span class="tab-logo" style="background: #E50000; display: inline-block; width: 16px; height: 16px; border-radius: 50%"></span>
+            Airtel
+          </div>
+          <div class="pricing-tab" data-tab="glo">
+            <span class="tab-logo" style="background: #008A00; display: inline-block; width: 16px; height: 16px; border-radius: 50%"></span>
+            Glo
+          </div>
+          <div class="pricing-tab" data-tab="9mobile">
+            <span class="tab-logo" style="background: #005F4B; display: inline-block; width: 16px; height: 16px; border-radius: 50%"></span>
+            9mobile
+          </div>
+        </div>
+
+        <!-- MTN pricing grid (default) -->
+        <div class="pricing-cards" id="plansContainer">
+          <!-- Loaded dynamically or static initial placeholder -->
+          <div class="pricing-card popular">
+            <div class="popular-tag">Best Seller</div>
+            <div class="plan-volume">1<span class="plan-unit">GB</span></div>
+            <span class="plan-duration">30 Days</span>
+            <div class="plan-price"><span class="naira">₦</span>260</div>
+          </div>
+          <div class="pricing-card">
+            <div class="plan-volume">2<span class="plan-unit">GB</span></div>
+            <span class="plan-duration">30 Days</span>
+            <div class="plan-price"><span class="naira">₦</span>520</div>
+          </div>
+          <div class="pricing-card">
+            <div class="plan-volume">5<span class="plan-unit">GB</span></div>
+            <span class="plan-duration">30 Days</span>
+            <div class="plan-price"><span class="naira">₦</span>1,300</div>
+          </div>
+          <div class="pricing-card">
+            <div class="plan-volume">10<span class="plan-unit">GB</span></div>
+            <span class="plan-duration">30 Days</span>
+            <div class="plan-price"><span class="naira">₦</span>2,600</div>
+          </div>
+        </div>
+
+        <div class="pricing-cta">
+          <a href="register.html" class="btn btn-primary btn-lg">Buy Data Packages</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section how-section" id="how-works">
+      <div class="container" id="how-to-use">
+        <div class="section-header" id="how-it-works">
+          <span class="section-label">Workflow</span>
+          <h2>How SUBA Works</h2>
+          <p>Get your digital services delivered in three simple, quick steps.</p>
+        </div>
+
+        <div class="steps-container">
+          <div class="how-step">
+            <div class="step-number">1</div>
+            <h4>Configure Details</h4>
+            <p>Select your network, select your data/airtime plan, and enter the destination phone number.</p>
+          </div>
+          <div class="how-step">
+            <div class="step-number">2</div>
+            <h4>Secure Payment</h4>
+            <p>Pay instantly using card, bank transfer, or USSD via our secured Paystack integration.</p>
+          </div>
+          <div class="how-step">
+            <div class="step-number">3</div>
+            <h4>Instant Delivery</h4>
+            <p>Our backend fulfills the order instantly. You get the airtime or data loading confirmation.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="section testimonials-section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Reviews</span>
+          <h2>Trusted By Students</h2>
+          <p>Read what fellow campus students say about their VTU experience on SUBA.</p>
+        </div>
+
+        <div class="testimonials-track">
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <div class="testimonial-text">"SUBA is a lifesaver. Standard VTU sites are so cluttered, but SUBA takes less than a minute. The MTN 1GB got loaded in like 3 seconds!"</div>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">TO</div>
+              <div>
+                <div class="testimonial-name">Tobi Oyelami</div>
+                <div class="testimonial-school">UNILAG • Student</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <div class="testimonial-text">"I buy Airtel data daily for classes. The transaction tracking on the dashboard is very transparent and I've never been scammed."</div>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">CE</div>
+              <div>
+                <div class="testimonial-name">Chidinma Egwu</div>
+                <div class="testimonial-school">UNN • Student</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <div class="testimonial-text">"As a campus ambassador for SUBA, I make neat commissions when my friends buy data. The payout is automated too!"</div>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">AA</div>
+              <div>
+                <div class="testimonial-name">Abubakar Aliyu</div>
+                <div class="testimonial-school">ABU Zaria • Student</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-dots">
+          <span class="testimonial-dot active"></span>
+          <span class="testimonial-dot"></span>
+          <span class="testimonial-dot"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section faq-section" id="faq">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Questions</span>
+          <h2>Frequently Asked Questions</h2>
+          <p>Find answers to standard questions about VTU delivery, payment, and wallet structures.</p>
+        </div>
+
+        <div class="faq-grid accordion-group">
+          <div class="accordion-item">
+            <button class="accordion-trigger">How fast is data delivery?</button>
+            <div class="accordion-content">
+              <p>Fulfillment is 100% automated. Once payment is confirmed by Paystack, the request triggers our VTU gateways and loads the data or airtime onto your phone in less than 5 seconds.</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-trigger">What happens if a transaction fails?</button>
+            <div class="accordion-content">
+              <p>If the delivery fails due to network issues, our system retries with a fallback provider. If it remains unsuccessful, your wallet is automatically refunded or our WhatsApp dispute handler initiates a direct refund within 24 hours.</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-trigger">Is my payment details secure?</button>
+            <div class="accordion-content">
+              <p>Yes. All card inputs and banking transfers are handled directly by Paystack, a licensed PCI-DSS compliant processor. SUBA does not store or process your card credentials.</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-trigger">How do I become a SUBA Ambassador?</button>
+            <div class="accordion-content">
+              <p>Simply register a standard account and navigate to the Ambassador tab. Share your referral link to earn commissions on every successful VTU purchase made by your network.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="section cta-section">
+      <div class="container">
+        <h2>Stop Buying Data At Ridiculous Prices</h2>
+        <p>Join thousands of students saving money and getting instant delivery on SUBA.</p>
+        <div class="cta-actions">
+          <a href="register.html" class="btn btn-white btn-lg">Create Free Account</a>
+          <a href="https://wa.me/2340000000000" class="btn btn-dark btn-lg" style="background: #25D366; border-color: #25D366">Chat on WhatsApp</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer Section -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img footer-logo-img">
+        <p class="tagline">Just SUBA it.</p>
+        <p style="margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.5)">Automated VTU system built specifically for Nigerian university students.</p>
+      </div>
+      
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#pricing">Pricing Plans</a></li>
+          <li><a href="#how-to-use">How It Works</a></li>
+          <li><a href="#faq">FAQs</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Services</h5>
+        <ul>
+          <li><a href="register.html">Buy Cheap Data</a></li>
+          <li><a href="register.html">Buy Airtime</a></li>
+          <li><a href="register.html">Electricity Tokens</a></li>
+          <li><a href="register.html">Cable TV (Phase 2)</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Connect</h5>
+        <ul>
+          <li><a href="https://wa.me/2340000000000">WhatsApp Support</a></li>
+          <li><a href="#">Announcements</a></li>
+          <li><a href="register.html">Become Ambassador</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>&copy; 2026 SUBA. All rights reserved. Built with pride for Nigeria.</p>
+      <div>
+        <a href="#" style="margin-right: 16px">Terms of Use</a>
+        <a href="#">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script>
+    // Local script for simple dynamic pricing switching on homepage
+    document.addEventListener('DOMContentLoaded', () => {
+      const plans = {
+        mtn: [
+          { vol: '1GB', dur: '30 Days', price: '260', popular: true },
+          { vol: '2GB', dur: '30 Days', price: '520' },
+          { vol: '5GB', dur: '30 Days', price: '1,300' },
+          { vol: '10GB', dur: '30 Days', price: '2,600' }
+        ],
+        airtel: [
+          { vol: '1.5GB', dur: '30 Days', price: '450', popular: true },
+          { vol: '2GB', dur: '30 Days', price: '600' },
+          { vol: '3GB', dur: '30 Days', price: '900' },
+          { vol: '5GB', dur: '30 Days', price: '1,500' }
+        ],
+        glo: [
+          { vol: '1.35GB', dur: '14 Days', price: '400' },
+          { vol: '2.9GB', dur: '30 Days', price: '800', popular: true },
+          { vol: '5.8GB', dur: '30 Days', price: '1,600' },
+          { vol: '7.7GB', dur: '30 Days', price: '2,000' }
+        ],
+        '9mobile': [
+          { vol: '1.5GB', dur: '30 Days', price: '850' },
+          { vol: '2GB', dur: '30 Days', price: '1,000', popular: true },
+          { vol: '3GB', dur: '30 Days', price: '1,400' },
+          { vol: '4.5GB', dur: '30 Days', price: '1,800' }
+        ]
+      };
+
+      const tabs = document.querySelectorAll('#networkTabs .pricing-tab');
+      const container = document.getElementById('plansContainer');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          const network = tab.dataset.tab;
+          const networkPlans = plans[network];
+
+          container.innerHTML = networkPlans.map(plan => `
+            <div class="pricing-card ${plan.popular ? 'popular' : ''}">
+              ${plan.popular ? '<div class="popular-tag">Best Seller</div>' : ''}
+              <div class="plan-volume">${plan.vol.replace(/(GB|MB)/, '')}<span class="plan-unit">$1</span></div>
+              <span class="plan-duration">${plan.dur}</span>
+              <div class="plan-price"><span class="naira">₦</span>${plan.price}</div>
+            </div>
+          `).join('');
+        });
+      });
+
+      // Initialize counters manually
+      if (typeof SUBAComponents !== 'undefined' && SUBAComponents.initCounters) {
+        SUBAComponents.initCounters();
+      }
+      if (typeof SUBAComponents !== 'undefined' && SUBAComponents.initTestimonialCarousel) {
+        SUBAComponents.initTestimonialCarousel();
+      }
+    });
+  </script>
+</body>
+</html>

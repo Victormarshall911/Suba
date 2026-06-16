@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Monitoring | SUBA — System Management</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item active" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Transaction Monitoring</h3>
+          <p>Supervise VTU deliveries. Execute manual retry or issue instant wallet refunds for failures.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Production Node</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+
+      <!-- User filters & Datatable card -->
+      <div class="card" style="padding: 0; overflow: hidden">
+        
+        <!-- Search and header actions -->
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
+          
+          <div class="search-bar" style="margin-bottom: var(--space-3)">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="adminTxnSearchInput" placeholder="Search by recipient, reference ID, or plan name...">
+          </div>
+
+          <div class="plan-filters" style="margin-top:0; margin-bottom:0">
+            <div class="plan-filter active" data-status="all">All Orders</div>
+            <div class="plan-filter" data-status="successful">Successful</div>
+            <div class="plan-filter" data-status="pending">Pending</div>
+            <div class="plan-filter" data-status="failed">Failed</div>
+            <div class="plan-filter" data-status="refunded">Refunded</div>
+          </div>
+
+        </div>
+
+        <!-- Admin Transactions Datatable -->
+        <div class="admin-table-container" style="border:none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Ref ID</th>
+                <th>User</th>
+                <th>Description</th>
+                <th>Destination</th>
+                <th>Amount</th>
+                <th>Gateway</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminTxnTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty search state -->
+        <div id="emptyTxnsState" class="empty-state hidden">
+          <span class="empty-icon">💸</span>
+          <h4>No Orders Match</h4>
+          <p>We couldn't find any transaction logs matching your filters.</p>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mock transactions DB
+      const txnsDb = [
+        { ref: 'SUBA-17850239', user: 'Tobi Oyelami', desc: 'MTN 1GB Data', dest: '08031234567', price: 260, provider: 'vtpass', status: 'successful' },
+        { ref: 'SUBA-17849822', user: 'Chidinma Egwu', desc: 'MTN ₦200 Airtime', dest: '08027654321', price: 200, provider: 'vtpass', status: 'successful' },
+        { ref: 'SUBA-17839811', user: 'Ibrahim Hassan', desc: 'Airtel 1.5GB', dest: '07051112223', price: 450, provider: 'clubkonnect', status: 'failed' },
+        { ref: 'SUBA-17832045', user: 'Tobi Oyelami', desc: 'IKEDC Token ₦2,000', dest: 'Meter 01011234567', price: 2100, provider: 'vtpass', status: 'successful' },
+        { ref: 'SUBA-17822944', user: 'Aliyu Abubakar', desc: 'Airtel ₦1,000 Airtime', dest: '08109876543', price: 1000, provider: 'vtpass', status: 'refunded' }
+      ];
+
+      let statusFilter = 'all';
+      let searchQuery = '';
+
+      function renderTransactions() {
+        const body = document.getElementById('adminTxnTableBody');
+        const emptyState = document.getElementById('emptyTxnsState');
+
+        const filtered = txnsDb.filter(t => {
+          const matchStatus = statusFilter === 'all' || t.status === statusFilter;
+          const matchQuery = searchQuery === '' ||
+            t.ref.toLowerCase().includes(searchQuery) ||
+            t.user.toLowerCase().includes(searchQuery) ||
+            t.dest.includes(searchQuery) ||
+            t.desc.toLowerCase().includes(searchQuery);
+          return matchStatus && matchQuery;
+        });
+
+        if (filtered.length === 0) {
+          body.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        body.innerHTML = filtered.map(t => {
+          const statusText = SUBAUtils.getStatusText(t.status);
+          const badgeClass = SUBAUtils.getStatusClass(t.status);
+          
+          return `
+            <tr>
+              <td><span style="font-family: var(--font-mono); font-size:12px; font-weight:700">${t.ref}</span></td>
+              <td>${t.user}</td>
+              <td>${t.desc}</td>
+              <td>${t.dest}</td>
+              <td><span style="font-weight:700">₦${SUBAUtils.formatNumber(t.price)}</span></td>
+              <td><span style="text-transform: uppercase; font-size: 11px; font-weight:600">${t.provider}</span></td>
+              <td><span class="badge ${badgeClass}">${statusText}</span></td>
+              <td>
+                <div class="table-actions">
+                  ${t.status === 'failed' ? `
+                    <button class="btn btn-primary btn-sm" onclick="retryVTU('${t.ref}')">⚡ Retry</button>
+                    <button class="btn btn-secondary btn-sm" style="color:var(--clr-error); border-color:var(--clr-error)" onclick="refundUser('${t.ref}')">👛 Refund</button>
+                  ` : `<span style="color:var(--clr-text-tertiary); font-size:12px">None</span>`}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Initial Render
+      renderTransactions();
+
+      // Search typing
+      document.getElementById('adminTxnSearchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderTransactions();
+      });
+
+      // Filter badges
+      document.querySelectorAll('.plan-filter').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.plan-filter').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          statusFilter = tab.dataset.status;
+          renderTransactions();
+        });
+      });
+
+      // Retry VTU function
+      window.retryVTU = function(ref) {
+        const item = txnsDb.find(t => t.ref === ref);
+        if (!item) return;
+
+        SUBAComponents.showToast({
+          title: 'Retrying Fulfillment',
+          message: 'Connecting to secondary VTpass node...',
+          type: 'info'
+        });
+
+        // Simulate success retry
+        setTimeout(() => {
+          item.status = 'successful';
+          SUBAComponents.showToast({
+            title: 'Retry Successful',
+            message: `Order ${ref} has been delivered successfully.`,
+            type: 'success'
+          });
+          renderTransactions();
+        }, 1500);
+      };
+
+      // Refund user wallet function
+      window.refundUser = function(ref) {
+        const item = txnsDb.find(t => t.ref === ref);
+        if (!item) return;
+
+        item.status = 'refunded';
+        
+        // Simulating updating user balance
+        const sessUser = SUBAUtils.retrieve('user');
+        if (sessUser && item.user.includes(sessUser.firstName)) {
+          sessUser.balance += (item.price * 100);
+          SUBAUtils.store('user', sessUser);
+        }
+
+        SUBAComponents.showToast({
+          title: 'Wallet Refunded',
+          message: `₦${item.price} has been credited back to user wallet.`,
+          type: 'success'
+        });
+        renderTransactions();
+      };
+
+    });
+  </script>
+</body>
+</html>

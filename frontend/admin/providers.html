@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Provider Settings | SUBA — System Management</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item active" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>VTU Gateways</h3>
+          <p>Supervise response latency, test connections, and adjust priority sequencing.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Production Node</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+
+      <!-- Provider management dashboard -->
+      <div class="dashboard-grid" style="grid-template-columns: 1fr">
+        
+        <div class="card" style="padding: 0; overflow: hidden">
+          <div style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--clr-border-light)">
+            <h4 style="font-size: var(--text-base)">Integrated APIs</h4>
+          </div>
+
+          <div class="admin-table-container" style="border:none; border-radius:0">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Provider Gateway</th>
+                  <th>Uptime Rate</th>
+                  <th>Latency Check</th>
+                  <th>Priority Order</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="provRow-vtpass">
+                  <td><span style="font-weight:700">VTpass API</span></td>
+                  <td>99.92%</td>
+                  <td id="lat-vtpass">1.2s</td>
+                  <td>Primary (0)</td>
+                  <td><span class="badge badge-success">HEALTHY</span></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-secondary btn-sm" onclick="pingGateway('vtpass')">⚡ Test Ping</button>
+                      <button class="btn btn-secondary btn-sm" disabled>Configure</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr id="provRow-clubkonnect">
+                  <td><span style="font-weight:700">Clubkonnect API</span></td>
+                  <td>98.45%</td>
+                  <td id="lat-clubkonnect">3.4s</td>
+                  <td>Standby (1)</td>
+                  <td><span class="badge badge-warning" style="background:var(--clr-warning-light); color:#92400E">SLOW</span></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-secondary btn-sm" onclick="pingGateway('clubkonnect')">⚡ Test Ping</button>
+                      <button class="btn btn-secondary btn-sm" disabled>Configure</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script>
+    window.pingGateway = function(slug) {
+      SUBAComponents.showToast({
+        title: 'Testing Gateway Connection',
+        message: `Sending verification packets to ${slug === 'vtpass' ? 'VTpass API' : 'Clubkonnect API'} server...`,
+        type: 'info'
+      });
+
+      const latencyCell = document.getElementById(`lat-${slug}`);
+      const prevVal = latencyCell.textContent;
+      latencyCell.textContent = 'Pinging...';
+
+      setTimeout(() => {
+        const randLatency = (0.5 + Math.random() * 4).toFixed(1) + 's';
+        latencyCell.textContent = randLatency;
+
+        SUBAComponents.showToast({
+          title: 'Ping Response Succeeded',
+          message: `Latency to gateway node: ${randLatency}`,
+          type: 'success'
+        });
+      }, 1500);
+    };
+  </script>
+</body>
+</html>

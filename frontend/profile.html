@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings | SUBA — Automated Student VTU</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item" data-page="home">
+          <span class="sidebar-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="buy-data.html" class="sidebar-nav-item" data-page="buy-data">
+          <span class="sidebar-icon">📶</span>
+          <span>Buy Data</span>
+        </a>
+        <a href="buy-airtime.html" class="sidebar-nav-item" data-page="buy-airtime">
+          <span class="sidebar-icon">📱</span>
+          <span>Buy Airtime</span>
+        </a>
+        <a href="buy-electricity.html" class="sidebar-nav-item" data-page="buy-electricity">
+          <span class="sidebar-icon">⚡</span>
+          <span>Electricity</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="history">
+          <span class="sidebar-icon">📊</span>
+          <span>History</span>
+        </a>
+        <a href="ambassador.html" class="sidebar-nav-item" data-page="ambassador">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassador</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item active" data-page="profile">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" id="desktopUserAvatar">TO</div>
+        <div>
+          <div class="sidebar-user-name" id="desktopUserName">Tobi Oyelami</div>
+          <div class="sidebar-user-role">Student Account</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top greeting -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Account Settings</h3>
+          <p>Update your personal information and adjust password credentials.</p>
+        </div>
+        <div class="topbar-actions">
+          <a href="dashboard.html" class="btn btn-ghost btn-sm" style="font-size: var(--text-sm); font-weight: 600">🏠 Dashboard</a>
+          <a href="profile.html" class="avatar" id="topbarUserAvatar">TO</a>
+        </div>
+      </div>
+
+      <div class="purchase-card">
+        
+        <!-- Profile info form card -->
+        <div class="card" style="margin-bottom: var(--space-6)">
+          <h4 style="font-size: var(--text-base); margin-bottom: var(--space-4)">Profile Information</h4>
+          <form id="profileForm" novalidate>
+            <div class="grid-2 mb-4">
+              <div class="form-group" style="margin-bottom:0">
+                <label for="profFirstName" class="form-label">First Name</label>
+                <input type="text" id="profFirstName" class="form-input" required>
+                <div class="form-error hidden" id="firstNameError"></div>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label for="profLastName" class="form-label">Last Name</label>
+                <input type="text" id="profLastName" class="form-input" required>
+                <div class="form-error hidden" id="lastNameError"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="profEmail" class="form-label">Email Address</label>
+              <input type="email" id="profEmail" class="form-input" required>
+              <div class="form-error hidden" id="emailError"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number (Verified)</label>
+              <div class="phone-input-wrapper" style="opacity: 0.6; background: var(--clr-bg)">
+                <span class="phone-prefix">+234</span>
+                <input type="tel" id="profPhone" class="form-input" disabled style="background: transparent">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+          </form>
+        </div>
+
+        <!-- Password credentials card -->
+        <div class="card" style="margin-bottom: var(--space-6)">
+          <h4 style="font-size: var(--text-base); margin-bottom: var(--space-4)">Change Password</h4>
+          <form id="passwordChangeForm" novalidate>
+            <div class="form-group">
+              <label for="currentPassword" class="form-label">Current Password</label>
+              <input type="password" id="currentPassword" class="form-input" placeholder="••••••••" required>
+              <div class="form-error hidden" id="currentPassError"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="newPassword" class="form-label">New Password</label>
+              <input type="password" id="newPassword" class="form-input" placeholder="••••••••" required>
+              <div class="form-error hidden" id="newPassError"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="changePasswordBtn">Update Password</button>
+          </form>
+        </div>
+
+        <!-- Logout Action Card -->
+        <div class="card" style="border-color: var(--clr-error-light); padding: var(--space-5); display: flex; justify-content: space-between; align-items: center">
+          <div>
+            <h4 style="font-size: var(--text-sm); color: var(--clr-error-dark)">Log Out of SUBA</h4>
+            <p style="font-size: var(--text-xs); color: var(--clr-text-tertiary); margin-top:2px">Disconnect this device from your active session.</p>
+          </div>
+          <button class="btn btn-danger btn-sm" id="logoutBtn" style="background: var(--clr-error); border-color: var(--clr-error)">Log Out</button>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="bottom-nav-item" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="buy-data.html" class="bottom-nav-item" data-page="buy-data">
+        <span class="nav-icon">📶</span>
+        <span>Buy Data</span>
+      </a>
+      <a href="buy-airtime.html" class="bottom-nav-item nav-buy" data-page="buy-airtime">
+        <div class="nav-icon-wrapper">
+          <span>📱</span>
+        </div>
+        <span style="margin-top: 4px">Airtime</span>
+      </a>
+      <a href="transactions.html" class="bottom-nav-item" data-page="history">
+        <span class="nav-icon">📊</span>
+        <span>History</span>
+      </a>
+      <a href="profile.html" class="bottom-nav-item active" data-page="profile">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = SUBAUtils.retrieve('user');
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Prepopulate fields
+      const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+      document.getElementById('desktopUserAvatar').textContent = initials;
+      document.getElementById('topbarUserAvatar').textContent = initials;
+      document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
+
+      document.getElementById('profFirstName').value = user.firstName || '';
+      document.getElementById('profLastName').value = user.lastName || '';
+      document.getElementById('profEmail').value = user.email || '';
+      
+      const phoneClean = user.phone.startsWith('+234') ? user.phone.substring(4) : (user.phone.startsWith('0') ? user.phone.substring(1) : user.phone);
+      document.getElementById('profPhone').value = phoneClean;
+
+      // Handle Profile Submit
+      const profileForm = document.getElementById('profileForm');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const emailError = document.getElementById('emailError');
+      const firstNameError = document.getElementById('firstNameError');
+      const lastNameError = document.getElementById('lastNameError');
+
+      profileForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        emailError.classList.add('hidden');
+        firstNameError.classList.add('hidden');
+        lastNameError.classList.add('hidden');
+
+        const firstName = document.getElementById('profFirstName').value.trim();
+        const lastName = document.getElementById('profLastName').value.trim();
+        const email = document.getElementById('profEmail').value.trim();
+
+        let isValid = true;
+        if (!firstName) {
+          firstNameError.textContent = 'First name is required';
+          firstNameError.classList.remove('hidden');
+          isValid = false;
+        }
+        if (!lastName) {
+          lastNameError.textContent = 'Last name is required';
+          lastNameError.classList.remove('hidden');
+          isValid = false;
+        }
+        if (!email) {
+          emailError.textContent = 'Email is required';
+          emailError.classList.remove('hidden');
+          isValid = false;
+        } else if (!SUBAUtils.isValidEmail(email)) {
+          emailError.textContent = 'Please enter a valid email address';
+          emailError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (isValid) {
+          saveProfileBtn.classList.add('is-loading');
+          setTimeout(() => {
+            saveProfileBtn.classList.remove('is-loading');
+            
+            // Save updated fields
+            user.firstName = firstName;
+            user.lastName = lastName;
+            user.email = email;
+            SUBAUtils.store('user', user);
+
+            // Update UI widgets
+            const newInitials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase();
+            document.getElementById('desktopUserAvatar').textContent = newInitials;
+            document.getElementById('topbarUserAvatar').textContent = newInitials;
+            document.getElementById('desktopUserName').textContent = `${firstName} ${lastName}`;
+
+            SUBAComponents.showToast({
+              title: 'Profile Updated',
+              message: 'Your personal info has been saved successfully.',
+              type: 'success'
+            });
+          }, 1200);
+        }
+      });
+
+      // Handle password submit
+      const passForm = document.getElementById('passwordChangeForm');
+      const changePassBtn = document.getElementById('changePasswordBtn');
+      const currentPassError = document.getElementById('currentPassError');
+      const newPassError = document.getElementById('newPassError');
+
+      passForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        currentPassError.classList.add('hidden');
+        newPassError.classList.add('hidden');
+
+        const curPass = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+
+        let isValid = true;
+        if (!curPass) {
+          currentPassError.textContent = 'Please enter your current password';
+          currentPassError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        const passVerify = SUBAUtils.validatePassword(newPass);
+        if (!newPass) {
+          newPassError.textContent = 'Please enter a new password';
+          newPassError.classList.remove('hidden');
+          isValid = false;
+        } else if (!passVerify.valid) {
+          newPassError.textContent = passVerify.message;
+          newPassError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (isValid) {
+          changePassBtn.classList.add('is-loading');
+          setTimeout(() => {
+            changePassBtn.classList.remove('is-loading');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            
+            SUBAComponents.showToast({
+              title: 'Password Changed',
+              message: 'Your login credentials have been updated.',
+              type: 'success'
+            });
+          }, 1500);
+        }
+      });
+
+      // Logout trigger
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        SUBAUtils.remove('token');
+        SUBAUtils.remove('user');
+        SUBAComponents.showToast({
+          title: 'Logged Out',
+          message: 'Redirecting to login portal...',
+          type: 'info'
+        });
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 1000);
+      });
+    });
+  </script>
+</body>
+</html>

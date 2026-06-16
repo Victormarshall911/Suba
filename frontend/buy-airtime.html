@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buy Airtime | SUBA — Fast & Cheap Student VTU</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/purchase.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item" data-page="home">
+          <span class="sidebar-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="buy-data.html" class="sidebar-nav-item" data-page="buy-data">
+          <span class="sidebar-icon">📶</span>
+          <span>Buy Data</span>
+        </a>
+        <a href="buy-airtime.html" class="sidebar-nav-item active" data-page="buy-airtime">
+          <span class="sidebar-icon">📱</span>
+          <span>Buy Airtime</span>
+        </a>
+        <a href="buy-electricity.html" class="sidebar-nav-item" data-page="buy-electricity">
+          <span class="sidebar-icon">⚡</span>
+          <span>Electricity</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="history">
+          <span class="sidebar-icon">📊</span>
+          <span>History</span>
+        </a>
+        <a href="ambassador.html" class="sidebar-nav-item" data-page="ambassador">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassador</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item" data-page="profile">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" id="desktopUserAvatar">TO</div>
+        <div>
+          <div class="sidebar-user-name" id="desktopUserName">Tobi Oyelami</div>
+          <div class="sidebar-user-role">Student Account</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Buy Airtime VTU</h3>
+          <p>Instant airtime top-up with up to 2% discount.</p>
+        </div>
+        <div class="topbar-actions">
+          <a href="dashboard.html" class="btn btn-ghost btn-sm" style="font-size: var(--text-sm); font-weight: 600">🏠 Dashboard</a>
+          <a href="profile.html" class="avatar" id="topbarUserAvatar">TO</a>
+        </div>
+      </div>
+
+      <div class="purchase-card card">
+        
+        <!-- Step indicator bar -->
+        <div class="step-indicator" id="purchaseSteps">
+          <div class="step active" id="pStep1">
+            <span class="step-dot">1</span>
+            <span class="step-label">Select Details</span>
+          </div>
+          <span class="step-line" id="pLine1"></span>
+          <div class="step" id="pStep2">
+            <span class="step-dot">2</span>
+            <span class="step-label">Review Order</span>
+          </div>
+          <span class="step-line" id="pLine2"></span>
+          <div class="step" id="pStep3">
+            <span class="step-dot">3</span>
+            <span class="step-label">Fulfillment</span>
+          </div>
+        </div>
+
+        <!-- STEP 1: Details Form -->
+        <div class="purchase-step active" id="step1Content">
+          
+          <!-- Recipient phone field -->
+          <div class="form-group">
+            <label for="recipientPhone" class="form-label">Recipient Phone Number</label>
+            <div class="phone-input-wrapper">
+              <span class="phone-prefix">+234</span>
+              <input type="tel" id="recipientPhone" class="form-input" placeholder="8031234567" maxlength="10">
+            </div>
+            <div class="form-error hidden" id="phoneError"></div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px">
+              <div class="checkbox-wrapper" id="selfPurchaseWrapper">
+                <div class="checkbox checked" id="selfPurchaseCheckbox"></div>
+                <span class="checkbox-label" style="font-size: 13px">Buy for myself</span>
+              </div>
+              <span class="text-xs text-orange fw-semibold" id="chooseSavedBtn" style="cursor: pointer">Choose Saved Recipient</span>
+            </div>
+          </div>
+
+          <!-- Network Selector (Auto-detected if possible) -->
+          <div class="form-group">
+            <label class="form-label">Network Provider <span class="text-tertiary fw-regular" id="autoDetectLabel" style="font-size: 11px">(Detected automatically)</span></label>
+            <div class="network-selector" id="networkPills">
+              <div class="network-pill active" data-network="MTN">
+                <span class="network-logo" style="background: #FFCC00; display: inline-block; width: 24px; height: 24px; border-radius: 50%"></span>
+                <span class="network-name">MTN</span>
+              </div>
+              <div class="network-pill" data-network="Airtel">
+                <span class="network-logo" style="background: #E50000; display: inline-block; width: 24px; height: 24px; border-radius: 50%"></span>
+                <span class="network-name">Airtel</span>
+              </div>
+              <div class="network-pill" data-network="Glo">
+                <span class="network-logo" style="background: #008A00; display: inline-block; width: 24px; height: 24px; border-radius: 50%"></span>
+                <span class="network-name">Glo</span>
+              </div>
+              <div class="network-pill" data-network="9mobile">
+                <span class="network-logo" style="background: #005F4B; display: inline-block; width: 24px; height: 24px; border-radius: 50%"></span>
+                <span class="network-name">9mobile</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Amount Input -->
+          <div class="form-group">
+            <label for="airtimeAmount" class="form-label">Airtime Amount (₦)</label>
+            <input type="number" id="airtimeAmount" class="form-input" placeholder="Enter amount from ₦50 to ₦50,000" min="50" max="50000">
+            <div class="form-error hidden" id="amountError"></div>
+            
+            <!-- Quick Amount Selector Grid -->
+            <div class="quick-amounts" style="margin-top: 10px">
+              <button class="quick-amount-btn" data-value="100">₦100</button>
+              <button class="quick-amount-btn" data-value="200">₦200</button>
+              <button class="quick-amount-btn" data-value="500">₦500</button>
+              <button class="quick-amount-btn" data-value="1000">₦1,000</button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg mt-6" id="goToStep2Btn">
+            Review Order
+          </button>
+        </div>
+
+        <!-- STEP 2: Order Summary and Payment Method -->
+        <div class="purchase-step" id="step2Content">
+          <h4 style="font-size: var(--text-base); margin-bottom: var(--space-4)">Confirm Your Purchase Details</h4>
+          
+          <div class="summary-card">
+            <div class="summary-title">Order Summary</div>
+            <div class="summary-row">
+              <span class="summary-label">Service Type</span>
+              <span class="summary-value" id="summaryService">Airtime Top-Up</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Network Provider</span>
+              <span class="summary-value" id="summaryNetwork">MTN</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Recipient Number</span>
+              <span class="summary-value" id="summaryPhone">08031234567</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Selected Amount</span>
+              <span class="summary-value" id="summaryPrice">₦500</span>
+            </div>
+            <div class="summary-row" style="color: var(--clr-success-dark)">
+              <span class="summary-label" style="color: inherit">Student Discount (2%)</span>
+              <span class="summary-value" id="summaryDiscount">-₦10</span>
+            </div>
+            <div class="summary-total">
+              <span>Total Amount</span>
+              <span class="total-price" id="summaryTotal">₦490</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Select Payment Method</label>
+            <div class="payment-methods">
+              <div class="payment-method-item active" data-method="wallet">
+                <div class="method-icon">💰</div>
+                <div class="method-details">
+                  <div class="method-title">Pay via SUBA Wallet</div>
+                  <div class="method-desc">Instant check. Balance: <span id="paymentWalletBalance">₦4,250.00</span></div>
+                </div>
+                <div class="method-select-dot"></div>
+              </div>
+              
+              <div class="payment-method-item" data-method="paystack">
+                <div class="method-icon">💳</div>
+                <div class="method-details">
+                  <div class="method-title">Pay via Paystack</div>
+                  <div class="method-desc">Card, Bank Transfer, USSD (Zero fees)</div>
+                </div>
+                <div class="method-select-dot"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group btn-group-stack">
+            <button class="btn btn-secondary btn-block btn-lg" id="backToStep1Btn">Back</button>
+            <button class="btn btn-primary btn-block btn-lg" id="confirmPaymentBtn">Confirm & Pay</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Automated Timeline Fulfillment -->
+        <div class="purchase-step" id="step3Content">
+          <div class="success-screen">
+            
+            <div id="fulfillmentLoading">
+              <div class="success-icon-wrapper" style="background: var(--clr-primary-light); color: var(--clr-primary)">
+                ⏳
+              </div>
+              <h3 id="fulfillmentStatusTitle">Fulfilling Airtime Order</h3>
+              <p>Please wait while our systems register and top-up your airtime request.</p>
+            </div>
+
+            <div id="fulfillmentSuccess" class="hidden">
+              <div class="success-icon-wrapper">
+                ✓
+              </div>
+              <h3>Order Completed!</h3>
+              <p>Your airtime top-up was processed and loaded successfully by the network operator.</p>
+              
+              <div style="background: var(--clr-bg); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-6); text-align: left; max-width: 380px; margin-inline: auto">
+                <div style="font-size: 11px; color: var(--clr-text-tertiary); text-transform: uppercase; font-weight: 700">Order Information</div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px">
+                  <span class="text-secondary">Order Reference:</span>
+                  <span class="fw-semibold" id="successRef">SUBA-17850239</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px">
+                  <span class="text-secondary">Fulfillment Status:</span>
+                  <span class="text-success fw-bold">Delivered</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery Timeline Progress Tracking -->
+            <div class="timeline">
+              <div class="timeline-item completed" id="timeStep1">
+                <div class="timeline-dot"></div>
+                <div class="timeline-info">
+                  <span class="timeline-title">Payment Confirmed</span>
+                  <span class="timeline-time" id="timeStep1Label">Just now</span>
+                </div>
+              </div>
+              <div class="timeline-item active" id="timeStep2">
+                <div class="timeline-dot"></div>
+                <div class="timeline-info">
+                  <span class="timeline-title" id="timeStep2Title">Verifying Network Operator</span>
+                  <span class="timeline-time" id="timeStep2Label">Pending...</span>
+                </div>
+              </div>
+              <div class="timeline-item" id="timeStep3">
+                <div class="timeline-dot"></div>
+                <div class="timeline-info">
+                  <span class="timeline-title">Fulfilling Airtime VTU</span>
+                  <span class="timeline-time">Pending...</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="btn-group btn-group-stack mt-8 hidden" id="successActions" style="justify-content: center">
+              <a href="dashboard.html" class="btn btn-secondary btn-lg">Back to Dashboard</a>
+              <button class="btn btn-primary btn-lg" onclick="window.location.reload()">Buy Again</button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="bottom-nav-item" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="buy-data.html" class="bottom-nav-item" data-page="buy-data">
+        <span class="nav-icon">📶</span>
+        <span>Buy Data</span>
+      </a>
+      <a href="buy-airtime.html" class="bottom-nav-item active nav-buy" data-page="buy-airtime">
+        <div class="nav-icon-wrapper">
+          <span>📱</span>
+        </div>
+        <span style="margin-top: 4px">Airtime</span>
+      </a>
+      <a href="transactions.html" class="bottom-nav-item" data-page="history">
+        <span class="nav-icon">📊</span>
+        <span>History</span>
+      </a>
+      <a href="profile.html" class="bottom-nav-item" data-page="profile">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Saved Recipients Modal Dialog -->
+  <div class="modal-backdrop" id="recipientsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Choose Recipient</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('recipientsModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding-bottom: var(--space-6)">
+        <div style="display: flex; flex-direction: column; gap: var(--space-3)" id="modalRecipientsList">
+          <!-- Populated from storage -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let activeNetwork = 'MTN';
+      let activeMethod = 'wallet';
+      let finalPrice = 0;
+
+      const user = SUBAUtils.retrieve('user');
+      if (user) {
+        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+        document.getElementById('desktopUserAvatar').textContent = initials;
+        document.getElementById('topbarUserAvatar').textContent = initials;
+        document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('paymentWalletBalance').textContent = SUBAUtils.formatCurrency(user.balance, true);
+      }
+
+      // Check for quick click recipient
+      const dashboardQuickRecipient = SUBAUtils.retrieve('active_recipient');
+      if (dashboardQuickRecipient) {
+        activeNetwork = dashboardQuickRecipient.network;
+        document.getElementById('recipientPhone').value = dashboardQuickRecipient.phone.substring(1);
+        document.getElementById('selfPurchaseCheckbox').classList.remove('checked');
+        
+        SUBAUtils.remove('active_recipient');
+        
+        document.querySelectorAll('#networkPills .network-pill').forEach(p => {
+          if (p.dataset.network === activeNetwork) {
+            p.classList.add('active');
+          } else {
+            p.classList.remove('active');
+          }
+        });
+      } else if (user) {
+        document.getElementById('recipientPhone').value = user.phone.substring(1);
+        document.getElementById('recipientPhone').disabled = true;
+      }
+
+      // Network selection tabs click listener
+      document.querySelectorAll('#networkPills .network-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          document.querySelectorAll('#networkPills .network-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          activeNetwork = pill.dataset.network;
+          document.getElementById('autoDetectLabel').classList.add('hidden');
+        });
+      });
+
+      // Phone field input (detect network automatically)
+      const phoneField = document.getElementById('recipientPhone');
+      phoneField.addEventListener('input', () => {
+        const rawPhone = phoneField.value;
+        const formatted = SUBAUtils.formatPhone(rawPhone);
+        if (formatted.length >= 4) {
+          const detected = SUBAUtils.detectNetwork('0' + formatted);
+          if (detected) {
+            document.querySelectorAll('#networkPills .network-pill').forEach(p => {
+              if (p.dataset.network === detected) {
+                p.classList.add('active');
+                activeNetwork = detected;
+              } else {
+                p.classList.remove('active');
+              }
+            });
+            document.getElementById('autoDetectLabel').textContent = `(Auto-detected: ${detected})`;
+            document.getElementById('autoDetectLabel').classList.remove('hidden');
+          }
+        }
+      });
+
+      // Buy for myself checkbox toggle
+      const selfCheckbox = document.getElementById('selfPurchaseCheckbox');
+      const selfWrapper = document.getElementById('selfPurchaseWrapper');
+
+      selfWrapper.addEventListener('click', () => {
+        const isChecked = selfCheckbox.classList.toggle('checked');
+        if (isChecked && user) {
+          phoneField.value = user.phone.substring(1);
+          phoneField.disabled = true;
+          document.getElementById('phoneError').classList.add('hidden');
+          phoneField.classList.remove('is-error');
+          
+          // Trigger default network detect
+          const formatted = SUBAUtils.formatPhone(user.phone);
+          const detected = SUBAUtils.detectNetwork(formatted) || 'MTN';
+          document.querySelectorAll('#networkPills .network-pill').forEach(p => {
+            if (p.dataset.network === detected) {
+              p.click();
+            }
+          });
+        } else {
+          phoneField.value = '';
+          phoneField.disabled = false;
+        }
+      });
+
+      // Choose saved recipient modal trigger
+      const chooseSavedBtn = document.getElementById('chooseSavedBtn');
+      const modalRecipientsList = document.getElementById('modalRecipientsList');
+
+      chooseSavedBtn.addEventListener('click', () => {
+        const mockRecipients = [
+          { name: 'Self (MTN)', phone: user ? user.phone : '08031234567', network: 'MTN' },
+          { name: 'Mum (Airtel)', phone: '08027654321', network: 'Airtel' },
+          { name: 'Joy (Glo)', phone: '07051112223', network: 'Glo' }
+        ];
+
+        modalRecipientsList.innerHTML = mockRecipients.map(r => `
+          <div class="txn-item" style="border: 1px solid var(--clr-border-light); border-radius: var(--radius-lg)" data-phone="${r.phone}" data-network="${r.network}">
+            <div class="txn-icon" style="background: var(--clr-primary-light); color: var(--clr-primary); font-size: 16px">${r.name.substring(0,2).toUpperCase()}</div>
+            <div class="txn-details">
+              <div class="txn-title" style="font-weight:700">${r.name}</div>
+              <div class="txn-subtitle">${r.phone}</div>
+            </div>
+            <div style="font-size: 12px; font-weight:700; color: var(--clr-primary)">Select</div>
+          </div>
+        `).join('');
+
+        SUBAComponents.openModal('recipientsModal');
+
+        document.querySelectorAll('#modalRecipientsList .txn-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const phoneVal = item.dataset.phone;
+            const netVal = item.dataset.network;
+
+            phoneField.value = phoneVal.startsWith('0') ? phoneVal.substring(1) : phoneVal;
+            selfCheckbox.classList.remove('checked');
+            phoneField.disabled = false;
+
+            document.querySelectorAll('#networkPills .network-pill').forEach(pill => {
+              if (pill.dataset.network === netVal) {
+                pill.click();
+              }
+            });
+
+            SUBAComponents.closeModal('recipientsModal');
+          });
+        });
+      });
+
+      // Quick amount quick selectors
+      document.querySelectorAll('.quick-amount-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.quick-amount-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('airtimeAmount').value = btn.dataset.value;
+          document.getElementById('amountError').classList.add('hidden');
+          document.getElementById('airtimeAmount').classList.remove('is-error');
+        });
+      });
+
+      // Reset active state of quick buttons when manually typing amount
+      document.getElementById('airtimeAmount').addEventListener('input', () => {
+        document.querySelectorAll('.quick-amount-btn').forEach(b => b.classList.remove('active'));
+      });
+
+      // Step 1 check & continue
+      const goToStep2 = document.getElementById('goToStep2Btn');
+      const amountField = document.getElementById('airtimeAmount');
+      goToStep2.addEventListener('click', () => {
+        const rawPhone = phoneField.value;
+        const formatted = SUBAUtils.formatPhone(rawPhone);
+        const amountVal = parseFloat(amountField.value);
+
+        let isValid = true;
+        document.getElementById('phoneError').classList.add('hidden');
+        document.getElementById('amountError').classList.add('hidden');
+        phoneField.classList.remove('is-error');
+        amountField.classList.remove('is-error');
+
+        if (!rawPhone) {
+          phoneField.classList.add('is-error');
+          document.getElementById('phoneError').textContent = 'Recipient phone number is required';
+          document.getElementById('phoneError').classList.remove('hidden');
+          isValid = false;
+        } else if (!SUBAUtils.isValidPhone('0' + formatted)) {
+          phoneField.classList.add('is-error');
+          document.getElementById('phoneError').textContent = 'Please enter a valid Nigerian phone number';
+          document.getElementById('phoneError').classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (!amountVal || isNaN(amountVal)) {
+          amountField.classList.add('is-error');
+          document.getElementById('amountError').textContent = 'Please enter an airtime amount';
+          document.getElementById('amountError').classList.remove('hidden');
+          isValid = false;
+        } else if (amountVal < 50 || amountVal > 50000) {
+          amountField.classList.add('is-error');
+          document.getElementById('amountError').textContent = 'Airtime amount must be between ₦50 and ₦50,000';
+          document.getElementById('amountError').classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (isValid) {
+          // Fill summary
+          document.getElementById('summaryNetwork').textContent = activeNetwork;
+          document.getElementById('summaryPhone').textContent = '0' + formatted;
+          document.getElementById('summaryPrice').textContent = `₦${amountVal}`;
+          
+          // 2% standard discount
+          const discount = Math.round(amountVal * 0.02);
+          finalPrice = amountVal - discount;
+
+          document.getElementById('summaryDiscount').textContent = `-₦${discount}`;
+          document.getElementById('summaryTotal').textContent = `₦${finalPrice}`;
+
+          transitionStep(2);
+        }
+      });
+
+      // Step 2 buttons
+      document.getElementById('backToStep1Btn').addEventListener('click', () => {
+        transitionStep(1);
+      });
+
+      document.querySelectorAll('.payment-method-item').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.payment-method-item').forEach(p => p.classList.remove('active'));
+          item.classList.add('active');
+          activeMethod = item.dataset.method;
+        });
+      });
+
+      const confirmPayment = document.getElementById('confirmPaymentBtn');
+      confirmPayment.addEventListener('click', () => {
+        if (activeMethod === 'wallet' && user) {
+          const requiredKobo = finalPrice * 100;
+          if (user.balance < requiredKobo) {
+            SUBAComponents.showToast({
+              title: 'Insufficient Funds',
+              message: 'Your wallet balance is low. Please choose Paystack or fund your wallet.',
+              type: 'error'
+            });
+            return;
+          }
+        }
+
+        confirmPayment.classList.add('is-loading');
+        setTimeout(() => {
+          confirmPayment.classList.remove('is-loading');
+          
+          if (activeMethod === 'wallet' && user) {
+            user.balance -= (finalPrice * 100);
+            SUBAUtils.store('user', user);
+          }
+
+          transitionStep(3);
+          startSimulatedTimeline();
+        }, 1500);
+      });
+
+      function transitionStep(step) {
+        document.querySelectorAll('.purchase-step').forEach(c => c.classList.remove('active'));
+        document.getElementById(`step${step}Content`).classList.add('active');
+
+        const s1 = document.getElementById('pStep1');
+        const s2 = document.getElementById('pStep2');
+        const s3 = document.getElementById('pStep3');
+        const l1 = document.getElementById('pLine1');
+        const l2 = document.getElementById('pLine2');
+
+        if (step === 2) {
+          s1.className = 'step completed';
+          s2.className = 'step active';
+          l1.className = 'step-line completed';
+        } else if (step === 3) {
+          s1.className = 'step completed';
+          s2.className = 'step completed';
+          s3.className = 'step active';
+          l1.className = 'step-line completed';
+          l2.className = 'step-line completed';
+        } else {
+          s1.className = 'step active';
+          s2.className = 'step';
+          s3.className = 'step';
+          l1.className = 'step-line';
+          l2.className = 'step-line';
+        }
+      }
+
+      function startSimulatedTimeline() {
+        const tStep1 = document.getElementById('timeStep1');
+        const tStep2 = document.getElementById('timeStep2');
+        const tStep3 = document.getElementById('timeStep3');
+        const tStep1Label = document.getElementById('timeStep1Label');
+        const tStep2Label = document.getElementById('timeStep2Label');
+        const tStep2Title = document.getElementById('timeStep2Title');
+
+        const successRef = document.getElementById('successRef');
+        const generatedId = SUBAUtils.generateRequestId().substring(0,13);
+        successRef.textContent = generatedId;
+
+        tStep1.className = 'timeline-item completed';
+        tStep1Label.textContent = '1s ago';
+
+        setTimeout(() => {
+          tStep2.className = 'timeline-item completed';
+          tStep2Label.textContent = 'Success';
+          tStep2Title.textContent = `${activeNetwork} Provider Connected`;
+
+          tStep3.className = 'timeline-item active';
+          tStep3.querySelector('.timeline-title').textContent = 'Fulfilling Airtime Top-Up';
+          tStep3.querySelector('.timeline-time').textContent = 'Processing...';
+
+          setTimeout(() => {
+            tStep3.className = 'timeline-item completed';
+            tStep3.querySelector('.timeline-time').textContent = 'Success';
+
+            document.getElementById('fulfillmentLoading').classList.add('hidden');
+            document.getElementById('fulfillmentSuccess').classList.remove('hidden');
+            document.getElementById('successActions').classList.remove('hidden');
+
+            SUBAComponents.showToast({
+              title: 'Airtime Loaded!',
+              message: `₦${SUBAUtils.formatNumber(amountField.value)} Top-up loaded to ${phoneField.value}.`,
+              type: 'success'
+            });
+
+          }, 2500);
+
+        }, 1500);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | SUBA — Cheap & Fast VTU Services</title>
+  <meta name="description" content="Log in to your SUBA account to buy data bundles, airtime, and utility tokens.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+  <div class="auth-layout">
+    
+    <!-- Left panel (Visuals on Desktop) -->
+    <div class="auth-visual">
+      <div class="auth-visual-brand">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img auth-panel-logo"></a>
+      </div>
+      <div class="auth-visual-body">
+        <h2>Save Money on Data Bundles.</h2>
+        <p>SUBA is the automated platform engineered specifically for students. Experience instant delivery and zero transaction fees.</p>
+      </div>
+      <div class="auth-visual-footer">
+        &copy; 2026 SUBA. Automated VTU System.
+      </div>
+    </div>
+
+    <!-- Right panel (Auth Form) -->
+    <div class="auth-content">
+      <div class="auth-card">
+        
+        <a href="index.html" class="auth-back">
+          <span>←</span> Back to Home
+        </a>
+
+        <div class="auth-header">
+          <img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img auth-card-logo">
+          <h3>Welcome Back!</h3>
+          <p>Enter your details below to access your dashboard.</p>
+        </div>
+
+        <form id="loginForm" novalidate>
+          <!-- Phone Number Input -->
+          <div class="form-group">
+            <label for="loginPhone" class="form-label">Phone Number<span class="required">*</span></label>
+            <div class="phone-input-wrapper">
+              <span class="phone-prefix">+234</span>
+              <input type="tel" id="loginPhone" class="form-input" placeholder="8031234567" required maxlength="10">
+            </div>
+            <div class="form-error hidden" id="phoneError"></div>
+          </div>
+
+          <!-- Password Input -->
+          <div class="form-group">
+            <label for="loginPassword" class="form-label">Password<span class="required">*</span></label>
+            <div class="password-input-wrapper">
+              <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
+              <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle Password Visibility">👁️</button>
+            </div>
+            <div class="form-error hidden" id="passwordError"></div>
+          </div>
+
+          <!-- Helper links (Forgot password, Remember me) -->
+          <div class="form-helper">
+            <div class="checkbox-wrapper" id="rememberMeWrapper">
+              <div class="checkbox" id="rememberMeCheckbox"></div>
+              <span class="checkbox-label">Keep me logged in</span>
+            </div>
+            <a href="#" id="forgotPassword">Forgot Password?</a>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginSubmitBtn">
+            <span class="btn-text">Log In</span>
+          </button>
+        </form>
+
+        <!-- Toggle to Register -->
+        <p class="text-sm text-center mt-6 text-secondary">
+          New to SUBA? <a href="register.html" class="text-orange fw-medium" style="text-decoration: none">Create an account</a>
+        </p>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Toggle password visibility
+      const passwordToggle = document.getElementById('passwordToggle');
+      const passwordInput = document.getElementById('loginPassword');
+      
+      passwordToggle.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        passwordToggle.textContent = type === 'password' ? '👁️' : '🙈';
+      });
+
+      // Keep me logged in checkbox mock interaction
+      const rememberCheckbox = document.getElementById('rememberMeCheckbox');
+      const rememberWrapper = document.getElementById('rememberMeWrapper');
+      
+      rememberWrapper.addEventListener('click', () => {
+        rememberCheckbox.classList.toggle('checked');
+      });
+
+      // Handle simple client validation and mock submission
+      const loginForm = document.getElementById('loginForm');
+      const submitBtn = document.getElementById('loginSubmitBtn');
+      const phoneInput = document.getElementById('loginPhone');
+      const phoneError = document.getElementById('phoneError');
+      const passwordError = document.getElementById('passwordError');
+
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        let isValid = true;
+        
+        // Reset errors
+        phoneError.classList.add('hidden');
+        passwordError.classList.add('hidden');
+        phoneInput.classList.remove('is-error');
+        passwordInput.classList.remove('is-error');
+
+        // Validate Phone
+        const rawPhone = phoneInput.value;
+        const formatted = SUBAUtils.formatPhone(rawPhone);
+        if (!rawPhone) {
+          phoneInput.classList.add('is-error');
+          phoneError.textContent = 'Phone number is required';
+          phoneError.classList.remove('hidden');
+          isValid = false;
+        } else if (!SUBAUtils.isValidPhone('0' + formatted)) {
+          phoneInput.classList.add('is-error');
+          phoneError.textContent = 'Please enter a valid Nigerian phone number';
+          phoneError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        // Validate Password
+        if (!passwordInput.value) {
+          passwordInput.classList.add('is-error');
+          passwordError.textContent = 'Password is required';
+          passwordError.classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (isValid) {
+          submitBtn.classList.add('is-loading');
+          
+          // Delegate to auth.js if available, or simulate login
+          if (window.SUBAAuth && window.SUBAAuth.login) {
+            window.SUBAAuth.login('0' + formatted, passwordInput.value)
+              .catch(err => {
+                submitBtn.classList.remove('is-loading');
+                SUBAComponents.showToast({
+                  title: 'Login Failed',
+                  message: err.message || 'Incorrect credentials, try again.',
+                  type: 'error'
+                });
+              });
+          } else {
+            setTimeout(() => {
+              submitBtn.classList.remove('is-loading');
+              
+              // Set mock logged in status
+              SUBAUtils.store('token', 'mock_jwt_token');
+              SUBAUtils.store('user', {
+                firstName: 'Tobi',
+                lastName: 'Oyelami',
+                phone: '0' + formatted,
+                email: 'tobi@unilag.edu.ng',
+                referralCode: 'TOB1405',
+                balance: 425000 // stored in kobo (₦4,250.00)
+              });
+              
+              SUBAComponents.showToast({
+                title: 'Welcome Tobi!',
+                message: 'Redirecting to your dashboard...',
+                type: 'success'
+              });
+              
+              setTimeout(() => {
+                window.location.href = 'dashboard.html';
+              }, 1000);
+            }, 1500);
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

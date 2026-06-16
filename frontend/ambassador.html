@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambassador Dashboard | SUBA — Automated Student VTU</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-nav-item" data-page="home">
+          <span class="sidebar-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="buy-data.html" class="sidebar-nav-item" data-page="buy-data">
+          <span class="sidebar-icon">📶</span>
+          <span>Buy Data</span>
+        </a>
+        <a href="buy-airtime.html" class="sidebar-nav-item" data-page="buy-airtime">
+          <span class="sidebar-icon">📱</span>
+          <span>Buy Airtime</span>
+        </a>
+        <a href="buy-electricity.html" class="sidebar-nav-item" data-page="buy-electricity">
+          <span class="sidebar-icon">⚡</span>
+          <span>Electricity</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="history">
+          <span class="sidebar-icon">📊</span>
+          <span>History</span>
+        </a>
+        <a href="ambassador.html" class="sidebar-nav-item active" data-page="ambassador">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassador</span>
+        </a>
+        <a href="profile.html" class="sidebar-nav-item" data-page="profile">
+          <span class="sidebar-icon">⚙️</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" id="desktopUserAvatar">TO</div>
+        <div>
+          <div class="sidebar-user-name" id="desktopUserName">Tobi Oyelami</div>
+          <div class="sidebar-user-role">Student Account</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Ambassador Portal</h3>
+          <p>Share SUBA with other students and earn commissions on their purchases.</p>
+        </div>
+        <div class="topbar-actions">
+          <a href="dashboard.html" class="btn btn-ghost btn-sm" style="font-size: var(--text-sm); font-weight: 600">🏠 Dashboard</a>
+          <a href="profile.html" class="avatar" id="topbarUserAvatar">TO</a>
+        </div>
+      </div>
+
+      <!-- Ambassador Grid -->
+      <div class="dashboard-grid">
+        
+        <!-- Left columns: Referral Link and Commission Summary -->
+        <div class="dashboard-left">
+          
+          <!-- Referral link share card -->
+          <div class="card card-gradient">
+            <h4 style="margin-bottom: var(--space-2)">Invite Friends & Earn</h4>
+            <p style="font-size: var(--text-sm); opacity: 0.9; margin-bottom: var(--space-5)">You earn 2% commission on all mobile data bundles and airtime top-ups purchased by students who register with your referral details.</p>
+            
+            <div style="background: rgba(0, 0, 0, 0.15); padding: var(--space-4); border-radius: var(--radius-lg); border: 1.5px solid rgba(255,255,255,0.12)">
+              <div style="font-size: 11px; opacity: 0.7; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.05em">YOUR REFERRAL CODE</div>
+              <div style="display: flex; align-items: center; justify-content: space-between">
+                <span class="referral-code" id="refCodeText" style="color: white; font-size: var(--text-xl)">TOB1405</span>
+                <button class="btn btn-white btn-sm" id="copyCodeBtn" style="color: var(--clr-primary); font-weight:700">Copy Code</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commission payout metrics cards -->
+          <div class="grid-3">
+            <div class="card card-sm">
+              <span style="font-size: var(--text-xs); color: var(--clr-text-tertiary)">TOTAL COMMISSIONS</span>
+              <h3 style="font-size: var(--text-xl); margin-top: 4px" id="totalCommissions">₦4,520</h3>
+            </div>
+            <div class="card card-sm">
+              <span style="font-size: var(--text-xs); color: var(--clr-text-tertiary)">WITHDRAWN FUNDS</span>
+              <h3 style="font-size: var(--text-xl); margin-top: 4px" id="withdrawnCommissions">₦3,000</h3>
+            </div>
+            <div class="card card-sm" style="border-color: var(--clr-primary-subtle)">
+              <span style="font-size: var(--text-xs); color: var(--clr-primary)">CLEARED BALANCE</span>
+              <h3 style="font-size: var(--text-xl); margin-top: 4px; color: var(--clr-primary)" id="clearedCommissions">₦1,520</h3>
+            </div>
+          </div>
+
+          <!-- Payout actions card -->
+          <div class="card" style="padding: var(--space-5)">
+            <h4 style="font-size: var(--text-base); margin-bottom: var(--space-3)">Cashout Commissions</h4>
+            <p style="font-size: var(--text-sm); color: var(--clr-text-secondary); margin-bottom: var(--space-5)">Transfer your cleared commission earnings straight into your main SUBA funding wallet or request bank payout.</p>
+            <div class="btn-group">
+              <button class="btn btn-primary" id="transferToWalletBtn">Transfer to Wallet</button>
+              <button class="btn btn-secondary" id="requestBankPayoutBtn">Withdraw to Bank</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right columns: Leaderboard & Referral lists -->
+        <div class="dashboard-right">
+          
+          <!-- Leaderboard widget -->
+          <div class="card" style="padding: var(--space-5)">
+            <h4 style="font-size: var(--text-sm); text-transform: uppercase; letter-spacing:0.05em; margin-bottom: var(--space-4)">Campus Leaderboard</h4>
+            
+            <div style="display: flex; flex-direction: column; gap: var(--space-3)">
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div style="display: flex; align-items: center; gap: var(--space-3)">
+                  <span style="font-weight: 700; width: 20px">🥇</span>
+                  <div class="avatar avatar-sm" style="font-size: 10px">FO</div>
+                  <span class="fw-semibold">Femi O. (UI)</span>
+                </div>
+                <span class="text-orange fw-bold">₦25,400</span>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div style="display: flex; align-items: center; gap: var(--space-3)">
+                  <span style="font-weight: 700; width: 20px">🥈</span>
+                  <div class="avatar avatar-sm" style="font-size: 10px">AA</div>
+                  <span class="fw-semibold">Aliyu A. (ABU)</span>
+                </div>
+                <span class="text-orange fw-bold">₦18,200</span>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div style="display: flex; align-items: center; gap: var(--space-3)">
+                  <span style="font-weight: 700; width: 20px">🥉</span>
+                  <div class="avatar avatar-sm" style="font-size: 10px">CE</div>
+                  <span class="fw-semibold">Chidinma E. (UNN)</span>
+                </div>
+                <span class="text-orange fw-bold">₦12,650</span>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2)">
+                <div style="display: flex; align-items: center; gap: var(--space-3)">
+                  <span style="font-weight: 700; width: 20px; text-align: center; color: var(--clr-text-tertiary)">4</span>
+                  <div class="avatar avatar-sm" style="font-size: 10px" id="myAvatarPlaceholder">TO</div>
+                  <span class="fw-semibold" id="myNamePlaceholder">Tobi O. (UNILAG)</span>
+                </div>
+                <span class="text-orange fw-bold">₦4,520</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="bottom-nav-item" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="buy-data.html" class="bottom-nav-item" data-page="buy-data">
+        <span class="nav-icon">📶</span>
+        <span>Buy Data</span>
+      </a>
+      <a href="buy-airtime.html" class="bottom-nav-item nav-buy" data-page="buy-airtime">
+        <div class="nav-icon-wrapper">
+          <span>📱</span>
+        </div>
+        <span style="margin-top: 4px">Airtime</span>
+      </a>
+      <a href="transactions.html" class="bottom-nav-item" data-page="history">
+        <span class="nav-icon">📊</span>
+        <span>History</span>
+      </a>
+      <a href="profile.html" class="bottom-nav-item active" data-page="profile">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Cashout Modal -->
+  <div class="modal-backdrop" id="cashoutModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="cashoutTitle">Transfer to Wallet</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('cashoutModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom:var(--space-5)">
+          <label for="cashoutAmount" class="form-label">Amount to Cashout (₦)</label>
+          <input type="number" id="cashoutAmount" class="form-input" min="500" placeholder="Minimum cashout ₦500">
+          <div class="form-hint" style="margin-top:6px">Cleared commission balance available: <span class="fw-bold text-orange">₦1,520</span></div>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="confirmCashoutBtn">Proceed Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = SUBAUtils.retrieve('user');
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Initialize
+      const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+      document.getElementById('desktopUserAvatar').textContent = initials;
+      document.getElementById('topbarUserAvatar').textContent = initials;
+      document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
+      document.getElementById('myAvatarPlaceholder').textContent = initials;
+      document.getElementById('myNamePlaceholder').textContent = `${user.firstName} ${user.lastName?.[0] || ''}. (UNILAG)`;
+
+      document.getElementById('refCodeText').textContent = user.referralCode || 'SUBA001';
+
+      // Copy code button trigger
+      const copyBtn = document.getElementById('copyCodeBtn');
+      copyBtn.addEventListener('click', () => {
+        const code = document.getElementById('refCodeText').textContent;
+        const link = `${window.location.origin}/register.html?ref=${code}`;
+        SUBAUtils.copyToClipboard(link).then(success => {
+          if (success) {
+            copyBtn.textContent = 'Copied!';
+            SUBAComponents.showToast({
+              title: 'Link Copied',
+              message: 'Referral signup link copied successfully.',
+              type: 'success'
+            });
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy Code';
+            }, 2000);
+          }
+        });
+      });
+
+      // Transfer to wallet trigger
+      const transferBtn = document.getElementById('transferToWalletBtn');
+      const confirmCashout = document.getElementById('confirmCashoutBtn');
+      const cashoutAmountInput = document.getElementById('cashoutAmount');
+
+      let cashoutType = 'wallet';
+
+      transferBtn.addEventListener('click', () => {
+        cashoutType = 'wallet';
+        document.getElementById('cashoutTitle').textContent = 'Transfer to Wallet';
+        confirmCashout.textContent = 'Transfer to SUBA Wallet';
+        SUBAComponents.openModal('cashoutModal');
+      });
+
+      // Bank cashout trigger
+      document.getElementById('requestBankPayoutBtn').addEventListener('click', () => {
+        cashoutType = 'bank';
+        document.getElementById('cashoutTitle').textContent = 'Withdraw to Bank';
+        confirmCashout.textContent = 'Initiate Bank Payout';
+        SUBAComponents.openModal('cashoutModal');
+      });
+
+      confirmCashout.addEventListener('click', () => {
+        const val = parseFloat(cashoutAmountInput.value);
+        if (!val || val < 500) {
+          SUBAComponents.showToast({
+            title: 'Low Cashout Amount',
+            message: 'Minimum withdrawal is ₦500.',
+            type: 'error'
+          });
+          return;
+        }
+        if (val > 1520) {
+          SUBAComponents.showToast({
+            title: 'Limit Exceeded',
+            message: 'Cleared balance exceeded.',
+            type: 'error'
+          });
+          return;
+        }
+
+        confirmCashout.classList.add('is-loading');
+        setTimeout(() => {
+          confirmCashout.classList.remove('is-loading');
+          SUBAComponents.closeModal('cashoutModal');
+
+          // Commission logic simulation
+          document.getElementById('clearedCommissions').textContent = `₦${SUBAUtils.formatNumber(1520 - val)}`;
+          document.getElementById('withdrawnCommissions').textContent = `₦${SUBAUtils.formatNumber(3000 + val)}`;
+
+          if (cashoutType === 'wallet' && user) {
+            user.balance += (val * 100);
+            SUBAUtils.store('user', user);
+          }
+
+          SUBAComponents.showToast({
+            title: 'Cashout Completed',
+            message: cashoutType === 'wallet' ? `₦${val} transferred to wallet.` : `₦${val} bank payout queued.`,
+            type: 'success'
+          });
+
+          cashoutAmountInput.value = '';
+
+        }, 1500);
+      });
+    });
+  </script>
+</body>
+</html>
