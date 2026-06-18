@@ -178,25 +178,43 @@
   <script src="js/components.js"></script>
   <script src="js/api.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const user = SUBAUtils.retrieve('user');
-      if (!user) {
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!SUBAUtils.retrieve('token')) {
         window.location.href = 'login.html';
         return;
       }
 
-      // Prepopulate fields
-      const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
-      document.getElementById('desktopUserAvatar').textContent = initials;
-      document.getElementById('topbarUserAvatar').textContent = initials;
-      document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
+      let user = null;
+      try {
+        user = await SUBAApi.request('/auth/me', { method: 'GET' });
+        if (user) SUBAUtils.store('user', user);
+      } catch (err) {
+        console.error(err);
+      }
 
-      document.getElementById('profFirstName').value = user.firstName || '';
-      document.getElementById('profLastName').value = user.lastName || '';
-      document.getElementById('profEmail').value = user.email || '';
-      
-      const phoneClean = user.phone.startsWith('+234') ? user.phone.substring(4) : (user.phone.startsWith('0') ? user.phone.substring(1) : user.phone);
-      document.getElementById('profPhone').value = phoneClean;
+      if (!user) {
+        user = SUBAUtils.retrieve('user');
+      }
+
+      if (user) {
+        const fullName = user.full_name || 'User';
+        const names = fullName.split(' ');
+        const firstName = names[0];
+        const lastName = names.length > 1 ? names[names.length - 1] : '';
+        const initials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase() || 'U';
+
+        document.getElementById('desktopUserAvatar').textContent = initials;
+        document.getElementById('topbarUserAvatar').textContent = initials;
+        document.getElementById('desktopUserName').textContent = fullName;
+
+        document.getElementById('profFirstName').value = firstName;
+        document.getElementById('profLastName').value = lastName;
+        document.getElementById('profEmail').value = user.email || '';
+        
+        const rawPhone = user.phone_number || '';
+        const phoneClean = rawPhone.startsWith('+234') ? rawPhone.substring(4) : (rawPhone.startsWith('0') ? rawPhone.substring(1) : rawPhone);
+        document.getElementById('profPhone').value = phoneClean;
+      }
 
       // Handle Profile Submit
       const profileForm = document.getElementById('profileForm');

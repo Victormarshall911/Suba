@@ -105,13 +105,10 @@ class UserLoginRequest(BaseModel):
     """
     Schema for POST /api/v1/auth/login
 
-    The frontend sends phone number (not email) as the login identifier.
-    """
-
-    phone_number: str = Field(
+    email: EmailStr = Field(
         ...,
-        description="Nigerian phone number used during registration",
-        examples=["08031234567"],
+        description="User email address used during registration",
+        examples=["student@university.edu.ng"],
     )
 
     password: str = Field(
@@ -119,17 +116,6 @@ class UserLoginRequest(BaseModel):
         description="Account password",
         examples=["SecurePass1"],
     )
-
-    @field_validator("phone_number")
-    @classmethod
-    def normalize_phone(cls, v: str) -> str:
-        """Normalize phone number to 0-prefix format."""
-        cleaned = v.strip().replace("-", "").replace(" ", "")
-        if cleaned.startswith("+234"):
-            cleaned = "0" + cleaned[4:]
-        elif cleaned.startswith("234") and len(cleaned) == 13:
-            cleaned = "0" + cleaned[3:]
-        return cleaned
 
 
 # =============================================================================

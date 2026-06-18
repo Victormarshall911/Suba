@@ -39,11 +39,11 @@ const SUBAAuth = {
   /**
    * Handle user login request
    */
-  async login(phone, password) {
+  async login(email, password) {
     try {
       const data = await SUBAApi.request('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ phone_number: phone, password: password })
+        body: JSON.stringify({ email: email, password: password })
       });
 
       if (data && data.access_token) {

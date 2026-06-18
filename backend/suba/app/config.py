@@ -24,10 +24,7 @@ class Settings(BaseSettings):
     APP_SECRET_KEY: str = "change-me-to-a-random-secret-string"
     APP_ENV: str = "development"
     CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://localhost:8000",
+        "*"
     ]
 
     # -------------------------------------------------------------------------

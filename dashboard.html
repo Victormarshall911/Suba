@@ -293,24 +293,41 @@
   <script src="js/components.js"></script>
   <script src="js/api.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Load user details from storage
-      const user = SUBAUtils.retrieve('user');
-      
-      // Redirect if not logged in
-      if (!user && !SUBAUtils.retrieve('token')) {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Redirect if no token exists
+      if (!SUBAUtils.retrieve('token')) {
         window.location.href = 'login.html';
         return;
       }
 
-      if (user) {
-        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
-        document.getElementById('desktopUserAvatar').textContent = initials || 'TO';
-        document.getElementById('topbarUserAvatar').textContent = initials || 'TO';
-        document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
-        document.getElementById('greetingMessage').textContent = `Hey, ${user.firstName} 👋`;
-        document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance / 100);
-        document.getElementById('referralCode').textContent = user.referralCode || 'SUBA001';
+      // Fetch live user data from backend
+      try {
+        const user = await SUBAApi.request('/auth/me', { method: 'GET' });
+        if (user) {
+          // Update local cache
+          SUBAUtils.store('user', user);
+          
+          const fullName = user.full_name || 'User';
+          const names = fullName.split(' ');
+          const firstName = names[0];
+          const lastName = names.length > 1 ? names[names.length - 1] : '';
+          const initials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase() || 'U';
+
+          document.getElementById('desktopUserAvatar').textContent = initials;
+          document.getElementById('topbarUserAvatar').textContent = initials;
+          document.getElementById('desktopUserName').textContent = fullName;
+          document.getElementById('greetingMessage').textContent = `Hey, ${firstName} 👋`;
+          
+          // Wallet logic assumes returned balance is in kobo or raw depending on backend
+          // We will divide by 100 assuming the backend returns kobo, but if backend returns raw Naira, adjust.
+          // Wait, backend `UserResponse` usually returns raw float for balance if it's stored as Decimal.
+          // Let's assume balance is returned as float in Naira.
+          document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance || 0);
+          document.getElementById('referralCode').textContent = user.referral_code || 'SUBA001';
+        }
+      } catch (err) {
+        console.error("Failed to load live user data", err);
+        // If unauthenticated, api.js automatically redirects to login.html
       }
 
       // Fund Wallet modal triggers

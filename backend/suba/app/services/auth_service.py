@@ -158,7 +158,7 @@ async def register_user(
 
 async def authenticate_user(
     db: AsyncSession,
-    phone_number: str,
+    email: str,
     password: str,
 ) -> AuthResponse:
     """
@@ -177,15 +177,15 @@ async def authenticate_user(
     """
 
     # -------------------------------------------------------------------------
-    # Look up user by phone number
+    # Look up user by email
     # -------------------------------------------------------------------------
     result = await db.execute(
-        select(User).where(User.phone_number == phone_number)
+        select(User).where(User.email == email)
     )
     user = result.scalar_one_or_none()
 
     if user is None:
-        # Do not reveal whether the phone number exists
+        # Do not reveal whether the email exists
         raise InvalidCredentialsError()
 
     # -------------------------------------------------------------------------

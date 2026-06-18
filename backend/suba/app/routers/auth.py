@@ -72,9 +72,9 @@ async def register(
 @router.post(
     "/login",
     response_model=AuthResponse,
-    summary="Log in with phone number and password",
+    summary="Log in with email address and password",
     description=(
-        "Verifies the user's phone number and password. "
+        "Verifies the user's email address and password. "
         "Returns a JWT access token and the user profile on success."
     ),
 )
@@ -85,11 +85,11 @@ async def login(
     """
     Authenticate a user and return a JWT token.
 
-    The frontend sends the phone number (not email) as the login identifier.
+    The frontend sends the email as the login identifier.
     """
     return await auth_service.authenticate_user(
         db=db,
-        phone_number=request.phone_number,
+        email=request.email,
         password=request.password,
     )
 
