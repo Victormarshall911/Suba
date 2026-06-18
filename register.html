@@ -95,6 +95,9 @@
               </div>
             </div>
 
+            <!-- Firebase Recaptcha (Required for SMS) -->
+            <div id="recaptcha-container"></div>
+
             <!-- CTA Buttons for Step 1 -->
             <button type="button" class="btn btn-primary btn-block btn-lg mt-6" id="step1NextBtn">
               <span class="btn-text">Send Verification Code</span>
@@ -180,6 +183,7 @@
   <script src="js/components.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Toggle password
@@ -200,6 +204,7 @@
 
       // State managers
       let verifiedPhone = '';
+      let firebaseToken = '';
       let activeStep = 1;
       let timerVal = 30;
       let timerInterval;
@@ -237,7 +242,7 @@
       }
 
       // Step 1 Click Action
-      step1NextBtn.addEventListener('click', () => {
+      step1NextBtn.addEventListener('click', async () => {
         // Reset errors
         regPhoneError.classList.add('hidden');
         otpError.classList.add('hidden');
@@ -261,6 +266,8 @@
           return;
         }
 
+        const fullPhone = '0' + formatted;
+
         // If OTP Section is already showing, it means user wants to verify OTP
         if (!otpSection.classList.contains('hidden')) {
           let code = '';
@@ -274,38 +281,74 @@
 
           step1NextBtn.classList.add('is-loading');
           
-          // Verify code simulation
-          setTimeout(() => {
+          try {
+            // Verify code with Firebase
+            const result = await window.confirmationResult.confirm(code);
+            firebaseToken = await result.user.getIdToken();
+            verifiedPhone = fullPhone;
+            
+            SUBAComponents.showToast({
+              title: 'Phone Verified',
+              message: 'Setting up your credentials...',
+              type: 'success'
+            });
+            transitionStep(2);
+          } catch (err) {
+            console.error(err);
+            otpError.textContent = 'Incorrect verification code or token expired.';
+            otpError.classList.remove('hidden');
+          } finally {
             step1NextBtn.classList.remove('is-loading');
-            if (code === '123456') { // Mock verification bypass
-              verifiedPhone = '0' + formatted;
-              SUBAComponents.showToast({
-                title: 'Phone Verified',
-                message: 'Setting up your credentials...',
-                type: 'success'
-              });
-              transitionStep(2);
-            } else {
-              otpError.textContent = 'Incorrect verification code. Use 123456 to bypass.';
-              otpError.classList.remove('hidden');
-            }
-          }, 1500);
+          }
 
         } else {
-          // Send OTP Simulation
+          // Send OTP Real via Firebase
           step1NextBtn.classList.add('is-loading');
-          setTimeout(() => {
-            step1NextBtn.classList.remove('is-loading');
+          try {
+            // Check if Firebase is loaded
+            if (!window.SUBAFirebase) {
+              throw new Error("Firebase is not initialized yet. Please wait a moment.");
+            }
+            
+            // Setup reCAPTCHA if not already done
+            if (!window.recaptchaVerifier) {
+              window.recaptchaVerifier = new window.SUBAFirebase.RecaptchaVerifier(
+                window.SUBAFirebase.auth, 
+                'recaptcha-container', 
+                { size: 'invisible' }
+              );
+            }
+            
+            // Send the SMS
+            window.confirmationResult = await window.SUBAFirebase.signInWithPhoneNumber(
+              window.SUBAFirebase.auth, 
+              fullPhone, 
+              window.recaptchaVerifier
+            );
+
             otpSection.classList.remove('hidden');
             step1NextBtn.querySelector('.btn-text').textContent = 'Verify Code';
             phoneInput.disabled = true;
             SUBAComponents.showToast({
               title: 'OTP Sent',
-              message: 'Check your phone messages for verification code 123456.',
+              message: 'Check your phone for the Firebase SMS code.',
               type: 'info'
             });
             startTimer();
-          }, 1500);
+          } catch (err) {
+            console.error(err);
+            phoneInput.classList.add('is-error');
+            // Reset recaptcha if failed so user can try again
+            if (window.recaptchaVerifier) {
+                window.recaptchaVerifier.render().then(widgetId => {
+                    grecaptcha.reset(widgetId);
+                });
+            }
+            regPhoneError.textContent = err.message || 'Failed to send OTP via Firebase';
+            regPhoneError.classList.remove('hidden');
+          } finally {
+            step1NextBtn.classList.remove('is-loading');
+          }
         }
       });
 
@@ -401,22 +444,24 @@
       const referralError = document.getElementById('referralError');
       const step3FinishBtn = document.getElementById('step3FinishBtn');
 
-      step3FinishBtn.addEventListener('click', () => {
+      step3FinishBtn.addEventListener('click', async () => {
         step3FinishBtn.classList.add('is-loading');
         
-        setTimeout(() => {
-          step3FinishBtn.classList.remove('is-loading');
-          
-          // Store registered user credentials
-          SUBAUtils.store('token', 'mock_jwt_token');
-          SUBAUtils.store('user', {
-            firstName: firstNameInput.value.trim(),
-            lastName: lastNameInput.value.trim(),
-            phone: verifiedPhone,
-            email: emailInput.value.trim(),
-            referralCode: SUBAUtils.generateReferralCode(firstNameInput.value.trim()),
-            balance: 0 // New account starts with 0 balance
+        try {
+          const res = await SUBAApi.request('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: emailInput.value.trim(),
+              phone_number: verifiedPhone,
+              password: passwordInput.value,
+              full_name: `${firstNameInput.value.trim()} ${lastNameInput.value.trim()}`,
+              firebase_token: firebaseToken
+            })
           });
+          
+          // Store registered user credentials from backend
+          SUBAUtils.store('token', res.access_token);
+          SUBAUtils.store('user', res.user);
 
           SUBAComponents.showToast({
             title: 'Account Created!',
@@ -427,7 +472,12 @@
           setTimeout(() => {
             window.location.href = 'dashboard.html';
           }, 1000);
-        }, 1500);
+        } catch (err) {
+          referralError.textContent = err.message || 'Registration failed.';
+          referralError.classList.remove('hidden');
+        } finally {
+          step3FinishBtn.classList.remove('is-loading');
+        }
       });
 
       function transitionStep(step) {

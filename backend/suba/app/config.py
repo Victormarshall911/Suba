@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     VTU_BASE_URL: str = ""
 
     # -------------------------------------------------------------------------
+    # Firebase (Phone Authentication)
+    # -------------------------------------------------------------------------
+    FIREBASE_CREDENTIALS_PATH: str = "firebase-credentials.json"
+
+    # -------------------------------------------------------------------------
     # Validators
     # -------------------------------------------------------------------------
     @field_validator("CORS_ORIGINS", mode="before")

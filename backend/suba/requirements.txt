@@ -21,6 +21,9 @@ bcrypt==4.2.1
 # --- HTTP Client (for VTU provider calls) ---
 httpx==0.28.1
 
+# --- Firebase (for Phone Auth Verification) ---
+firebase-admin>=6.5.0
+
 # --- Rate Limiting ---
 slowapi==0.1.9
 

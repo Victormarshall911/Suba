@@ -30,33 +30,25 @@ def upgrade() -> None:
     # =========================================================================
     # Create ENUM types
     # =========================================================================
-    user_role_enum = postgresql.ENUM(
+    user_role_enum = sa.Enum(
         "USER", "ADMIN",
         name="user_role_enum",
-        create_type=True,
     )
-    transaction_type_enum = postgresql.ENUM(
+    transaction_type_enum = sa.Enum(
         "FUNDING", "DATA_PURCHASE", "REFUND",
         name="transaction_type_enum",
-        create_type=True,
     )
-    transaction_status_enum = postgresql.ENUM(
+    transaction_status_enum = sa.Enum(
         "PENDING", "SUCCESS", "FAILED",
         name="transaction_status_enum",
-        create_type=True,
     )
-
-    # Create enum types in the database
-    user_role_enum.create(op.get_bind(), checkfirst=True)
-    transaction_type_enum.create(op.get_bind(), checkfirst=True)
-    transaction_status_enum.create(op.get_bind(), checkfirst=True)
 
     # =========================================================================
     # Table: users
     # =========================================================================
     op.create_table(
         "users",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("id", sa.Uuid(), primary_key=True),
         sa.Column("email", sa.String(255), unique=True, nullable=False, index=True),
         sa.Column("phone_number", sa.String(14), unique=True, nullable=False, index=True),
         sa.Column("full_name", sa.String(255), nullable=False),
@@ -81,10 +73,10 @@ def upgrade() -> None:
     # =========================================================================
     op.create_table(
         "wallets",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("id", sa.Uuid(), primary_key=True),
         sa.Column(
             "user_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
             unique=True,
@@ -112,16 +104,16 @@ def upgrade() -> None:
     # =========================================================================
     op.create_table(
         "transactions",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("id", sa.Uuid(), primary_key=True),
         sa.Column(
             "user_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column(
             "wallet_id",
-            postgresql.UUID(as_uuid=True),
+            sa.Uuid(),
             sa.ForeignKey("wallets.id", ondelete="CASCADE"),
             nullable=False,
         ),
@@ -138,7 +130,7 @@ def upgrade() -> None:
         sa.Column("network", sa.String(20), nullable=True),
         sa.Column("plan_code", sa.String(100), nullable=True),
         sa.Column("narration", sa.Text, nullable=True),
-        sa.Column("provider_response", postgresql.JSONB, nullable=True),
+        sa.Column("provider_response", sa.JSON, nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

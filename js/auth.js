@@ -43,11 +43,11 @@ const SUBAAuth = {
     try {
       const data = await SUBAApi.request('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ phone, password })
+        body: JSON.stringify({ phone_number: phone, password: password })
       });
 
-      if (data && data.token) {
-        SUBAUtils.store('token', data.token);
+      if (data && data.access_token) {
+        SUBAUtils.store('token', data.access_token);
         SUBAUtils.store('user', data.user);
         
         SUBAComponents.showToast({

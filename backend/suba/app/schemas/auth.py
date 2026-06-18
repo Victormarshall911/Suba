@@ -14,6 +14,8 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
+
+
 # =============================================================================
 # Request Schemas
 # =============================================================================
@@ -57,6 +59,12 @@ class UserRegisterRequest(BaseModel):
         max_length=128,
         description="Password — min 8 chars, 1 uppercase, 1 digit",
         examples=["SecurePass1"],
+    )
+
+    firebase_token: str = Field(
+        ...,
+        description="Firebase ID Token obtained after phone verification on the frontend",
+        examples=["eyJhbGciOiJSUzI1NiIsImtp..."],
     )
 
     @field_validator("phone_number")

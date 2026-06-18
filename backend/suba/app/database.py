@@ -30,12 +30,19 @@ class Base(DeclarativeBase):
 # ---------------------------------------------------------------------------
 settings = get_settings()
 
+engine_kwargs = {
+    "echo": (settings.APP_ENV == "development"),
+}
+if not settings.DATABASE_URL.startswith("sqlite"):
+    engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_size": 10,
+        "max_overflow": 20,
+    })
+
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=(settings.APP_ENV == "development"),  # SQL logging only in dev
-    pool_pre_ping=True,  # Verify connections are alive before use
-    pool_size=10,         # Connection pool size
-    max_overflow=20,      # Allow burst connections beyond pool_size
+    **engine_kwargs
 )
 
 async_session_factory = async_sessionmaker(
