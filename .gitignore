@@ -13,3 +13,31 @@ $RECYCLE.BIN/
 *.njsproj
 *.sln
 *.sw?
+
+# ----------------------------------------------------------------------
+# Backend (Python / FastAPI)
+# ----------------------------------------------------------------------
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Environment Variables (Crucial to prevent leaking secrets)
+.env
+.env.*
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing
+.pytest_cache/
+coverage.xml
+htmlcov/
+.coverage
+.tox/
+
+# Local Databases
+*.sqlite3
+*.db

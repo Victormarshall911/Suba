@@ -6,8 +6,8 @@
 const SUBAApi = {
   // Base configuration
   BASE_URL: window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-    ? 'http://localhost:3000/api'
-    : 'https://api.suba.ng/api',
+    ? 'http://localhost:8000/api/v1'
+    : 'https://api.suba.ng/api/v1',
 
   /**
    * Helper to fetch resources with authorization headers
