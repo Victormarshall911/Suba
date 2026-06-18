@@ -104,6 +104,7 @@ class UserRegisterRequest(BaseModel):
 class UserLoginRequest(BaseModel):
     """
     Schema for POST /api/v1/auth/login
+    """
 
     email: EmailStr = Field(
         ...,
