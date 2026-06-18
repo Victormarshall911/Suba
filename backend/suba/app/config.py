@@ -57,9 +57,9 @@ class Settings(BaseSettings):
     VTU_BASE_URL: str = ""
 
     # -------------------------------------------------------------------------
-    # Firebase (Phone Authentication)
+    # Supabase (Email Authentication)
     # -------------------------------------------------------------------------
-    FIREBASE_CREDENTIALS_PATH: str = "firebase-credentials.json"
+    SUPABASE_JWT_SECRET: str = ""
 
     # -------------------------------------------------------------------------
     # Validators

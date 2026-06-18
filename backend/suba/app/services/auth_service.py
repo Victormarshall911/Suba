@@ -11,9 +11,7 @@ It handles:
 """
 
 import structlog
-import firebase_admin
-from firebase_admin import auth as firebase_auth
-from firebase_admin import credentials
+from jose import jwt, JWTError
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -59,34 +57,30 @@ async def register_user(
     """
 
     # -------------------------------------------------------------------------
-    # Step 0: Verify Firebase Token
+    # Step 0: Verify Supabase Token
     # -------------------------------------------------------------------------
-    if not firebase_admin._apps:
-        try:
-            from app.config import get_settings
-            settings = get_settings()
-            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-            firebase_admin.initialize_app(cred)
-        except Exception as e:
-            logger.error("firebase_initialization_failed", error=str(e))
-            raise HTTPException(status_code=500, detail="Internal server error configuring SMS provider")
-            
+    from app.config import get_settings
+    settings = get_settings()
+
     try:
-        decoded_token = firebase_auth.verify_id_token(request.firebase_token)
-        firebase_phone = decoded_token.get("phone_number")
+        # Supabase JWTs are typically signed with HS256
+        payload = jwt.decode(
+            request.supabase_token, 
+            settings.SUPABASE_JWT_SECRET, 
+            algorithms=["HS256"],
+            options={"verify_aud": False} # Supabase aud can be 'authenticated'
+        )
         
-        if not firebase_phone:
-            raise HTTPException(status_code=400, detail="Verification token does not contain a phone number")
+        supabase_email = payload.get("email")
+        if not supabase_email:
+            raise HTTPException(status_code=400, detail="Verification token does not contain an email address")
             
-        # Normalize firebase phone (e.g. +234803...) to local 0-prefix
-        normalized_fb_phone = firebase_phone.replace("+234", "0")
-        
-        if normalized_fb_phone != request.phone_number:
-            raise HTTPException(status_code=400, detail="Verified phone number does not match requested phone number")
+        if supabase_email.lower() != request.email.lower():
+            raise HTTPException(status_code=400, detail="Verified email does not match requested email")
             
-    except Exception as e:
-        logger.warning("firebase_token_verification_failed", error=str(e))
-        raise HTTPException(status_code=400, detail="Invalid or expired phone verification token")
+    except JWTError as e:
+        logger.warning("supabase_token_verification_failed", error=str(e))
+        raise HTTPException(status_code=400, detail="Invalid or expired email verification token")
 
     # -------------------------------------------------------------------------
     # Step 1: Check uniqueness before insert (fast fail with clear message)

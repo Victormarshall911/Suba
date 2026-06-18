@@ -61,10 +61,10 @@ class UserRegisterRequest(BaseModel):
         examples=["SecurePass1"],
     )
 
-    firebase_token: str = Field(
+    supabase_token: str = Field(
         ...,
-        description="Firebase ID Token obtained after phone verification on the frontend",
-        examples=["eyJhbGciOiJSUzI1NiIsImtp..."],
+        description="Supabase JWT Token obtained after email verification on the frontend",
+        examples=["eyJhbGciOiJIUzI1NiIsInR5..."],
     )
 
     @field_validator("phone_number")

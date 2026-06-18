@@ -42,7 +42,7 @@
         <div class="auth-header">
           <img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img auth-card-logo">
           <h3>Create Account</h3>
-          <p id="stepDescription">Step 1: Verify your phone number via OTP.</p>
+          <p id="stepDescription">Step 1: Verify your email address via OTP.</p>
         </div>
 
         <!-- Step Indicator -->
@@ -69,12 +69,9 @@
           <!-- STEP 1: Phone and OTP Verification -->
           <div class="auth-step active" id="step1">
             <div class="form-group">
-              <label for="regPhone" class="form-label">Phone Number<span class="required">*</span></label>
-              <div class="phone-input-wrapper">
-                <span class="phone-prefix">+234</span>
-                <input type="tel" id="regPhone" class="form-input" placeholder="8031234567" maxlength="10">
-              </div>
-              <div class="form-error hidden" id="regPhoneError"></div>
+              <label for="regEmail" class="form-label">Email Address<span class="required">*</span></label>
+              <input type="email" id="regEmail" class="form-input" placeholder="tobi@unilag.edu.ng">
+              <div class="form-error hidden" id="regEmailError"></div>
               <div class="form-hint">A 6-digit verification code will be sent.</div>
             </div>
 
@@ -95,8 +92,6 @@
               </div>
             </div>
 
-            <!-- Firebase Recaptcha (Required for SMS) -->
-            <div id="recaptcha-container"></div>
 
             <!-- CTA Buttons for Step 1 -->
             <button type="button" class="btn btn-primary btn-block btn-lg mt-6" id="step1NextBtn">
@@ -120,9 +115,12 @@
             </div>
 
             <div class="form-group">
-              <label for="email" class="form-label">Email Address<span class="required">*</span></label>
-              <input type="email" id="email" class="form-input" placeholder="john.doe@unilag.edu.ng">
-              <div class="form-error hidden" id="emailError"></div>
+              <label for="regPhone" class="form-label">Phone Number<span class="required">*</span></label>
+              <div class="phone-input-wrapper">
+                <span class="phone-prefix">+234</span>
+                <input type="tel" id="regPhone" class="form-input" placeholder="8031234567" maxlength="10">
+              </div>
+              <div class="form-error hidden" id="regPhoneError"></div>
             </div>
 
             <div class="form-group">
@@ -183,7 +181,7 @@
   <script src="js/components.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
-  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/supabase-config.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Toggle password
@@ -203,14 +201,14 @@
       });
 
       // State managers
-      let verifiedPhone = '';
-      let firebaseToken = '';
+      let verifiedEmail = '';
+      let supabaseToken = '';
       let activeStep = 1;
       let timerVal = 30;
       let timerInterval;
 
-      const phoneInput = document.getElementById('regPhone');
-      const regPhoneError = document.getElementById('regPhoneError');
+      const emailInput1 = document.getElementById('regEmail');
+      const regEmailError = document.getElementById('regEmailError');
       const step1NextBtn = document.getElementById('step1NextBtn');
       const otpSection = document.getElementById('otpSection');
       const otpError = document.getElementById('otpError');
@@ -244,29 +242,26 @@
       // Step 1 Click Action
       step1NextBtn.addEventListener('click', async () => {
         // Reset errors
-        regPhoneError.classList.add('hidden');
+        regEmailError.classList.add('hidden');
         otpError.classList.add('hidden');
-        phoneInput.classList.remove('is-error');
+        emailInput1.classList.remove('is-error');
 
-        // Check phone validity
-        const rawPhone = phoneInput.value;
-        const formatted = SUBAUtils.formatPhone(rawPhone);
+        // Check email validity
+        const emailVal = emailInput1.value.trim();
         
-        if (!rawPhone) {
-          phoneInput.classList.add('is-error');
-          regPhoneError.textContent = 'Phone number is required';
-          regPhoneError.classList.remove('hidden');
+        if (!emailVal) {
+          emailInput1.classList.add('is-error');
+          regEmailError.textContent = 'Email address is required';
+          regEmailError.classList.remove('hidden');
           return;
         }
 
-        if (!SUBAUtils.isValidPhone('0' + formatted)) {
-          phoneInput.classList.add('is-error');
-          regPhoneError.textContent = 'Please enter a valid Nigerian phone number';
-          regPhoneError.classList.remove('hidden');
+        if (!SUBAUtils.isValidEmail(emailVal)) {
+          emailInput1.classList.add('is-error');
+          regEmailError.textContent = 'Please enter a valid email address';
+          regEmailError.classList.remove('hidden');
           return;
         }
-
-        const fullPhone = '0' + formatted;
 
         // If OTP Section is already showing, it means user wants to verify OTP
         if (!otpSection.classList.contains('hidden')) {
@@ -282,70 +277,61 @@
           step1NextBtn.classList.add('is-loading');
           
           try {
-            // Verify code with Firebase
-            const result = await window.confirmationResult.confirm(code);
-            firebaseToken = await result.user.getIdToken();
-            verifiedPhone = fullPhone;
+            // Verify code with Supabase
+            const { data, error } = await window.SUBASupabase.auth.verifyOtp({
+              email: emailVal,
+              token: code,
+              type: 'email'
+            });
+            
+            if (error) throw error;
+            
+            supabaseToken = data.session.access_token;
+            verifiedEmail = emailVal;
             
             SUBAComponents.showToast({
-              title: 'Phone Verified',
-              message: 'Setting up your credentials...',
+              title: 'Email Verified',
+              message: 'Setting up your profile...',
               type: 'success'
             });
             transitionStep(2);
           } catch (err) {
             console.error(err);
-            otpError.textContent = 'Incorrect verification code or token expired.';
+            otpError.textContent = err.message || 'Incorrect verification code or token expired.';
             otpError.classList.remove('hidden');
           } finally {
             step1NextBtn.classList.remove('is-loading');
           }
 
         } else {
-          // Send OTP Real via Firebase
+          // Send Email OTP Real via Supabase
           step1NextBtn.classList.add('is-loading');
           try {
-            // Check if Firebase is loaded
-            if (!window.SUBAFirebase) {
-              throw new Error("Firebase is not initialized yet. Please wait a moment.");
+            if (!window.SUBASupabase) {
+              throw new Error("Supabase is not initialized yet. Please wait a moment.");
             }
             
-            // Setup reCAPTCHA if not already done
-            if (!window.recaptchaVerifier) {
-              window.recaptchaVerifier = new window.SUBAFirebase.RecaptchaVerifier(
-                window.SUBAFirebase.auth, 
-                'recaptcha-container', 
-                { size: 'invisible' }
-              );
-            }
+            // Send the Email
+            const { error } = await window.SUBASupabase.auth.signInWithOtp({
+              email: emailVal,
+            });
             
-            // Send the SMS
-            window.confirmationResult = await window.SUBAFirebase.signInWithPhoneNumber(
-              window.SUBAFirebase.auth, 
-              fullPhone, 
-              window.recaptchaVerifier
-            );
+            if (error) throw error;
 
             otpSection.classList.remove('hidden');
             step1NextBtn.querySelector('.btn-text').textContent = 'Verify Code';
-            phoneInput.disabled = true;
+            emailInput1.disabled = true;
             SUBAComponents.showToast({
               title: 'OTP Sent',
-              message: 'Check your phone for the Firebase SMS code.',
+              message: 'Check your email for the verification code.',
               type: 'info'
             });
             startTimer();
           } catch (err) {
             console.error(err);
-            phoneInput.classList.add('is-error');
-            // Reset recaptcha if failed so user can try again
-            if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.render().then(widgetId => {
-                    grecaptcha.reset(widgetId);
-                });
-            }
-            regPhoneError.textContent = err.message || 'Failed to send OTP via Firebase';
-            regPhoneError.classList.remove('hidden');
+            emailInput1.classList.add('is-error');
+            regEmailError.textContent = err.message || 'Failed to send OTP via Supabase';
+            regEmailError.classList.remove('hidden');
           } finally {
             step1NextBtn.classList.remove('is-loading');
           }
@@ -365,12 +351,12 @@
       // Step 2 Click Action
       const firstNameInput = document.getElementById('firstName');
       const lastNameInput = document.getElementById('lastName');
-      const emailInput = document.getElementById('email');
+      const phoneInput2 = document.getElementById('regPhone');
       const step2NextBtn = document.getElementById('step2NextBtn');
 
       const firstNameError = document.getElementById('firstNameError');
       const lastNameError = document.getElementById('lastNameError');
-      const emailError = document.getElementById('emailError');
+      const phoneError2 = document.getElementById('regPhoneError');
       const passwordError = document.getElementById('regPasswordError');
       const termsError = document.getElementById('termsError');
 
@@ -378,13 +364,13 @@
         // Reset errors
         firstNameError.classList.add('hidden');
         lastNameError.classList.add('hidden');
-        emailError.classList.add('hidden');
+        phoneError2.classList.add('hidden');
         passwordError.classList.add('hidden');
         termsError.classList.add('hidden');
 
         firstNameInput.classList.remove('is-error');
         lastNameInput.classList.remove('is-error');
-        emailInput.classList.remove('is-error');
+        phoneInput2.classList.remove('is-error');
         passwordInput.classList.remove('is-error');
 
         let isValid = true;
@@ -403,15 +389,18 @@
           isValid = false;
         }
 
-        if (!emailInput.value.trim()) {
-          emailInput.classList.add('is-error');
-          emailError.textContent = 'Email is required';
-          emailError.classList.remove('hidden');
+        const rawPhone = phoneInput2.value;
+        const formattedPhone = SUBAUtils.formatPhone(rawPhone);
+
+        if (!rawPhone) {
+          phoneInput2.classList.add('is-error');
+          phoneError2.textContent = 'Phone number is required';
+          phoneError2.classList.remove('hidden');
           isValid = false;
-        } else if (!SUBAUtils.isValidEmail(emailInput.value.trim())) {
-          emailInput.classList.add('is-error');
-          emailError.textContent = 'Please enter a valid email address';
-          emailError.classList.remove('hidden');
+        } else if (!SUBAUtils.isValidPhone('0' + formattedPhone)) {
+          phoneInput2.classList.add('is-error');
+          phoneError2.textContent = 'Please enter a valid Nigerian phone number';
+          phoneError2.classList.remove('hidden');
           isValid = false;
         }
 
@@ -451,11 +440,11 @@
           const res = await SUBAApi.request('/auth/register', {
             method: 'POST',
             body: JSON.stringify({
-              email: emailInput.value.trim(),
-              phone_number: verifiedPhone,
+              email: verifiedEmail,
+              phone_number: '0' + SUBAUtils.formatPhone(phoneInput2.value),
               password: passwordInput.value,
               full_name: `${firstNameInput.value.trim()} ${lastNameInput.value.trim()}`,
-              firebase_token: firebaseToken
+              supabase_token: supabaseToken
             })
           });
           

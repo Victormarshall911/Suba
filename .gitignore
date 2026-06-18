@@ -1,3 +1,6 @@
+# Supabase Configuration
+# Note: js/supabase-config.js MUST be pushed to GitHub for Vercel to work.
+
 # OS junk files
 Thumbs.db
 ehthumbs.db
