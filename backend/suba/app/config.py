@@ -6,7 +6,7 @@ All sensitive values (DATABASE_URL, secrets) are loaded here and never logged.
 """
 
 from functools import lru_cache
-from typing import List
+from typing import List, Union
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     APP_SECRET_KEY: str = "change-me-to-a-random-secret-string"
     APP_ENV: str = "development"
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:3000",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
