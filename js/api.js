@@ -5,9 +5,7 @@
 
 const SUBAApi = {
   // Base configuration
-  BASE_URL: window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-    ? 'http://localhost:8001/api/v1'
-    : 'https://suba-backend.onrender.com/api/v1',
+  BASE_URL: 'https://suba-backend.onrender.com/api/v1',
 
   /**
    * Helper to fetch resources with authorization headers
