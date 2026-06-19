@@ -62,22 +62,26 @@ async def register_user(
     from app.config import get_settings
     settings = get_settings()
 
+    token_alg = "unknown"
     try:
-        # Inspect the token header to determine algorithm
-        import base64, json
+        # Inspect the token header to determine the signing algorithm
+        import base64 as b64
+        import json as _json
         header_segment = request.supabase_token.split('.')[0]
-        # Add padding if needed
         padded = header_segment + '=' * (4 - len(header_segment) % 4)
-        token_header = json.loads(base64.urlsafe_b64decode(padded))
-        token_alg = token_header.get("alg", "unknown")
+        token_header = _json.loads(b64.urlsafe_b64decode(padded))
+        token_alg = token_header.get("alg", "HS256")
         logger.info("supabase_token_header", header=token_header)
+    except Exception as e:
+        logger.warning("supabase_token_header_parse_failed", error=str(e))
+        raise HTTPException(status_code=400, detail=f"Malformed verification token: could not read header")
 
-        # Supabase JWTs may use various algorithms
+    try:
         payload = jwt.decode(
             request.supabase_token, 
             settings.SUPABASE_JWT_SECRET, 
             algorithms=[token_alg],
-            options={"verify_aud": False}  # Supabase aud can be 'authenticated'
+            options={"verify_aud": False}
         )
         
         supabase_email = payload.get("email")
@@ -88,7 +92,7 @@ async def register_user(
             raise HTTPException(status_code=400, detail="Verified email does not match requested email")
             
     except JWTError as e:
-        logger.warning("supabase_token_verification_failed", error=str(e))
+        logger.warning("supabase_token_verification_failed", error=str(e), alg=token_alg)
         raise HTTPException(status_code=400, detail=f"Invalid or expired email verification token: {str(e)} (alg={token_alg})")
 
     # -------------------------------------------------------------------------
