@@ -80,7 +80,7 @@ async def register_user(
             
     except JWTError as e:
         logger.warning("supabase_token_verification_failed", error=str(e))
-        raise HTTPException(status_code=400, detail="Invalid or expired email verification token")
+        raise HTTPException(status_code=400, detail=f"Invalid or expired email verification token: {str(e)}")
 
     # -------------------------------------------------------------------------
     # Step 1: Check uniqueness before insert (fast fail with clear message)
