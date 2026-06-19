@@ -63,12 +63,12 @@ async def register_user(
     settings = get_settings()
 
     try:
-        # Supabase JWTs are typically signed with HS256
+        # Supabase JWTs may be signed with HS256, HS384, or HS512
         payload = jwt.decode(
             request.supabase_token, 
             settings.SUPABASE_JWT_SECRET, 
-            algorithms=["HS256"],
-            options={"verify_aud": False} # Supabase aud can be 'authenticated'
+            algorithms=["HS256", "HS384", "HS512"],
+            options={"verify_aud": False}  # Supabase aud can be 'authenticated'
         )
         
         supabase_email = payload.get("email")
