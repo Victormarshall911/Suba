@@ -63,11 +63,20 @@ async def register_user(
     settings = get_settings()
 
     try:
-        # Supabase JWTs may be signed with HS256, HS384, or HS512
+        # Inspect the token header to determine algorithm
+        import base64, json
+        header_segment = request.supabase_token.split('.')[0]
+        # Add padding if needed
+        padded = header_segment + '=' * (4 - len(header_segment) % 4)
+        token_header = json.loads(base64.urlsafe_b64decode(padded))
+        token_alg = token_header.get("alg", "unknown")
+        logger.info("supabase_token_header", header=token_header)
+
+        # Supabase JWTs may use various algorithms
         payload = jwt.decode(
             request.supabase_token, 
             settings.SUPABASE_JWT_SECRET, 
-            algorithms=["HS256", "HS384", "HS512"],
+            algorithms=[token_alg],
             options={"verify_aud": False}  # Supabase aud can be 'authenticated'
         )
         
@@ -80,7 +89,7 @@ async def register_user(
             
     except JWTError as e:
         logger.warning("supabase_token_verification_failed", error=str(e))
-        raise HTTPException(status_code=400, detail=f"Invalid or expired email verification token: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid or expired email verification token: {str(e)} (alg={token_alg})")
 
     # -------------------------------------------------------------------------
     # Step 1: Check uniqueness before insert (fast fail with clear message)
