@@ -131,18 +131,6 @@
                 <div class="recipient-circle" style="border-style: dashed">+</div>
                 <span class="recipient-name">Add New</span>
               </div>
-              <div class="recipient-avatar-btn" data-phone="08031234567" data-network="MTN">
-                <div class="recipient-circle" style="background: #FFF9E6; color: #D9A300">MO</div>
-                <span class="recipient-name">Self (MTN)</span>
-              </div>
-              <div class="recipient-avatar-btn" data-phone="08027654321" data-network="Airtel">
-                <div class="recipient-circle" style="background: #FFEBEB; color: #E50000">AM</div>
-                <span class="recipient-name">Mum (Airtel)</span>
-              </div>
-              <div class="recipient-avatar-btn" data-phone="07051112223" data-network="Glo">
-                <div class="recipient-circle" style="background: #EAF9EA; color: #008A00">JD</div>
-                <span class="recipient-name">Joy (Glo)</span>
-              </div>
             </div>
           </div>
 
@@ -158,41 +146,8 @@
               <a href="transactions.html">View All</a>
             </div>
             <div id="recentTxnsList">
-              <!-- Static placeholders or filled by javascript -->
-              <div class="txn-item" onclick="window.location.href='transactions.html'">
-                <div class="txn-icon data">📶</div>
-                <div class="txn-details">
-                  <div class="txn-title">Airtel 2GB Data</div>
-                  <div class="txn-subtitle">To 08027654321 • Success</div>
-                </div>
-                <div class="txn-right">
-                  <div class="txn-amount debit">-₦500</div>
-                  <div class="txn-subtitle">Just now</div>
-                </div>
-              </div>
-
-              <div class="txn-item" onclick="window.location.href='transactions.html'">
-                <div class="txn-icon airtime">📱</div>
-                <div class="txn-details">
-                  <div class="txn-title">MTN ₦200 Airtime</div>
-                  <div class="txn-subtitle">To 08031234567 • Success</div>
-                </div>
-                <div class="txn-right">
-                  <div class="txn-amount debit">-₦200</div>
-                  <div class="txn-subtitle">1 hour ago</div>
-                </div>
-              </div>
-
-              <div class="txn-item" onclick="window.location.href='transactions.html'">
-                <div class="txn-icon wallet">💰</div>
-                <div class="txn-details">
-                  <div class="txn-title">Funded Wallet</div>
-                  <div class="txn-subtitle">Via Paystack • Success</div>
-                </div>
-                <div class="txn-right">
-                  <div class="txn-amount credit">+₦5,000</div>
-                  <div class="txn-subtitle">3 hours ago</div>
-                </div>
+              <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
+                Loading transactions...
               </div>
             </div>
           </div>
@@ -330,6 +285,45 @@
         if (user) {
           SUBAUtils.store('user', user);
           updateUI(user);
+        }
+
+        // Fetch recent transactions
+        const txns = await SUBAApi.request('/wallet/transactions?page=1&size=5', { method: 'GET' });
+        const list = document.getElementById('recentTxnsList');
+        
+        if (!txns || !txns.items || txns.items.length === 0) {
+          list.innerHTML = `
+            <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
+              No recent transactions found
+            </div>
+          `;
+        } else {
+          list.innerHTML = '';
+          txns.items.forEach(txn => {
+            const isCredit = txn.type === 'CREDIT';
+            const icon = txn.type === 'FUNDING' ? '💰' : (txn.type === 'AIRTIME' ? '📱' : '📶');
+            const colorClass = txn.type === 'FUNDING' ? 'wallet' : (txn.type === 'AIRTIME' ? 'airtime' : 'data');
+            const sign = isCredit ? '+' : '-';
+            const amtClass = isCredit ? 'credit' : 'debit';
+            
+            // Format date relative (e.g., Just now, 2 hours ago) or simple date string
+            const dateStr = new Date(txn.created_at).toLocaleString();
+
+            const txnHtml = `
+              <div class="txn-item" onclick="window.location.href='transactions.html'">
+                <div class="txn-icon ${colorClass}">${icon}</div>
+                <div class="txn-details">
+                  <div class="txn-title">${txn.narration || 'Transaction'}</div>
+                  <div class="txn-subtitle">${txn.status}</div>
+                </div>
+                <div class="txn-right">
+                  <div class="txn-amount ${amtClass}">${sign}₦${SUBAUtils.formatNumber(txn.amount)}</div>
+                  <div class="txn-subtitle">${dateStr}</div>
+                </div>
+              </div>
+            `;
+            list.insertAdjacentHTML('beforeend', txnHtml);
+          });
         }
       } catch (err) {
         console.error("Failed to load live user data", err);
