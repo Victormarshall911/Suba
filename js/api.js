@@ -5,7 +5,7 @@
 
 const SUBAApi = {
   // Base configuration
-  BASE_URL: 'https://suba-backend.onrender.com/api/v1',
+  BASE_URL: 'https://suba-backend-production.up.railway.app/api/v1',
 
   /**
    * Helper to fetch resources with authorization headers
