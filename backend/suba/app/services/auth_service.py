@@ -62,38 +62,43 @@ async def register_user(
     from app.config import get_settings
     settings = get_settings()
 
-    token_alg = "unknown"
-    try:
-        # Inspect the token header to determine the signing algorithm
-        import base64 as b64
-        import json as _json
-        header_segment = request.supabase_token.split('.')[0]
-        padded = header_segment + '=' * (4 - len(header_segment) % 4)
-        token_header = _json.loads(b64.urlsafe_b64decode(padded))
-        token_alg = token_header.get("alg", "HS256")
-        logger.info("supabase_token_header", header=token_header)
-    except Exception as e:
-        logger.warning("supabase_token_header_parse_failed", error=str(e))
-        raise HTTPException(status_code=400, detail=f"Malformed verification token: could not read header")
-
-    try:
-        payload = jwt.decode(
-            request.supabase_token, 
-            settings.SUPABASE_JWT_SECRET, 
-            algorithms=[token_alg],
-            options={"verify_aud": False}
+    import httpx
+    
+    # Supabase URL must be provided in settings for network verification
+    if not settings.SUPABASE_URL or not settings.SUPABASE_ANON_KEY:
+        logger.error("supabase_network_verification_missing_keys")
+        raise HTTPException(
+            status_code=500, 
+            detail="Server configuration error: Missing SUPABASE_URL or SUPABASE_ANON_KEY"
         )
         
-        supabase_email = payload.get("email")
+    try:
+        # Verify the token by calling the Supabase REST API to get the user
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"{settings.SUPABASE_URL}/auth/v1/user",
+                headers={
+                    "apikey": settings.SUPABASE_ANON_KEY,
+                    "Authorization": f"Bearer {request.supabase_token}"
+                }
+            )
+            
+        if response.status_code != 200:
+            logger.warning("supabase_token_verification_failed", status=response.status_code, response=response.text)
+            raise HTTPException(status_code=400, detail="Invalid or expired email verification token")
+            
+        user_data = response.json()
+        supabase_email = user_data.get("email")
+        
         if not supabase_email:
             raise HTTPException(status_code=400, detail="Verification token does not contain an email address")
             
         if supabase_email.lower() != request.email.lower():
             raise HTTPException(status_code=400, detail="Verified email does not match requested email")
             
-    except JWTError as e:
-        logger.warning("supabase_token_verification_failed", error=str(e), alg=token_alg)
-        raise HTTPException(status_code=400, detail=f"Invalid or expired email verification token: {str(e)} (alg={token_alg})")
+    except httpx.RequestError as e:
+        logger.error("supabase_network_verification_timeout", error=str(e))
+        raise HTTPException(status_code=502, detail="Unable to contact authentication server. Please try again.")
 
     # -------------------------------------------------------------------------
     # Step 1: Check uniqueness before insert (fast fail with clear message)

@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     # Supabase (Email Authentication)
     # -------------------------------------------------------------------------
     SUPABASE_JWT_SECRET: str = ""
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
 
     # -------------------------------------------------------------------------
     # Validators
