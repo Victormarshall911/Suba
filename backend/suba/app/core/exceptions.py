@@ -129,18 +129,30 @@ class PaystackSignatureError(SUBAException):
 # Global Exception Handler — ensures consistent JSON error shape
 # =============================================================================
 
+def _add_cors_headers(request: Request, response: JSONResponse) -> JSONResponse:
+    origin = request.headers.get("origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "false"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    else:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
 async def suba_exception_handler(request: Request, exc: SUBAException) -> JSONResponse:
     """
     Global handler for all SUBAException subclasses.
     Returns a consistent JSON body with 'detail' and 'code' keys.
     """
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content={
             "detail": exc.detail,
             "code": exc.code,
         },
     )
+    return _add_cors_headers(request, response)
 
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -153,10 +165,11 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     logger = structlog.get_logger()
     logger.error("unhandled_exception", error=str(exc), path=request.url.path)
 
-    return JSONResponse(
+    response = JSONResponse(
         status_code=500,
         content={
             "detail": "An unexpected error occurred",
             "code": "INTERNAL_ERROR",
         },
     )
+    return _add_cors_headers(request, response)
