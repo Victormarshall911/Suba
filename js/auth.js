@@ -68,3 +68,6 @@ const SUBAAuth = {
 
 // Check guard immediately when script runs
 SUBAAuth.checkGuard();
+
+// Export to window explicitly so login.html can find window.SUBAAuth
+window.SUBAAuth = SUBAAuth;
