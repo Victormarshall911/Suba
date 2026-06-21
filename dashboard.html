@@ -53,9 +53,9 @@
         </a>
       </nav>
       <div class="sidebar-footer">
-        <div class="avatar avatar-sm" id="desktopUserAvatar">TO</div>
+        <div class="avatar avatar-sm" id="desktopUserAvatar">U</div>
         <div>
-          <div class="sidebar-user-name" id="desktopUserName">Tobi Oyelami</div>
+          <div class="sidebar-user-name" id="desktopUserName">User</div>
           <div class="sidebar-user-role">Student Account</div>
         </div>
       </div>
@@ -67,7 +67,7 @@
       <!-- Topbar greeting and notifications -->
       <div class="dashboard-topbar">
         <div class="user-greeting">
-          <h3 id="greetingMessage">Hey, Tobi 👋</h3>
+          <h3 id="greetingMessage">Hey, User 👋</h3>
           <p>Ready to purchase your campus bundles today?</p>
         </div>
         <div class="topbar-actions">
@@ -75,7 +75,7 @@
             🔔
             <span class="bell-badge"></span>
           </button>
-          <a href="profile.html" class="avatar" id="topbarUserAvatar">TO</a>
+          <a href="profile.html" class="avatar" id="topbarUserAvatar">U</a>
         </div>
       </div>
 
@@ -300,34 +300,39 @@
         return;
       }
 
-      // Fetch live user data from backend
+      // Function to update UI with user object
+      const updateUI = (user) => {
+        const fullName = user.full_name || 'User';
+        const names = fullName.split(' ');
+        const firstName = names[0];
+        const lastName = names.length > 1 ? names[names.length - 1] : '';
+        const initials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase() || 'U';
+
+        document.getElementById('desktopUserAvatar').textContent = initials;
+        document.getElementById('topbarUserAvatar').textContent = initials;
+        document.getElementById('desktopUserName').textContent = fullName;
+        document.getElementById('greetingMessage').textContent = `Hey, ${firstName} 👋`;
+        document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance || 0);
+        
+        const refElement = document.getElementById('referralCode');
+        if (refElement) refElement.textContent = user.referral_code || 'SUBA001';
+      };
+
+      // Instantly update UI from cache to prevent flickering
+      const cachedUser = SUBAUtils.retrieve('user');
+      if (cachedUser) {
+        updateUI(cachedUser);
+      }
+
+      // Fetch live user data from backend in background
       try {
         const user = await SUBAApi.request('/auth/me', { method: 'GET' });
         if (user) {
-          // Update local cache
           SUBAUtils.store('user', user);
-          
-          const fullName = user.full_name || 'User';
-          const names = fullName.split(' ');
-          const firstName = names[0];
-          const lastName = names.length > 1 ? names[names.length - 1] : '';
-          const initials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase() || 'U';
-
-          document.getElementById('desktopUserAvatar').textContent = initials;
-          document.getElementById('topbarUserAvatar').textContent = initials;
-          document.getElementById('desktopUserName').textContent = fullName;
-          document.getElementById('greetingMessage').textContent = `Hey, ${firstName} 👋`;
-          
-          // Wallet logic assumes returned balance is in kobo or raw depending on backend
-          // We will divide by 100 assuming the backend returns kobo, but if backend returns raw Naira, adjust.
-          // Wait, backend `UserResponse` usually returns raw float for balance if it's stored as Decimal.
-          // Let's assume balance is returned as float in Naira.
-          document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance || 0);
-          document.getElementById('referralCode').textContent = user.referral_code || 'SUBA001';
+          updateUI(user);
         }
       } catch (err) {
         console.error("Failed to load live user data", err);
-        // If unauthenticated, api.js automatically redirects to login.html
       }
 
       // Fund Wallet modal triggers
