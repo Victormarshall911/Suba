@@ -136,7 +136,7 @@
             <!-- Terms and conditions checkbox -->
             <div class="checkbox-wrapper mb-6" id="termsWrapper">
               <div class="checkbox" id="termsCheckbox"></div>
-              <span class="checkbox-label">I agree to SUBA's <a href="#" class="text-orange">Terms of Service</a> & <a href="#" class="text-orange">Privacy Policy</a></span>
+              <span class="checkbox-label">I agree to SUBA's <a href="policies.html?tab=terms" target="_blank" class="text-orange">Terms of Service</a> & <a href="policies.html?tab=privacy" target="_blank" class="text-orange">Privacy Policy</a></span>
             </div>
             <div class="form-error hidden mb-4" id="termsError"></div>
 
@@ -196,7 +196,8 @@
       // Terms interaction
       const termsCheckbox = document.getElementById('termsCheckbox');
       const termsWrapper = document.getElementById('termsWrapper');
-      termsWrapper.addEventListener('click', () => {
+      termsWrapper.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') return;
         termsCheckbox.classList.toggle('checked');
       });
 
@@ -451,6 +452,8 @@
           // Store registered user credentials from backend
           SUBAUtils.store('token', res.access_token);
           SUBAUtils.store('user', res.user);
+          
+          localStorage.setItem('suba_show_support_prompt', 'true');
 
           SUBAComponents.showToast({
             title: 'Account Created!',

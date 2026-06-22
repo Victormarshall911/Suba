@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Policies & Legal | SUBA — Fast, Reliable & Automated VTU</title>
+  <meta name="description" content="Read SUBA's terms of service, privacy policy, refund policy, and customer support rules.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  
+  <style>
+    /* Policies layout styling */
+    .policies-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-8);
+      margin-top: calc(var(--header-height) + var(--space-8));
+      margin-bottom: var(--space-20);
+    }
+    
+    @media (min-width: 1024px) {
+      .policies-grid {
+        grid-template-columns: 300px 1fr;
+        margin-top: calc(var(--header-height) + var(--space-12));
+      }
+    }
+    
+    .policies-sidebar {
+      position: sticky;
+      top: calc(var(--header-height) + var(--space-6));
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border-light);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-5);
+      height: fit-content;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    @media (max-width: 1023px) {
+      .policies-sidebar {
+        position: relative;
+        top: 0;
+        display: flex;
+        overflow-x: auto;
+        gap: var(--space-2);
+        border: none;
+        background: none;
+        padding: var(--space-2) 0;
+        box-shadow: none;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .policies-sidebar::-webkit-scrollbar {
+        display: none;
+      }
+    }
+    
+    .policies-nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px var(--space-4);
+      color: var(--clr-text-secondary);
+      font-weight: var(--fw-medium);
+      border-radius: var(--radius-lg);
+      transition: all var(--transition-fast);
+      text-decoration: none;
+      margin-bottom: var(--space-1);
+      cursor: pointer;
+      font-size: var(--text-sm);
+    }
+    
+    .policies-nav-item:hover {
+      background: var(--clr-bg);
+      color: var(--clr-primary);
+    }
+    
+    .policies-nav-item.active {
+      background: var(--clr-primary-light);
+      color: var(--clr-primary);
+      font-weight: var(--fw-bold);
+    }
+    
+    @media (max-width: 1023px) {
+      .policies-nav-item {
+        white-space: nowrap;
+        margin-bottom: 0;
+        border: 1px solid var(--clr-border-light);
+        background: var(--clr-surface);
+      }
+      .policies-nav-item.active {
+        border-color: var(--clr-primary-subtle);
+      }
+    }
+    
+    .policy-content-block {
+      display: none;
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border-light);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-6) var(--space-5);
+      box-shadow: var(--shadow-sm);
+      animation: fadeIn 300ms ease;
+    }
+    
+    @media (min-width: 640px) {
+      .policy-content-block {
+        padding: var(--space-10);
+      }
+    }
+    
+    .policy-content-block.active {
+      display: block;
+    }
+    
+    .policy-content-block h2 {
+      font-size: var(--text-2xl);
+      color: var(--clr-text-primary);
+      margin-bottom: var(--space-2);
+      font-weight: var(--fw-bold);
+    }
+    
+    .policy-date {
+      font-size: var(--text-xs);
+      color: var(--clr-text-tertiary);
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--clr-border-light);
+    }
+    
+    .policy-body h3 {
+      font-size: var(--text-base);
+      color: var(--clr-text-primary);
+      margin-top: var(--space-6);
+      margin-bottom: var(--space-3);
+      font-weight: var(--fw-bold);
+    }
+    
+    .policy-body p {
+      font-size: var(--text-sm);
+      color: var(--clr-text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--space-4);
+    }
+    
+    .policy-body ul {
+      margin-bottom: var(--space-4);
+      padding-left: var(--space-5);
+    }
+    
+    .policy-body li {
+      font-size: var(--text-sm);
+      color: var(--clr-text-secondary);
+      line-height: 1.6;
+      margin-bottom: var(--space-2);
+      list-style-type: disc;
+    }
+    
+    .policy-body ol {
+      margin-bottom: var(--space-4);
+      padding-left: var(--space-5);
+    }
+    
+    .policy-body ol li {
+      list-style-type: decimal;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header class="header scrolled">
+    <div class="container header-inner">
+      <a href="index.html" class="header-logo">
+        <img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img">
+      </a>
+      
+      <nav class="header-nav">
+        <a href="index.html#home">Home</a>
+        <a href="index.html#pricing">Pricing</a>
+        <a href="index.html#how-it-works">How It Works</a>
+        <a href="index.html#faq">FAQ</a>
+      </nav>
+      
+      <div class="header-actions">
+        <a href="login.html" class="btn btn-ghost btn-sm desktop-only">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+        <button class="mobile-menu-btn" aria-label="Toggle Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#pricing">Pricing Plans</a>
+    <a href="index.html#how-it-works">How It Works</a>
+    <a href="index.html#faq">FAQ</a>
+    <div class="mobile-menu-cta">
+      <a href="login.html" class="btn btn-secondary">Login</a>
+      <a href="register.html" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+
+  <main class="page-content">
+    <div class="container">
+      <div class="policies-grid">
+        
+        <!-- Sidebar Navigation Tabs -->
+        <aside class="policies-sidebar">
+          <div class="policies-nav-item active" data-tab="terms">Terms of Service</div>
+          <div class="policies-nav-item" data-tab="privacy">Privacy Policy</div>
+          <div class="policies-nav-item" data-tab="refund">Refund Policy</div>
+          <div class="policies-nav-item" data-tab="kyc">KYC Verification</div>
+          <div class="policies-nav-item" data-tab="support">Customer Support</div>
+          <div class="policies-nav-item" data-tab="aml">Anti-Money Laundering</div>
+          <div class="policies-nav-item" data-tab="dispute">Dispute Resolution</div>
+        </aside>
+
+        <!-- Policies Content Area -->
+        <div class="policies-content">
+          
+          <!-- 1. Terms of Service -->
+          <section class="policy-content-block active" id="content-terms">
+            <h2>SUBA Terms of Service</h2>
+            <div class="policy-date">Effective Date: June 22, 2026</div>
+            <div class="policy-body">
+              <p>By accessing or using SUBA, you agree to these Terms of Service.</p>
+              
+              <h3>Eligibility</h3>
+              <p>You must:</p>
+              <ul>
+                <li>Be at least 18 years old, or use the platform under the supervision of a parent or guardian.</li>
+                <li>Provide accurate and complete information during registration.</li>
+              </ul>
+              
+              <h3>Acceptable Use</h3>
+              <p>You agree not to:</p>
+              <ul>
+                <li>Engage in fraudulent, illegal, or unauthorized activities.</li>
+                <li>Use stolen or unauthorized payment methods.</li>
+                <li>Create multiple accounts to exploit promotions or evade restrictions.</li>
+                <li>Attempt to interfere with the security or functionality of the platform.</li>
+              </ul>
+              
+              <h3>Pricing</h3>
+              <p>Prices displayed at checkout are final for that transaction. SUBA reserves the right to update pricing at any time without prior notice.</p>
+              
+              <h3>Service Availability</h3>
+              <p>SUBA strives to provide uninterrupted services but cannot guarantee continuous availability due to maintenance, third-party provider outages, network failures, or events beyond our control.</p>
+              
+              <h3>Account Security</h3>
+              <p>You are responsible for maintaining the confidentiality of your account credentials and for all activities conducted through your account.</p>
+              
+              <h3>Suspension and Termination</h3>
+              <p>SUBA may suspend or terminate accounts involved in fraud, suspicious activities, abuse of promotions, or violations of these Terms.</p>
+              
+              <h3>Limitation of Liability</h3>
+              <p>SUBA shall not be liable for indirect, incidental, or consequential damages arising from the use of the platform.</p>
+              
+              <h3>Governing Law</h3>
+              <p>These Terms are governed by the laws of the Federal Republic of Nigeria.</p>
+            </div>
+          </section>
+
+          <!-- 2. Privacy Policy -->
+          <section class="policy-content-block" id="content-privacy">
+            <h2>SUBA Privacy Policy</h2>
+            <div class="policy-date">Effective Date: June 22, 2026</div>
+            <div class="policy-body">
+              <p>SUBA respects your privacy and is committed to protecting your personal information.</p>
+              
+              <h3>Information We Collect</h3>
+              <p>We may collect:</p>
+              <ul>
+                <li>Full name</li>
+                <li>Email address</li>
+                <li>Phone number</li>
+                <li>Date of birth</li>
+                <li>Device information</li>
+                <li>IP address</li>
+                <li>Transaction history</li>
+                <li>Identity verification documents</li>
+              </ul>
+              
+              <h3>How We Use Your Information</h3>
+              <p>We use your information to:</p>
+              <ul>
+                <li>Deliver and improve our services</li>
+                <li>Verify your identity</li>
+                <li>Prevent fraud and unauthorized activities</li>
+                <li>Comply with legal and regulatory obligations</li>
+              </ul>
+              
+              <h3>Data Sharing</h3>
+              <p>We may share information with:</p>
+              <ul>
+                <li>Payment processors</li>
+                <li>VTU service providers</li>
+                <li>Identity verification partners</li>
+                <li>Regulatory authorities where required by law</li>
+              </ul>
+              <p>SUBA does not sell user data.</p>
+              
+              <h3>Data Security</h3>
+              <p>We implement industry-standard security measures, including encryption, access controls, and regular security monitoring.</p>
+              
+              <h3>Your Rights</h3>
+              <p>You may request access to, correction of, or deletion of your personal information, subject to applicable laws.</p>
+              
+              <p>For privacy-related inquiries, contact: <a href="mailto:support@suba.ng">support@suba.ng</a></p>
+            </div>
+          </section>
+
+          <!-- 3. Refund Policy -->
+          <section class="policy-content-block" id="content-refund">
+            <h2>SUBA Refund Policy</h2>
+            <div class="policy-date">Effective Date: June 22, 2026</div>
+            <div class="policy-body">
+              <p>SUBA is committed to providing fast, secure, and reliable digital utility services. This Refund Policy outlines the circumstances under which refunds may be granted.</p>
+              
+              <h3>Eligible Refund Requests</h3>
+              <p>Users may qualify for a refund if:</p>
+              <ul>
+                <li>Payment is successful, but the purchased service is not delivered within the stated timeframe.</li>
+                <li>A transaction fails due to a verified technical issue on SUBA's platform.</li>
+                <li>Duplicate charges occur for the same transaction.</li>
+                <li>A user is incorrectly debited due to a system error.</li>
+              </ul>
+              
+              <h3>Non-Refundable Transactions</h3>
+              <p>Refunds will not be provided if:</p>
+              <ul>
+                <li>Incorrect phone numbers, meter numbers, smart card numbers, or account details are submitted by the user.</li>
+                <li>The service provider confirms successful delivery.</li>
+                <li>The user changes their mind after a successful purchase.</li>
+                <li>Service disruptions occur after successful delivery due to third-party network providers.</li>
+                <li>Fraudulent or suspicious activity is detected.</li>
+              </ul>
+              
+              <h3>Refund Process</h3>
+              <ol>
+                <li>Submit a refund request within 72 hours of the transaction.</li>
+                <li>Provide the transaction ID and any relevant information or screenshots.</li>
+                <li>SUBA will investigate the claim within 1–3 business days.</li>
+                <li>Approved refunds will be processed within 5–10 business days.</li>
+              </ol>
+              <p>SUBA reserves the right to request additional information before approving any refund.</p>
+            </div>
+          </section>
+
+          <!-- 4. KYC Verification Policy -->
+          <section class="policy-content-block" id="content-kyc">
+            <h2>SUBA Know Your Customer (KYC) Policy</h2>
+            <div class="policy-date">Effective Date: June 22, 2026</div>
+            <div class="policy-body">
+              <p>SUBA uses a risk-based KYC process to verify user identities and maintain platform security.</p>
+              
+              <h3>Tier 1 – Basic Verification</h3>
+              <p><strong>Requirements:</strong></p>
+              <ul>
+                <li>Full name</li>
+                <li>Phone number</li>
+                <li>Email address</li>
+                <li>OTP verification</li>
+              </ul>
+              <p><strong>Features:</strong></p>
+              <ul>
+                <li>Access to basic services</li>
+                <li>Lower transaction limits</li>
+              </ul>
+              
+              <h3>Tier 2 – Standard Verification</h3>
+              <p><strong>Additional Requirements:</strong></p>
+              <ul>
+                <li>National Identification Number (NIN) or Bank Verification Number (BVN)</li>
+                <li>Date of birth</li>
+              </ul>
+              <p><strong>Features:</strong></p>
+              <ul>
+                <li>Increased transaction limits</li>
+              </ul>
+              
+              <h3>Tier 3 – Enhanced Verification</h3>
+              <p><strong>Additional Requirements:</strong></p>
+              <ul>
+                <li>Government-issued identification document</li>
+                <li>Selfie verification</li>
+              </ul>
+              <p><strong>Features:</strong></p>
+              <ul>
+                <li>Higher transaction limits</li>
+                <li>Access to premium features</li>
+              </ul>
+              <p>SUBA reserves the right to request additional information at any time.</p>
+            </div>
+          </section>
+
+          <!-- 5. Customer Support Policy -->
+          <section class="policy-content-block" id="content-support">
+            <h2>SUBA Customer Support Policy</h2>
+            <div class="policy-date">Effective Date: June 22, 2026</div>
+            <div class="policy-body">
+              <p>SUBA is committed to providing timely and effective customer support.</p>
+              
+              <h3>Support Channels</h3>
+              <p>Users can contact SUBA through:</p>
+              <ul>
+                <li>In-app support</li>
+                <li>WhatsApp</li>
+                <li>Email: <a href="mailto:support@suba.ng">support@suba.ng</a></li>
+                <li>Official social media channels</li>
+              </ul>
+              
+              <h3>Response Times</h3>
+              <ul>
+                <li>General inquiries: Within 24 hours</li>
+                <li>Transaction issues: Within 12 hours</li>
+                <li>Critical payment issues: Within 4 hours</li>
+              </ul>
+              
+              <h3>Support Hours</h3>
+              <p>Monday to Sunday: 8:00 AM – 10:00 PM (WAT)</p>
+              <p>Critical transaction monitoring operates 24/7.</p>
+              
+              <p>Users should provide their transaction ID and relevant details when requesting assistance.</p>
+            </div>
+          </section>
+
+          <!-- 6. AML Policy -->
+          <section class="policy-content-block" id="content-aml">
+            <h2>SUBA Anti-Money Laundering (AML) Policy</h2>
+            <div class="policy-date">Effective Date: June 22, 2026</div>
+            <div class="policy-body">
+              <p>SUBA is committed to preventing money laundering, fraud, terrorist financing, and other financial crimes.</p>
+              
+              <h3>Monitoring Activities</h3>
+              <p>SUBA may:</p>
+              <ul>
+                <li>Monitor transactions for unusual patterns</li>
+                <li>Review high-risk accounts</li>
+                <li>Restrict suspicious transactions</li>
+                <li>Request enhanced verification documents</li>
+              </ul>
+              
+              <h3>Examples of Suspicious Activities</h3>
+              <ul>
+                <li>Multiple accounts linked to the same identity</li>
+                <li>Repeated failed payment attempts</li>
+                <li>Unusual transaction frequency or volume</li>
+                <li>Rapid account funding and spending patterns</li>
+              </ul>
+              
+              <h3>Reporting Obligations</h3>
+              <p>SUBA reserves the right to report suspicious activities to relevant authorities as required by applicable laws and regulations.</p>
+              <p>Users found engaging in prohibited activities may have their accounts restricted, suspended, or permanently terminated.</p>
+            </div>
+          </section>
+
+          <!-- 7. Dispute Resolution Policy -->
+          <section class="policy-content-block" id="content-dispute">
+            <h2>SUBA Dispute Resolution Policy</h2>
+            <div class="policy-date">Effective Date: June 22, 2026</div>
+            <div class="policy-body">
+              <p>SUBA aims to resolve all disputes fairly, transparently, and efficiently.</p>
+              
+              <h3>Step 1: Submit a Complaint</h3>
+              <p>Users should contact SUBA support and provide:</p>
+              <ul>
+                <li>Transaction ID</li>
+                <li>Date and time of the transaction</li>
+                <li>Description of the issue</li>
+                <li>Relevant screenshots or supporting documents</li>
+              </ul>
+              
+              <h3>Step 2: Investigation</h3>
+              <p>SUBA will review the complaint and provide an initial response within 5 business days.</p>
+              
+              <h3>Step 3: Escalation</h3>
+              <p>If the issue remains unresolved, users may request a formal review by SUBA's compliance team.</p>
+              <p>The compliance team will provide a final decision within 10 business days.</p>
+              
+              <h3>Step 4: External Resolution</h3>
+              <p>Where necessary, unresolved disputes may be referred to applicable regulatory authorities, alternative dispute resolution mechanisms, or courts of competent jurisdiction in Nigeria.</p>
+              
+              <h3>Governing Law</h3>
+              <p>This policy is governed by the laws of the Federal Republic of Nigeria.</p>
+            </div>
+          </section>
+          
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer Section -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="images/suba-logo.png" alt="SUBA Logo" class="site-logo-img footer-logo-img">
+        <p class="tagline">Just SUBA it.</p>
+        <p style="margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.5)">Automated VTU system built specifically for Nigerian university students.</p>
+      </div>
+      
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="index.html#home">Home</a></li>
+          <li><a href="index.html#pricing">Pricing Plans</a></li>
+          <li><a href="index.html#how-to-use">How It Works</a></li>
+          <li><a href="index.html#faq">FAQs</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Services</h5>
+        <ul>
+          <li><a href="register.html">Buy Cheap Data</a></li>
+          <li><a href="register.html">Buy Airtime</a></li>
+          <li><a href="register.html">Electricity Tokens</a></li>
+          <li><a href="register.html">Cable TV (Phase 2)</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Connect</h5>
+        <ul>
+          <li><a href="https://wa.me/2348000000000">WhatsApp Support</a></li>
+          <li><a href="#">Announcements</a></li>
+          <li><a href="register.html">Become Ambassador</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>&copy; 2026 SUBA. All rights reserved. Built with pride for Nigeria.</p>
+      <div>
+        <a href="policies.html?tab=terms" style="margin-right: 16px">Terms of Use</a>
+        <a href="policies.html?tab=privacy">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('.policies-nav-item');
+      const blocks = document.querySelectorAll('.policy-content-block');
+      
+      function selectTab(tabName) {
+        tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+        blocks.forEach(b => b.classList.toggle('active', b.id === `content-${tabName}`));
+        
+        // Scroll slightly on mobile to show the new content
+        if (window.innerWidth < 1024) {
+          const contentArea = document.querySelector('.policies-content');
+          if (contentArea) {
+            contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      }
+      
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.dataset.tab;
+          selectTab(tabName);
+          
+          // Update URL query parameter without page reload
+          const newUrl = `${window.location.pathname}?tab=${tabName}`;
+          window.history.pushState({ tab: tabName }, '', newUrl);
+        });
+      });
+      
+      // Auto-select tab based on URL query param
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialTab = urlParams.get('tab');
+      if (initialTab && document.getElementById(`content-${initialTab}`)) {
+        selectTab(initialTab);
+      }
+      
+      // Listen for browser back/forward buttons
+      window.addEventListener('popstate', (e) => {
+        if (e.state && e.state.tab) {
+          selectTab(e.state.tab);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -50,6 +50,8 @@ const SUBAAuth = {
         SUBAUtils.store('token', data.access_token);
         SUBAUtils.store('user', data.user);
         
+        localStorage.setItem('suba_show_support_prompt', 'true');
+        
         SUBAComponents.showToast({
           title: 'Welcome Back!',
           message: 'Redirecting to your dashboard...',

@@ -10,6 +10,8 @@
   display: block;
   height: 48px;
   width: auto;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
   object-fit: contain;
   /* Slight drop-shadow gives pop without a white bg requirement */
   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.10));

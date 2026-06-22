@@ -243,6 +243,34 @@
     </div>
   </div>
 
+  <!-- Login Support Modal -->
+  <div class="modal-backdrop" id="loginSupportModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>Quick Support Portal</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('loginSupportModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center; padding-top: var(--space-4);">
+        <div style="font-size: 48px; margin-bottom: var(--space-4);">👋</div>
+        <h4 style="margin-bottom: var(--space-2); font-weight: 700;">Welcome back to SUBA!</h4>
+        <p style="font-size: var(--text-sm); color: var(--clr-text-secondary); line-height: 1.5; margin-bottom: var(--space-6);">
+          Do you need any support or assistance with your transactions today?
+        </p>
+        <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          <a href="https://wa.me/2348000000000" target="_blank" class="btn btn-primary btn-block" style="background: #25D366; border-color: #25D366; text-decoration: none;" onclick="SUBAComponents.closeModal('loginSupportModal')">
+            🟢 Chat on WhatsApp
+          </a>
+          <a href="mailto:support@suba.ng" class="btn btn-secondary btn-block" style="text-decoration: none;" onclick="SUBAComponents.closeModal('loginSupportModal')">
+            ✉️ Email Support
+          </a>
+          <button class="btn btn-ghost btn-block" onclick="SUBAComponents.closeModal('loginSupportModal')" style="color: var(--clr-text-tertiary); font-size: var(--text-xs);">
+            No support needed, thank you
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/utils.js"></script>
   <script src="js/components.js"></script>
@@ -496,6 +524,14 @@
           window.location.href = 'buy-data.html';
         });
       });
+
+      // Check if we should show the support prompt
+      if (localStorage.getItem('suba_show_support_prompt') === 'true') {
+        localStorage.removeItem('suba_show_support_prompt');
+        setTimeout(() => {
+          SUBAComponents.openModal('loginSupportModal');
+        }, 1500);
+      }
     });
   </script>
 </body>

@@ -14,6 +14,8 @@ const SUBAComponents = {
     this.initScrollAnimations();
     this.initAccordions();
     this.initToastContainer();
+    this.initCookieConsent();
+    this.initFloatingSupport();
   },
 
   /* ============================================
@@ -440,6 +442,146 @@ const SUBAComponents = {
     });
     document.querySelectorAll('.sidebar-nav-item').forEach(item => {
       item.classList.toggle('active', item.dataset.page === page);
+    });
+  },
+
+  /* ============================================
+     COOKIE CONSENT BANNER
+     ============================================ */
+  initCookieConsent() {
+    // Only run on user-facing pages, don't show inside admin
+    if (window.location.pathname.includes('/admin/')) return;
+    if (localStorage.getItem('suba_cookie_consent')) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'cookie-banner';
+    banner.id = 'cookieConsentBanner';
+    banner.innerHTML = `
+      <div class="cookie-banner-content">
+        <span class="cookie-icon">🍪</span>
+        <p>SUBA uses cookies to deliver fast, secure, and reliable VTU services. By using our site, you agree to our <a href="policies.html?tab=privacy">Privacy Policy</a>.</p>
+      </div>
+      <div class="cookie-banner-actions">
+        <button class="btn btn-ghost btn-sm" id="declineCookiesBtn" style="color: var(--clr-text-secondary);">Decline</button>
+        <button class="btn btn-primary btn-sm" id="acceptCookiesBtn">Accept Cookies</button>
+      </div>
+    `;
+
+    document.body.appendChild(banner);
+
+    document.getElementById('acceptCookiesBtn').addEventListener('click', () => {
+      localStorage.setItem('suba_cookie_consent', 'accepted');
+      banner.classList.add('cookie-banner-hide');
+      setTimeout(() => banner.remove(), 400);
+    });
+
+    document.getElementById('declineCookiesBtn').addEventListener('click', () => {
+      localStorage.setItem('suba_cookie_consent', 'declined');
+      banner.classList.add('cookie-banner-hide');
+      setTimeout(() => banner.remove(), 400);
+    });
+  },
+
+  /* ============================================
+     FLOATING SUPPORT WIDGET
+     ============================================ */
+  initFloatingSupport() {
+    // Don't show in admin area
+    if (window.location.pathname.includes('/admin/')) return;
+    if (document.getElementById('supportWidgetContainer')) return;
+
+    const widget = document.createElement('div');
+    widget.className = 'support-widget-container';
+    widget.id = 'supportWidgetContainer';
+    widget.innerHTML = `
+      <button class="support-floating-btn" id="supportFloatingBtn" aria-label="Contact Support">
+        <span class="support-btn-icon">💬</span>
+      </button>
+      
+      <div class="support-popover" id="supportPopover">
+        <div class="support-popover-header">
+          <div style="font-weight: 700; color: white;">SUBA Support</div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.85)">Active: 8:00 AM – 10:00 PM WAT</div>
+        </div>
+        <div class="support-popover-body">
+          <p style="margin-bottom: var(--space-3); font-size: 12px; color: var(--clr-text-secondary); line-height: 1.4;">
+            Need quick assistance with your transaction?
+          </p>
+          
+          <a href="https://wa.me/2348000000000" target="_blank" class="support-channel-link whatsapp" style="text-decoration: none;">
+            <span class="channel-icon">🟢</span>
+            <div class="channel-info">
+              <div class="channel-name" style="font-weight:600; font-size:13px; color: var(--clr-text-primary);">Chat on WhatsApp</div>
+              <div class="channel-desc" style="font-size:10px; color: var(--clr-text-tertiary);">Instant replies • 24/7 active</div>
+            </div>
+          </a>
+          
+          <a href="mailto:support@suba.ng" class="support-channel-link email" style="text-decoration: none; margin-top: 8px; display: flex;">
+            <span class="channel-icon">✉️</span>
+            <div class="channel-info">
+              <div class="channel-name" style="font-weight:600; font-size:13px; color: var(--clr-text-primary);">Email Support</div>
+              <div class="channel-desc" style="font-size:10px; color: var(--clr-text-tertiary);">Replies within 4 hours</div>
+            </div>
+          </a>
+
+          <a href="policies.html?tab=support" class="support-channel-link policy" style="text-decoration: none; margin-top: 8px; display: flex;">
+            <span class="channel-icon">📄</span>
+            <div class="channel-info">
+              <div class="channel-name" style="font-weight:600; font-size:13px; color: var(--clr-text-primary);">Support Policy</div>
+              <div class="channel-desc" style="font-size:10px; color: var(--clr-text-tertiary);">Read support hours & guidelines</div>
+            </div>
+          </a>
+          
+          <div class="support-ticket-form" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--clr-border-light);">
+            <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px; color: var(--clr-text-primary)">Submit Quick Ticket</div>
+            <textarea id="quickSupportMsg" class="form-textarea" placeholder="Describe your transaction issue..." rows="2" style="font-size: 11px; padding: 6px 10px; resize: none; margin-bottom: 8px;"></textarea>
+            <button class="btn btn-primary btn-sm btn-block" id="sendQuickSupportBtn" style="font-size: 11px; padding: 6px 12px; border-radius: var(--radius-md);">Submit Message</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(widget);
+
+    const floatBtn = document.getElementById('supportFloatingBtn');
+    const popover = document.getElementById('supportPopover');
+
+    floatBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      popover.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#supportWidgetContainer')) {
+        popover.classList.remove('active');
+      }
+    });
+
+    const sendBtn = document.getElementById('sendQuickSupportBtn');
+    const msgText = document.getElementById('quickSupportMsg');
+
+    sendBtn.addEventListener('click', () => {
+      const msg = msgText.value.trim();
+      if (!msg) {
+        SUBAComponents.showToast({
+          title: 'Empty Message',
+          message: 'Please describe your query first.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      sendBtn.classList.add('is-loading');
+      setTimeout(() => {
+        sendBtn.classList.remove('is-loading');
+        msgText.value = '';
+        popover.classList.remove('active');
+        SUBAComponents.showToast({
+          title: 'Ticket Submitted!',
+          message: 'Support team will contact you shortly.',
+          type: 'success'
+        });
+      }, 1200);
     });
   }
 };
