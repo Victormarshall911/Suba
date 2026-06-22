@@ -58,13 +58,18 @@
   pointer-events: none;
 }
 
-/* Visual panel logo — white/inverted to suit the dark gradient */
+/* Visual panel logo — styled as a premium rounded icon on dark background */
 .auth-visual-brand .auth-panel-logo {
   display: block;
-  height: 52px;
+  height: 72px;
   width: auto;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
   object-fit: contain;
-  filter: brightness(0) invert(1) drop-shadow(0 1px 4px rgba(0,0,0,0.25));
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .auth-visual-body {
@@ -136,11 +141,17 @@
 /* Auth card logo — show only on mobile (visual panel is hidden on mobile) */
 .auth-header .auth-card-logo {
   display: block;
-  height: 60px;
+  height: 80px;
   width: auto;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
   object-fit: contain;
   margin-inline: auto;
   margin-bottom: var(--space-4);
+  border-radius: 20px;
+  background: white;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
 @media (min-width: 1024px) {

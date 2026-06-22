@@ -8,44 +8,53 @@
 /* Base logo image style — used everywhere */
 .site-logo-img {
   display: block;
-  height: 48px;
+  height: 52px;
   width: auto;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
   object-fit: contain;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.05);
   /* Slight drop-shadow gives pop without a white bg requirement */
   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.10));
 }
 
 /* Header logo — slightly taller for the homepage nav */
 .header-logo .site-logo-img {
-  height: 44px;
+  height: 52px;
+  border-radius: 12px;
 }
 
 /* Sidebar logo — compact to fit the narrow rail */
 .sidebar-logo .site-logo-img {
-  height: 52px;
+  height: 64px;
+  border-radius: 16px;
 }
 
-/* Auth left-panel logo — on dark blue gradient so invert colors */
+/* Auth left-panel logo — on dark blue gradient, style as beautiful rounded icon */
 .auth-panel-logo {
-  height: 52px;
-  filter: brightness(0) invert(1) drop-shadow(0 1px 4px rgba(0,0,0,0.25));
+  height: 72px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 /* Auth card logo — centered above the form heading */
 .auth-card-logo {
-  height: 60px;
+  height: 80px;
   margin-inline: auto;
   margin-bottom: 4px;
+  border-radius: 20px;
 }
 
 /* Footer logo — on dark bg, keep natural colors but slightly smaller */
 .footer-logo-img {
-  height: 48px;
-  margin-bottom: 4px;
-  /* Subtle brightness boost to pop on dark footer */
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.25));
+  height: 60px;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 
