@@ -4,6 +4,9 @@ FROM python:3.12-slim
 # Set working directory
 WORKDIR /app
 
+# Ensure Python can import the 'app' module from WORKDIR
+ENV PYTHONPATH=/app
+
 # Copy the requirements file from the backend folder
 COPY backend/suba/requirements.txt .
 
