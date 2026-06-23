@@ -67,6 +67,13 @@ class UserRegisterRequest(BaseModel):
         examples=["eyJhbGciOiJIUzI1NiIsInR5..."],
     )
 
+    referral_code: str | None = Field(
+        default=None,
+        max_length=20,
+        description="Optional referral code from the user who invited this new user",
+        examples=["SUBA1A2B3C"],
+    )
+
     @field_validator("phone_number")
     @classmethod
     def validate_phone_number(cls, v: str) -> str:
@@ -135,6 +142,8 @@ class UserResponse(BaseModel):
     full_name: str
     role: str
     is_active: bool
+    referral_code: str | None = None
+    referred_by_id: uuid.UUID | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

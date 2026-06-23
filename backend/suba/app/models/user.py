@@ -103,6 +103,23 @@ class User(Base):
     )
 
     # -------------------------------------------------------------------------
+    # Referral Tracking
+    # -------------------------------------------------------------------------
+    referral_code: Mapped[str] = mapped_column(
+        String(20),
+        unique=True,
+        index=True,
+        nullable=True,  # Existing users will have null until a script populates them
+        comment="Unique referral code assigned to this user",
+    )
+
+    referred_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+        comment="Foreign key to the user who referred this account",
+    )
+
+    # -------------------------------------------------------------------------
     # Timestamps
     # -------------------------------------------------------------------------
     created_at: Mapped[datetime] = mapped_column(

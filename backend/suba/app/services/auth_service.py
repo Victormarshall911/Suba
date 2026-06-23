@@ -10,6 +10,8 @@ It handles:
     - Uniqueness checks for email and phone number
 """
 
+import random
+import string
 import structlog
 from jose import jwt, JWTError
 from fastapi import HTTPException
@@ -121,13 +123,48 @@ async def register_user(
     hashed_pw = hash_password(request.password)
 
     # -------------------------------------------------------------------------
-    # Step 3: Create the User
+    # Step 2.5: Resolve referral code if provided
+    # -------------------------------------------------------------------------
+    referred_by_id = None
+    if request.referral_code:
+        referrer_result = await db.execute(
+            select(User).where(User.referral_code == request.referral_code.upper())
+        )
+        referrer = referrer_result.scalar_one_or_none()
+        if referrer:
+            referred_by_id = referrer.id
+            logger.info("referral_code_matched", referrer_id=str(referrer.id), code=request.referral_code)
+        else:
+            logger.warning("referral_code_not_found", code=request.referral_code)
+            # Don't fail registration — just ignore the invalid code
+
+    # -------------------------------------------------------------------------
+    # Step 3: Generate a unique referral code for the new user
+    # -------------------------------------------------------------------------
+    def _generate_code() -> str:
+        chars = string.ascii_uppercase + string.digits
+        return "SUBA" + "".join(random.choices(chars, k=6))
+
+    # Ensure uniqueness
+    code_candidate = _generate_code()
+    while True:
+        existing_code = await db.execute(
+            select(User).where(User.referral_code == code_candidate)
+        )
+        if existing_code.scalar_one_or_none() is None:
+            break
+        code_candidate = _generate_code()
+
+    # -------------------------------------------------------------------------
+    # Step 4: Create the User
     # -------------------------------------------------------------------------
     new_user = User(
         email=request.email,
         phone_number=request.phone_number,
         full_name=request.full_name,
         password_hash=hashed_pw,
+        referral_code=code_candidate,
+        referred_by_id=referred_by_id,
     )
     db.add(new_user)
 

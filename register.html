@@ -208,6 +208,16 @@
       let timerVal = 30;
       let timerInterval;
 
+      // Auto-fill referral code from URL ?ref=CODE
+      const urlParams = new URLSearchParams(window.location.search);
+      const refFromUrl = urlParams.get('ref');
+      if (refFromUrl) {
+        const refInput = document.getElementById('referralCode');
+        if (refInput) {
+          refInput.value = refFromUrl.toUpperCase();
+        }
+      }
+
       const emailInput1 = document.getElementById('regEmail');
       const regEmailError = document.getElementById('regEmailError');
       const step1NextBtn = document.getElementById('step1NextBtn');
@@ -438,6 +448,7 @@
         step3FinishBtn.classList.add('is-loading');
         
         try {
+          const refCode = document.getElementById('referralCode').value.trim().toUpperCase() || null;
           const res = await SUBAApi.request('/auth/register', {
             method: 'POST',
             body: JSON.stringify({
@@ -445,7 +456,8 @@
               phone_number: '0' + SUBAUtils.formatPhone(phoneInput2.value),
               password: passwordInput.value,
               full_name: `${firstNameInput.value.trim()} ${lastNameInput.value.trim()}`,
-              supabase_token: supabaseToken
+              supabase_token: supabaseToken,
+              referral_code: refCode
             })
           });
           
