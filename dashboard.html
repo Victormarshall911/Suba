@@ -86,12 +86,17 @@
         <div class="dashboard-left">
           
           <!-- Wallet Card Widget -->
-          <div class="wallet-card">
-            <div class="wallet-label">YOUR WALLET BALANCE</div>
-            <div class="wallet-balance"><span class="currency">₦</span><span id="walletBalance">4,250.00</span></div>
-            <div class="wallet-actions">
-              <button class="btn btn-white btn-sm" id="fundWalletBtn">⚡ Fund Wallet</button>
-              <a href="transactions.html" class="btn btn-dark btn-sm" style="background: rgba(255,255,255,0.15); border: none">Ledger</a>
+          <!-- Asset Inventory Card Widget -->
+          <div class="card" style="padding: var(--space-5); margin-bottom: var(--space-5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4)">
+              <h4 style="font-weight: 700; color: var(--clr-text-primary)">Digital Asset Inventory</h4>
+              <button class="btn btn-primary btn-sm" id="fundWalletBtn">⚡ Buy Asset</button>
+            </div>
+            
+            <div id="assetsGrid" class="plan-grid" style="grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--space-3)">
+              <div class="empty-state" style="grid-column: 1/-1; padding: var(--space-6) 0; color: var(--clr-text-light);">
+                Scanning available service tokens...
+              </div>
             </div>
           </div>
 
@@ -152,13 +157,12 @@
             </div>
           </div>
 
-          <!-- Referral / Ambassador Promotion -->
-          <div class="card referral-card">
-            <h4>Become an Ambassador</h4>
-            <p style="margin-top: 4px; font-size: 13px">Earn 2% commission on every data and airtime bundle purchase made by students you refer.</p>
-            <div class="referral-share-box">
-              <span class="referral-code" id="referralCode">TOB1405</span>
-              <button class="referral-copy-btn" id="copyReferralBtn">Copy Link</button>
+          <!-- Dynamic Ambassador Lifecycle Widget -->
+          <div id="ambassadorContainer">
+            <div class="card referral-card">
+              <h4>Become a Suba Ambassador</h4>
+              <p style="margin-top: 4px; font-size: 13px">Earn up to 2.1% commission on every data and airtime purchase made by students you refer.</p>
+              <button class="btn btn-white btn-block mt-4" onclick="SUBAComponents.openModal('applyAmbassadorModal')">Join Ambassador Program</button>
             </div>
           </div>
 
@@ -196,11 +200,11 @@
 
   </div>
 
-  <!-- Wallet Funding Modal -->
+  <!-- Buy Digital Service Asset Modal -->
   <div class="modal-backdrop" id="fundWalletModal">
     <div class="modal">
       <div class="modal-header">
-        <h3>Fund Your Wallet</h3>
+        <h3>Buy Digital Service Asset</h3>
         <button class="modal-close" onclick="SUBAComponents.closeModal('fundWalletModal')">✕</button>
       </div>
       <div class="modal-body">
@@ -219,11 +223,95 @@
         </div>
 
         <div class="form-group">
-          <label for="fundAmount" class="form-label">Pre-notify Deposit (₦)</label>
+          <label for="fundAssetType" class="form-label">Select Asset Type</label>
+          <select id="fundAssetType" class="form-input">
+            <option value="AIRTIME">Airtime Asset (₦)</option>
+            <option value="DATA">Data Asset (GB)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="fundAmount" class="form-label">Purchase Value (₦)</label>
           <input type="number" id="fundAmount" class="form-input" placeholder="e.g. 1000" min="100">
-          <div class="form-hint" style="margin-top: 6px">Minimum deposit is ₦100. Transfer to the dedicated bank account above.</div>
+          <div class="form-hint" style="margin-top: 6px">Minimum purchase is ₦100. Transfer cash to the virtual account details above. Upon webhook settlement, the asset will be credited to your inventory.</div>
         </div>
         <button class="btn btn-primary btn-block btn-lg" id="confirmFundBtn">I Have Transferred the Funds</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset Transfer Modal -->
+  <div class="modal-backdrop" id="transferAssetModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Transfer Digital Asset</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('transferAssetModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: var(--clr-bg); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-5)">
+          <div style="font-size: 11px; color: var(--clr-text-tertiary); font-weight: 700">SELECTED ASSET</div>
+          <div style="font-weight: 700; font-size: 14px; margin-top:2px" id="transferAssetDetails">Airtime Asset — ₦1,000</div>
+        </div>
+        <div class="form-group">
+          <label for="transferRecipient" class="form-label">Recipient Email or Phone</label>
+          <input type="text" id="transferRecipient" class="form-input" placeholder="e.g. friend@suba.edu.ng or 080...">
+          <div class="form-hint">The recipient must be a registered Suba user.</div>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="confirmTransferBtn">Execute Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset Redemption Modal -->
+  <div class="modal-backdrop" id="redeemAssetModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Redeem Digital Asset (VTU Delivery)</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('redeemAssetModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: var(--clr-bg); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-5)">
+          <div style="font-size: 11px; color: var(--clr-text-tertiary); font-weight: 700">SELECTED ASSET</div>
+          <div style="font-weight: 700; font-size: 14px; margin-top:2px" id="redeemAssetDetails">Airtime Asset — ₦1,000</div>
+        </div>
+        <div class="form-group">
+          <label for="redeemPhone" class="form-label">Target Phone Number</label>
+          <div class="phone-input-wrapper">
+            <span class="phone-prefix">+234</span>
+            <input type="tel" id="redeemPhone" class="form-input" placeholder="8031234567" maxlength="10">
+          </div>
+          <div class="form-hint">The actual airtime or data value will be dispatched instantly to this telephone number.</div>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="confirmRedeemBtn">Confirm & Redeem VTU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ambassador Application Modal -->
+  <div class="modal-backdrop" id="applyAmbassadorModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Become a Suba Ambassador</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('applyAmbassadorModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="ambLocation" class="form-label">Your Campus Location</label>
+          <input type="text" id="ambLocation" class="form-input" placeholder="e.g. University of Lagos">
+        </div>
+        <div class="form-group">
+          <label for="ambSocials" class="form-label">Social Media Profile Links</label>
+          <input type="text" id="ambSocials" class="form-input" placeholder="e.g. twitter.com/username">
+        </div>
+        <div class="form-group">
+          <label for="ambReason" class="form-label">Reason for joining</label>
+          <textarea id="ambReason" class="form-input" rows="3" placeholder="Why do you want to represent Suba on your campus?"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="ambReferralCode" class="form-label">Referral Ambassador Code (Optional)</label>
+          <input type="text" id="ambReferralCode" class="form-input" placeholder="e.g. SUB-1234">
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="submitAmbAppBtn">Submit Application</button>
       </div>
     </div>
   </div>
@@ -298,6 +386,21 @@
         SUBAComponents.showPageSkeleton();
       }
 
+      let selectedAssetId = null;
+
+      // Make asset modal functions globally accessible
+      window.openTransferAssetModal = (id, type, val) => {
+        selectedAssetId = id;
+        document.getElementById('transferAssetDetails').textContent = `${type} Asset — ₦${SUBAUtils.formatNumber(val)}`;
+        SUBAComponents.openModal('transferAssetModal');
+      };
+
+      window.openRedeemAssetModal = (id, type, val) => {
+        selectedAssetId = id;
+        document.getElementById('redeemAssetDetails').textContent = `${type} Asset — ₦${SUBAUtils.formatNumber(val)}`;
+        SUBAComponents.openModal('redeemAssetModal');
+      };
+
       // Function to update UI with user object
       const updateUI = (user) => {
         const fullName = user.full_name || 'User';
@@ -310,17 +413,13 @@
         document.getElementById('topbarUserAvatar').textContent = initials;
         document.getElementById('desktopUserName').textContent = fullName;
         document.getElementById('greetingMessage').textContent = `Hey, ${firstName} 👋`;
-        document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance || 0);
         
         const bankEl = document.getElementById('fundBankName');
         const accEl = document.getElementById('fundAccountNumber');
         const refEl = document.getElementById('fundReference');
         if (bankEl) bankEl.textContent = user.bank_name || 'Sterling Bank';
-        if (accEl) accEl.textContent = user.virtual_account_number || '9922000000';
-        if (refEl) refEl.textContent = user.virtual_reference || 'REF-VA-xxxx';
-        
-        const refElement = document.getElementById('referralCode');
-        if (refElement) refElement.textContent = user.referral_code || 'SUBA001';
+        if (accEl) accEl.textContent = user.virtual_account_number || user.virtualAccount || '9922000000';
+        if (refEl) refEl.textContent = user.virtual_reference || user.reference || 'REF-VA-xxxx';
       };
 
       // Instantly update UI from cache to prevent flickering
@@ -329,67 +428,192 @@
         updateUI(cachedUser);
       }
 
-      // Fetch live user data from backend in background
-      try {
-        const [user, txns] = await Promise.all([
-          SUBAApi.request('/auth/me', { method: 'GET' }),
-          SUBAApi.request('/wallet/transactions?page=1&size=5', { method: 'GET' })
-        ]);
+      // Fetch user profile and dashboard stats
+      async function loadDashboardData() {
+        try {
+          const [user, assets, txns, ambProfile] = await Promise.all([
+            SUBAApi.request('/auth/me', { method: 'GET' }),
+            SUBAApi.request('/assets/inventory', { method: 'GET' }),
+            SUBAApi.request('/wallet/transactions?page=1&size=5', { method: 'GET' }),
+            SUBAApi.request('/ambassador/profile', { method: 'GET' }).catch(() => null)
+          ]);
 
-        if (user) {
-          SUBAUtils.store('user', user);
-          updateUI(user);
-        }
+          if (user) {
+            SUBAUtils.store('user', user);
+            updateUI(user);
+          }
 
-        // Fetch recent transactions
-        const list = document.getElementById('recentTxnsList');
-        
-        if (!txns || !txns.items || txns.items.length === 0) {
-          list.innerHTML = `
-            <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
-              No transactions yet
-            </div>
-          `;
-        } else {
-          list.innerHTML = '';
-          txns.items.forEach(txn => {
-            const isCredit = txn.type === 'FUNDING';
-            const icon = txn.type === 'FUNDING' ? '💰' : (txn.type === 'AIRTIME_PURCHASE' ? '📱' : '📶');
-            const colorClass = txn.type === 'FUNDING' ? 'wallet' : (txn.type === 'AIRTIME_PURCHASE' ? 'airtime' : 'data');
-            const sign = isCredit ? '+' : '-';
-            const amtClass = isCredit ? 'credit' : 'debit';
-            const dateStr = new Date(txn.created_at).toLocaleString('en-NG', { dateStyle: 'short', timeStyle: 'short' });
+          // 1. Render Digital Asset Inventory
+          const assetsGrid = document.getElementById('assetsGrid');
+          if (!assets || assets.length === 0) {
+            assetsGrid.innerHTML = `
+              <div class="empty-state" style="grid-column: 1/-1; padding: var(--space-6) 0; color: var(--clr-text-light); text-align: center; width: 100%">
+                No active tokens. Deposit funds or buy an asset.
+              </div>
+            `;
+          } else {
+            assetsGrid.innerHTML = '';
+            assets.forEach(asset => {
+              const isAirtime = asset.asset_type === 'AIRTIME';
+              const icon = isAirtime ? '📱' : '📶';
+              const badgeClass = isAirtime ? 'badge-orange' : 'badge-success';
+              const typeLabel = isAirtime ? 'AIRTIME' : 'DATA';
+              const expiryText = asset.expires_at 
+                ? `Expires: ${new Date(asset.expires_at).toLocaleDateString()}` 
+                : 'Lifetime Validity';
 
-            list.insertAdjacentHTML('beforeend', `
-              <div class="txn-item" onclick="window.location.href='transactions.html'">
-                <div class="txn-icon ${colorClass}">${icon}</div>
-                <div class="txn-details">
-                  <div class="txn-title">${txn.narration || 'Transaction'}</div>
-                  <div class="txn-subtitle">${txn.status}</div>
+              assetsGrid.insertAdjacentHTML('beforeend', `
+                <div class="plan-card" style="padding: var(--space-3); border-radius: var(--radius-md); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-2); min-height: 150px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 20px;">${icon}</span>
+                    <span class="badge ${badgeClass}" style="font-size: 9px; font-weight: 700; padding: 2px 6px;">${typeLabel}</span>
+                  </div>
+                  <div>
+                    <div style="font-size: var(--text-base); font-weight: 800; color: var(--clr-text-primary); margin-top: var(--space-1)">
+                      ₦${SUBAUtils.formatNumber(asset.value_denomination)}
+                    </div>
+                    <div style="font-size: 9px; color: var(--clr-text-tertiary); margin-top: 2px;">
+                      ${expiryText}
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 4px; margin-top: var(--space-2)">
+                    <button class="btn btn-primary btn-sm" style="flex:1; padding: 4px 0; font-size: 11px;" onclick="openRedeemAssetModal('${asset.id}', '${asset.asset_type}', ${asset.value_denomination})">Redeem</button>
+                    <button class="btn btn-secondary btn-sm" style="flex:1; padding: 4px 0; font-size: 11px;" onclick="openTransferAssetModal('${asset.id}', '${asset.asset_type}', ${asset.value_denomination})">Transfer</button>
+                  </div>
                 </div>
-                <div class="txn-right">
-                  <div class="txn-amount ${amtClass}">${sign}₦${SUBAUtils.formatNumber(txn.amount)}</div>
-                  <div class="txn-subtitle">${dateStr}</div>
+              `);
+            });
+          }
+
+          // 2. Render Recent Transactions
+          const list = document.getElementById('recentTxnsList');
+          if (!txns || !txns.items || txns.items.length === 0) {
+            list.innerHTML = `
+              <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
+                No transactions yet
+              </div>
+            `;
+          } else {
+            list.innerHTML = '';
+            txns.items.forEach(txn => {
+              const isCredit = txn.status === 'FULFILLED' && txn.type !== 'BILL_PAYMENT';
+              const icon = txn.type === 'AIRTIME' ? '📱' : '📶';
+              const colorClass = txn.type === 'AIRTIME' ? 'airtime' : 'data';
+              const sign = isCredit ? '+' : '-';
+              const amtClass = isCredit ? 'credit' : 'debit';
+              const dateStr = new Date(txn.created_at).toLocaleString('en-NG', { dateStyle: 'short', timeStyle: 'short' });
+
+              list.insertAdjacentHTML('beforeend', `
+                <div class="txn-item" onclick="window.location.href='transactions.html'">
+                  <div class="txn-icon ${colorClass}">${icon}</div>
+                  <div class="txn-details">
+                    <div class="txn-title">${txn.type} Purchase</div>
+                    <div class="txn-subtitle">${txn.status}</div>
+                  </div>
+                  <div class="txn-right">
+                    <div class="txn-amount ${amtClass}">${sign}₦${SUBAUtils.formatNumber(txn.amount)}</div>
+                    <div class="txn-subtitle">${dateStr}</div>
+                  </div>
+                </div>
+              `);
+            });
+          }
+
+          // 3. Render Ambassador Lifecycle Container
+          const ambContainer = document.getElementById('ambassadorContainer');
+          if (!ambProfile) {
+            // User has not applied to ambassador program
+            ambContainer.innerHTML = `
+              <div class="card referral-card">
+                <h4>Become a Suba Ambassador</h4>
+                <p style="margin-top: 4px; font-size: 13px">Earn up to 2.1% commission on every data and airtime purchase made by students you refer.</p>
+                <button class="btn btn-white btn-block mt-4" onclick="SUBAComponents.openModal('applyAmbassadorModal')">Join Ambassador Program</button>
+              </div>
+            `;
+          } else if (ambProfile.status === 'PENDING') {
+            ambContainer.innerHTML = `
+              <div class="card referral-card" style="border-left: 4px solid var(--clr-warning)">
+                <h4>Become a Suba Ambassador</h4>
+                <p style="margin-top: 4px; font-size: 13px">Your application is currently <strong>PENDING REVIEW</strong>.</p>
+                <button class="btn btn-white btn-block mt-4" disabled>Application Under Review</button>
+              </div>
+            `;
+          } else if (ambProfile.status === 'APPROVED') {
+            ambContainer.innerHTML = `
+              <div class="card referral-card" style="background: linear-gradient(135deg, var(--clr-primary-dark) 0%, var(--clr-primary) 100%); color: white;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4)">
+                  <h4 style="font-weight:700; color:white; margin:0">Suba Ambassador 🤝</h4>
+                  <span class="badge" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:2px 8px">${ambProfile.level} TIER</span>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); margin-bottom:var(--space-4)">
+                  <div>
+                    <div style="font-size:10px; opacity:0.8; text-transform:uppercase; font-weight:600">Total Referrals</div>
+                    <div style="font-size:20px; font-weight:800; margin-top:2px">${ambProfile.total_referrals}</div>
+                  </div>
+                  <div>
+                    <div style="font-size:10px; opacity:0.8; text-transform:uppercase; font-weight:600">Commissions</div>
+                    <div style="font-size:20px; font-weight:800; margin-top:2px">₦${SUBAUtils.formatNumber(ambProfile.total_earned)}</div>
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <div style="font-size:10px; opacity:0.8; margin-bottom:4px; font-weight:600">YOUR REFERRAL LINK</div>
+                  <div style="display:flex; gap:6px">
+                    <div id="referralLinkText" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); padding:6px 12px; border-radius:var(--radius-md); font-family:var(--font-mono); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1">
+                      ${window.location.origin}/register.html?ref=${ambProfile.referral_code}
+                    </div>
+                    <button class="btn btn-white btn-sm" id="copyReferralLinkBtn" style="color:var(--clr-primary)">📋 Copy</button>
+                  </div>
                 </div>
               </div>
-            `);
-          });
+            `;
+            
+            // Wire copy referral link
+            const copyRefLinkBtn = document.getElementById('copyReferralLinkBtn');
+            if (copyRefLinkBtn) {
+              copyRefLinkBtn.addEventListener('click', () => {
+                const linkText = document.getElementById('referralLinkText').textContent.trim();
+                SUBAUtils.copyToClipboard(linkText).then(success => {
+                  if (success) {
+                    copyRefLinkBtn.textContent = 'Copied!';
+                    SUBAComponents.showToast({
+                      title: 'Link Copied',
+                      message: 'Referral link copied to clipboard.',
+                      type: 'success'
+                    });
+                    setTimeout(() => { copyRefLinkBtn.textContent = 'Copy'; }, 2000);
+                  }
+                });
+              });
+            }
+          } else {
+            ambContainer.innerHTML = `
+              <div class="card referral-card" style="border-left: 4px solid var(--clr-error)">
+                <h4>Become a Suba Ambassador</h4>
+                <p style="margin-top: 4px; font-size: 13px">Your application was rejected. Please contact support to retry.</p>
+                <button class="btn btn-white btn-block mt-4" disabled>Application Rejected</button>
+              </div>
+            `;
+          }
+
+        } catch (err) {
+          console.error('Failed to load dashboard data', err);
+          document.getElementById('recentTxnsList').innerHTML = `
+            <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
+              Could not load transactions
+            </div>`;
+        } finally {
+          SUBAComponents.hidePageSkeleton();
         }
-      } catch (err) {
-        console.error('Failed to load dashboard data', err);
-        document.getElementById('recentTxnsList').innerHTML = `
-          <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
-            Could not load transactions
-          </div>`;
-      } finally {
-        // Always remove skeleton once data attempt completes
-        SUBAComponents.hidePageSkeleton();
       }
 
-      // Fund Wallet modal triggers
+      // Initial page data load
+      await loadDashboardData();
+
+      // Fund Wallet / Buy Asset modal triggers
       const fundWalletBtn = document.getElementById('fundWalletBtn');
       const confirmFundBtn = document.getElementById('confirmFundBtn');
       const fundAmount = document.getElementById('fundAmount');
+      const fundAssetType = document.getElementById('fundAssetType');
 
       fundWalletBtn.addEventListener('click', () => {
         SUBAComponents.openModal('fundWalletModal');
@@ -397,6 +621,7 @@
 
       confirmFundBtn.addEventListener('click', async () => {
         const val = parseFloat(fundAmount.value);
+        const type = fundAssetType.value;
         if (!val || val < 100) {
           SUBAComponents.showToast({
             title: 'Invalid Amount',
@@ -408,49 +633,167 @@
 
         confirmFundBtn.classList.add('is-loading');
         try {
-          const res = await SUBAApi.request('/wallet/fund/initiate', {
+          const res = await SUBAApi.request('/transactions/payment/initiate', {
             method: 'POST',
-            body: JSON.stringify({ amount: val })
+            body: JSON.stringify({ type, amount: val, provider: 'paystack' })
           });
           
-          confirmFundBtn.classList.remove('is-loading');
           SUBAComponents.closeModal('fundWalletModal');
-          
           SUBAComponents.showToast({
-            title: 'Funding Initiated',
-            message: `Please transfer ₦${SUBAUtils.formatNumber(val)} to the virtual account. Your balance will update automatically upon receipt.`,
+            title: 'Purchase Session Started',
+            message: `Please transfer ₦${SUBAUtils.formatNumber(val)} to the virtual account. Your asset will be credited upon gateway confirmation.`,
             type: 'success',
             duration: 8000
           });
           fundAmount.value = '';
+          await loadDashboardData();
         } catch (err) {
-          confirmFundBtn.classList.remove('is-loading');
           SUBAComponents.showToast({
-            title: 'Funding Failed',
-            message: err.message || 'Could not initiate funding.',
+            title: 'Purchase Failed',
+            message: err.message || 'Could not initiate purchase session.',
             type: 'error'
           });
+        } finally {
+          confirmFundBtn.classList.remove('is-loading');
         }
       });
 
-      // Copy referral code link
-      const copyBtn = document.getElementById('copyReferralBtn');
-      copyBtn.addEventListener('click', () => {
-        const code = document.getElementById('referralCode').textContent;
-        const link = `${window.location.origin}/register.html?ref=${code}`;
-        SUBAUtils.copyToClipboard(link).then(success => {
-          if (success) {
-            copyBtn.textContent = 'Copied!';
-            SUBAComponents.showToast({
-              title: 'Link Copied',
-              message: 'Referral link copied to clipboard.',
-              type: 'success'
-            });
-            setTimeout(() => {
-              copyBtn.textContent = 'Copy Link';
-            }, 2000);
-          }
-        });
+      // Transfer Asset execution
+      const confirmTransferBtn = document.getElementById('confirmTransferBtn');
+      const transferRecipient = document.getElementById('transferRecipient');
+
+      confirmTransferBtn.addEventListener('click', async () => {
+        const recipient = transferRecipient.value.trim();
+        if (!recipient) {
+          SUBAComponents.showToast({
+            title: 'Recipient Required',
+            message: 'Please enter recipient email or phone.',
+            type: 'error'
+          });
+          return;
+        }
+
+        confirmTransferBtn.classList.add('is-loading');
+        try {
+          await SUBAApi.request('/assets/transfer', {
+            method: 'POST',
+            body: JSON.stringify({ assetId: selectedAssetId, recipientIdentifier: recipient })
+          });
+          SUBAComponents.closeModal('transferAssetModal');
+          SUBAComponents.showToast({
+            title: 'Transfer Complete',
+            message: 'Asset successfully transferred to recipient.',
+            type: 'success'
+          });
+          transferRecipient.value = '';
+          await loadDashboardData();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Transfer Failed',
+            message: err.message || 'Could not execute asset transfer.',
+            type: 'error'
+          });
+        } finally {
+          confirmTransferBtn.classList.remove('is-loading');
+        }
+      });
+
+      // Redeem Asset execution (VTU dispatch)
+      const confirmRedeemBtn = document.getElementById('confirmRedeemBtn');
+      const redeemPhone = document.getElementById('redeemPhone');
+
+      confirmRedeemBtn.addEventListener('click', async () => {
+        const rawPhone = redeemPhone.value.trim();
+        if (!rawPhone || rawPhone.length !== 10) {
+          SUBAComponents.showToast({
+            title: 'Invalid Number',
+            message: 'Please enter a valid 10-digit telephone number (exclude leading 0).',
+            type: 'error'
+          });
+          return;
+        }
+
+        const formattedPhone = '0' + rawPhone;
+
+        confirmRedeemBtn.classList.add('is-loading');
+        try {
+          await SUBAApi.request('/assets/redeem', {
+            method: 'POST',
+            body: JSON.stringify({ assetId: selectedAssetId, targetPhone: formattedPhone })
+          });
+          SUBAComponents.closeModal('redeemAssetModal');
+          SUBAComponents.showToast({
+            title: 'Redemption Success',
+            message: `Service value dispatched to phone: ${formattedPhone}`,
+            type: 'success'
+          });
+          redeemPhone.value = '';
+          await loadDashboardData();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Redemption Failed',
+            message: err.message || 'Could not dispatch VTU values.',
+            type: 'error'
+          });
+        } finally {
+          confirmRedeemBtn.classList.remove('is-loading');
+        }
+      });
+
+      // Ambassador Application submission
+      const submitAmbAppBtn = document.getElementById('submitAmbAppBtn');
+      const ambLocation = document.getElementById('ambLocation');
+      const ambSocials = document.getElementById('ambSocials');
+      const ambReason = document.getElementById('ambReason');
+      const ambReferralCode = document.getElementById('ambReferralCode');
+
+      submitAmbAppBtn.addEventListener('click', async () => {
+        const location = ambLocation.value.trim();
+        const socials = ambSocials.value.trim();
+        const reason = ambReason.value.trim();
+        const ref = ambReferralCode.value.trim();
+
+        if (!location || !socials || !reason) {
+          SUBAComponents.showToast({
+            title: 'Fields Missing',
+            message: 'Please complete all fields in the application.',
+            type: 'error'
+          });
+          return;
+        }
+
+        submitAmbAppBtn.classList.add('is-loading');
+        try {
+          await SUBAApi.request('/ambassador/apply', {
+            method: 'POST',
+            body: JSON.stringify({
+              location,
+              social_links: socials,
+              reason_for_joining: reason,
+              referral_code: ref
+            })
+          });
+          SUBAComponents.closeModal('applyAmbassadorModal');
+          SUBAComponents.showToast({
+            title: 'Application Received',
+            message: 'Your Suba Ambassador application has been received and is pending admin review.',
+            type: 'success'
+          });
+          // Reset inputs
+          ambLocation.value = '';
+          ambSocials.value = '';
+          ambReason.value = '';
+          ambReferralCode.value = '';
+          await loadDashboardData();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Submission Failed',
+            message: err.message,
+            type: 'error'
+          });
+        } finally {
+          submitAmbAppBtn.classList.remove('is-loading');
+        }
       });
 
       // Add Saved Recipient trigger
