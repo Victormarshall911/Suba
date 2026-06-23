@@ -130,42 +130,9 @@
           <div class="card" style="padding: var(--space-5)">
             <h4 style="font-size: var(--text-sm); text-transform: uppercase; letter-spacing:0.05em; margin-bottom: var(--space-4)">Campus Leaderboard</h4>
             
-            <div style="display: flex; flex-direction: column; gap: var(--space-3)">
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
-                <div style="display: flex; align-items: center; gap: var(--space-3)">
-                  <span style="font-weight: 700; width: 20px">🥇</span>
-                  <div class="avatar avatar-sm" style="font-size: 10px">FO</div>
-                  <span class="fw-semibold">Femi O. (UI)</span>
-                </div>
-                <span class="text-orange fw-bold">₦25,400</span>
-              </div>
-
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
-                <div style="display: flex; align-items: center; gap: var(--space-3)">
-                  <span style="font-weight: 700; width: 20px">🥈</span>
-                  <div class="avatar avatar-sm" style="font-size: 10px">AA</div>
-                  <span class="fw-semibold">Aliyu A. (ABU)</span>
-                </div>
-                <span class="text-orange fw-bold">₦18,200</span>
-              </div>
-
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
-                <div style="display: flex; align-items: center; gap: var(--space-3)">
-                  <span style="font-weight: 700; width: 20px">🥉</span>
-                  <div class="avatar avatar-sm" style="font-size: 10px">CE</div>
-                  <span class="fw-semibold">Chidinma E. (UNN)</span>
-                </div>
-                <span class="text-orange fw-bold">₦12,650</span>
-              </div>
-
-              <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2)">
-                <div style="display: flex; align-items: center; gap: var(--space-3)">
-                  <span style="font-weight: 700; width: 20px; text-align: center; color: var(--clr-text-tertiary)">4</span>
-                  <div class="avatar avatar-sm" style="font-size: 10px" id="myAvatarPlaceholder">TO</div>
-                  <span class="fw-semibold" id="myNamePlaceholder">Tobi O. (UNILAG)</span>
-                </div>
-                <span class="text-orange fw-bold">₦4,520</span>
-              </div>
+            <div id="leaderboardList" style="display: flex; flex-direction: column; gap: var(--space-3)">
+              <!-- Dynamically populated from API -->
+              <div style="text-align:center; padding:var(--space-4); color:var(--clr-text-tertiary); font-size:var(--text-sm)">Loading leaderboard...</div>
             </div>
           </div>
 
@@ -234,14 +201,12 @@
       }
 
       // Initialize
-      const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+      const initials = ((user.full_name?.[0] || 'U')).toUpperCase();
       document.getElementById('desktopUserAvatar').textContent = initials;
       document.getElementById('topbarUserAvatar').textContent = initials;
-      document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
-      document.getElementById('myAvatarPlaceholder').textContent = initials;
-      document.getElementById('myNamePlaceholder').textContent = `${user.firstName} ${user.lastName?.[0] || ''}. (UNILAG)`;
+      document.getElementById('desktopUserName').textContent = user.full_name || 'User';
 
-      document.getElementById('refCodeText').textContent = user.referralCode || 'SUBA001';
+      document.getElementById('refCodeText').textContent = user.referral_code || 'SUBA001';
 
       // Copy code button trigger
       const copyBtn = document.getElementById('copyCodeBtn');
@@ -263,71 +228,68 @@
         });
       });
 
+      // Load dynamic data
+      const loadAmbassadorStats = async () => {
+        SUBAComponents.showPageSkeleton();
+        try {
+          const stats = await SUBAApi.request('/auth/ambassador');
+          if (stats) {
+            document.getElementById('totalCommissions').textContent = `₦${SUBAUtils.formatNumber(stats.total_commissions)}`;
+            document.getElementById('withdrawnCommissions').textContent = `₦${SUBAUtils.formatNumber(stats.withdrawn_funds)}`;
+            document.getElementById('clearedCommissions').textContent = `₦${SUBAUtils.formatNumber(stats.cleared_balance)}`;
+            
+            const lbList = document.getElementById('leaderboardList');
+            lbList.innerHTML = '';
+            
+            if (stats.leaderboard && stats.leaderboard.length > 0) {
+              stats.leaderboard.forEach((entry, index) => {
+                let rankBadge = '';
+                if (index === 0) rankBadge = '🥇';
+                else if (index === 1) rankBadge = '🥈';
+                else if (index === 2) rankBadge = '🥉';
+                else rankBadge = `<span style="color: var(--clr-text-tertiary)">${index + 1}</span>`;
+                
+                const isLast = index === stats.leaderboard.length - 1;
+                const border = isLast ? '' : 'border-bottom: 1px solid var(--clr-border-light)';
+                
+                lbList.insertAdjacentHTML('beforeend', `
+                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); ${border}">
+                    <div style="display: flex; align-items: center; gap: var(--space-3)">
+                      <span style="font-weight: 700; width: 20px; text-align: center">${rankBadge}</span>
+                      <div class="avatar avatar-sm" style="font-size: 10px">${entry.initials}</div>
+                      <span class="fw-semibold">${entry.full_name}</span>
+                    </div>
+                    <span class="text-orange fw-bold">₦${SUBAUtils.formatNumber(entry.amount)}</span>
+                  </div>
+                `);
+              });
+            } else {
+              lbList.innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-text-tertiary); font-size:var(--text-sm)">No referrers yet</div>';
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load ambassador stats", err);
+        } finally {
+          SUBAComponents.hidePageSkeleton();
+        }
+      };
+
+      loadAmbassadorStats();
+
       // Transfer to wallet trigger
       const transferBtn = document.getElementById('transferToWalletBtn');
-      const confirmCashout = document.getElementById('confirmCashoutBtn');
-      const cashoutAmountInput = document.getElementById('cashoutAmount');
+      const bankBtn = document.getElementById('requestBankPayoutBtn');
 
-      let cashoutType = 'wallet';
+      const showComingSoon = () => {
+        SUBAComponents.showToast({
+          title: 'Coming Soon',
+          message: 'Commission withdrawals will be enabled shortly.',
+          type: 'info'
+        });
+      };
 
-      transferBtn.addEventListener('click', () => {
-        cashoutType = 'wallet';
-        document.getElementById('cashoutTitle').textContent = 'Transfer to Wallet';
-        confirmCashout.textContent = 'Transfer to SUBA Wallet';
-        SUBAComponents.openModal('cashoutModal');
-      });
-
-      // Bank cashout trigger
-      document.getElementById('requestBankPayoutBtn').addEventListener('click', () => {
-        cashoutType = 'bank';
-        document.getElementById('cashoutTitle').textContent = 'Withdraw to Bank';
-        confirmCashout.textContent = 'Initiate Bank Payout';
-        SUBAComponents.openModal('cashoutModal');
-      });
-
-      confirmCashout.addEventListener('click', () => {
-        const val = parseFloat(cashoutAmountInput.value);
-        if (!val || val < 500) {
-          SUBAComponents.showToast({
-            title: 'Low Cashout Amount',
-            message: 'Minimum withdrawal is ₦500.',
-            type: 'error'
-          });
-          return;
-        }
-        if (val > 1520) {
-          SUBAComponents.showToast({
-            title: 'Limit Exceeded',
-            message: 'Cleared balance exceeded.',
-            type: 'error'
-          });
-          return;
-        }
-
-        confirmCashout.classList.add('is-loading');
-        setTimeout(() => {
-          confirmCashout.classList.remove('is-loading');
-          SUBAComponents.closeModal('cashoutModal');
-
-          // Commission logic simulation
-          document.getElementById('clearedCommissions').textContent = `₦${SUBAUtils.formatNumber(1520 - val)}`;
-          document.getElementById('withdrawnCommissions').textContent = `₦${SUBAUtils.formatNumber(3000 + val)}`;
-
-          if (cashoutType === 'wallet' && user) {
-            user.balance += (val * 100);
-            SUBAUtils.store('user', user);
-          }
-
-          SUBAComponents.showToast({
-            title: 'Cashout Completed',
-            message: cashoutType === 'wallet' ? `₦${val} transferred to wallet.` : `₦${val} bank payout queued.`,
-            type: 'success'
-          });
-
-          cashoutAmountInput.value = '';
-
-        }, 1500);
-      });
+      transferBtn.addEventListener('click', showComingSoon);
+      bankBtn.addEventListener('click', showComingSoon);
     });
   </script>
 </body>

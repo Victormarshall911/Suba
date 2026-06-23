@@ -24,6 +24,8 @@ from app.schemas.auth import (
     CheckEmailRequest,
     CheckPhoneRequest,
     CheckAvailabilityResponse,
+    AmbassadorStatsResponse,
+    LeaderboardEntry,
 )
 from app.services import auth_service
 
@@ -178,3 +180,71 @@ async def me(
         await db.refresh(current_user)
 
     return UserResponse.model_validate(current_user)
+
+# =============================================================================
+# GET /ambassador — Protected; return ambassador dashboard stats
+# =============================================================================
+
+@router.get(
+    "/ambassador",
+    response_model=AmbassadorStatsResponse,
+    summary="Get ambassador stats",
+)
+async def get_ambassador_stats(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> AmbassadorStatsResponse:
+    from sqlalchemy import select, func, desc
+    from app.models.transaction import Transaction, TransactionType, TransactionStatus
+    from sqlalchemy.orm import aliased
+    
+    # 1. Calculate my commissions
+    # Find all users I referred
+    referred_users = await db.execute(select(User.id).where(User.referred_by_id == current_user.id))
+    referred_ids = referred_users.scalars().all()
+    
+    total_commissions = 0.0
+    if referred_ids:
+        # Sum their successful VTU purchases
+        purchase_sum_stmt = select(func.sum(Transaction.amount)).where(
+            Transaction.user_id.in_(referred_ids),
+            Transaction.type.in_([TransactionType.DATA_PURCHASE, TransactionType.AIRTIME_PURCHASE]),
+            Transaction.status == TransactionStatus.SUCCESS
+        )
+        purchase_sum_result = await db.execute(purchase_sum_stmt)
+        total_purchases = purchase_sum_result.scalar() or 0.0
+        # 2% commission
+        total_commissions = float(total_purchases) * 0.02
+        
+    # 2. Leaderboard: Top 4 referrers
+    ReferredUser = aliased(User)
+    leaderboard_stmt = (
+        select(User, func.count(ReferredUser.id).label("ref_count"))
+        .join(ReferredUser, ReferredUser.referred_by_id == User.id)
+        .group_by(User.id)
+        .order_by(desc("ref_count"))
+        .limit(4)
+    )
+    lb_result = await db.execute(leaderboard_stmt)
+    
+    leaderboard = []
+    for user_obj, ref_count in lb_result:
+        # Estimate commissions for leaderboard (MVP simplification)
+        est_commission = ref_count * 1050.0  # mock value based on average referral
+        initials = (user_obj.full_name[:2] if user_obj.full_name else "U").upper()
+        leaderboard.append(LeaderboardEntry(
+            full_name=user_obj.full_name,
+            amount=est_commission,
+            initials=initials
+        ))
+        
+    # If I am not in the top 4, ensure I am added or at least return the array as is.
+    # The frontend can show the array directly.
+    
+    return AmbassadorStatsResponse(
+        total_commissions=total_commissions,
+        withdrawn_funds=0.0,
+        cleared_balance=total_commissions,
+        leaderboard=leaderboard
+    )
+

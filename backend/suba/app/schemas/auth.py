@@ -174,6 +174,21 @@ class CheckAvailabilityResponse(BaseModel):
     message: str = Field(..., description="Description of the result")
 
 
+# =============================================================================
+# Ambassador / Referral Schemas
+# =============================================================================
+
+class LeaderboardEntry(BaseModel):
+    full_name: str
+    amount: float
+    initials: str
+
+class AmbassadorStatsResponse(BaseModel):
+    total_commissions: float
+    withdrawn_funds: float
+    cleared_balance: float
+    leaderboard: list[LeaderboardEntry]
+
 
 class AuthResponse(BaseModel):
     """

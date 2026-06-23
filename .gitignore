@@ -40,6 +40,7 @@ coverage.xml
 htmlcov/
 .coverage
 .tox/
+backend/suba/tests/
 
 # Local Databases
 *.sqlite3
