@@ -5,169 +5,57 @@ import { sendToUser } from './websocket-service.js';
 
 export class TransactionService {
   /**
-   * Initiates a funding request.
+   * Initiates direct purchase of a service asset (e.g. Airtime, Data) using bank transfer.
    */
-  static async initiateFunding(userId, amount) {
+  static async initiateAssetPurchase(userId, { type, amount, provider }) {
     if (!amount || amount < 100) {
-      throw new Error("Validation failed: Minimum funding amount is ₦100.");
+      throw new Error("Validation failed: Minimum transaction amount is ₦100.");
+    }
+    if (!type || !['AIRTIME', 'DATA', 'BILL_PAYMENT'].includes(type)) {
+      throw new Error("Validation failed: Invalid transaction type.");
     }
 
-    const wallet = await WalletService.getWalletByUserId(userId);
-    if (!wallet) {
-      throw new Error("Wallet not found.");
-    }
-
-    const reference = `REF-FUND-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
-    const narration = `Wallet funding via Bank Transfer — ₦${amount}`;
+    const reference = `REF-PURCHASE-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+    const narration = `Direct purchase of ${type} — ₦${amount}`;
 
     const client = await db.getClient();
     try {
       await client.query('BEGIN');
 
       const insertResult = await client.query(
-        `INSERT INTO transactions (user_id, wallet_id, type, amount, status, reference, narration)
-         VALUES ($1, $2, 'FUNDING', $3, 'INITIATED', $4, $5) RETURNING *`,
-        [userId, wallet.id, amount, reference, narration]
+        `INSERT INTO transactions (user_id, type, provider, amount, status, external_reference)
+         VALUES ($1, $2, $3, $4, 'INITIATED', $5) RETURNING *`,
+        [userId, type, provider || 'paystack', amount, reference]
       );
-      const txn = insertResult.rows[0];
+      let txn = insertResult.rows[0];
 
-      // Transition INITIATED -> PENDING_PAYMENT
-      await TransactionStateMachine.transitionTo(
+      // Transition INITIATED -> PAYMENT_PENDING
+      txn = await TransactionStateMachine.transitionTo(
         txn.id, 
-        States.PENDING_PAYMENT, 
+        States.PAYMENT_PENDING, 
         null, 
-        'Waiting for bank transfer webhook', 
+        'Awaiting gateway callback or webhook confirmation', 
         client
       );
 
       await client.query('COMMIT');
       
-      console.log(`[TRANSACTION SERVICE] Initiated funding: User ${userId}, Ref: ${reference}`);
-      return { ...txn, status: States.PENDING_PAYMENT };
+      console.log(`[TRANSACTION SERVICE] Initiated asset purchase: User ${userId}, Ref: ${reference}`);
+      return { 
+        id: txn.id,
+        reference: reference, 
+        amount: amount, 
+        status: States.PAYMENT_PENDING,
+        bankName: 'Sterling Bank',
+        virtualAccountNumber: '9922' + Math.floor(100000 + Math.random() * 900000), // simulate NUBAN
+        paymentFlow: 'bank_transfer'
+      };
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
     } finally {
       client.release();
     }
-  }
-
-  /**
-   * Purchase a mobile VTU service (Airtime or Data) using wallet balance.
-   */
-  static async purchaseVTU(userId, { type, amount, recipient_phone, network, plan_code, narration }) {
-    if (!amount || amount <= 0) {
-      throw new Error("Validation failed: Transaction amount must be positive.");
-    }
-    if (!recipient_phone) {
-      throw new Error("Validation failed: Recipient phone number is required.");
-    }
-
-    const wallet = await WalletService.getWalletByUserId(userId);
-    if (!wallet) {
-      throw new Error("Wallet not found.");
-    }
-    if (wallet.is_frozen) {
-      throw new Error("Transaction aborted: Wallet is temporarily frozen.");
-    }
-    if (parseFloat(wallet.balance) < parseFloat(amount)) {
-      throw new Error("Transaction rejected: Insufficient wallet balance.");
-    }
-
-    const reference = `REF-VTU-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
-    const client = await db.getClient();
-
-    try {
-      await client.query('BEGIN');
-
-      // 1. Create Transaction INITIATED
-      const insertResult = await client.query(
-        `INSERT INTO transactions (user_id, wallet_id, type, amount, status, reference, recipient_phone, network, plan_code, narration)
-         VALUES ($1, $2, $3, $4, 'INITIATED', $5, $6, $7, $8, $9) RETURNING *`,
-        [userId, wallet.id, type, amount, reference, recipient_phone, network, plan_code, narration]
-      );
-      let txn = insertResult.rows[0];
-
-      // 2. Transition: INITIATED -> PENDING_PAYMENT -> PAYMENT_RECEIVED -> VALIDATING
-      txn = await TransactionStateMachine.transitionTo(txn.id, States.PENDING_PAYMENT, null, 'Processing payment from balance', client);
-      txn = await TransactionStateMachine.transitionTo(txn.id, States.PAYMENT_RECEIVED, null, 'Funds deducted from wallet balance', client);
-      txn = await TransactionStateMachine.transitionTo(txn.id, States.VALIDATING, null, 'Executing VTU order dispatch', client);
-
-      // 3. Post Ledger Entry: Debit User Wallet, Credit System Revenue
-      await WalletService.postLedgerTransaction(
-        txn.id,
-        'user_wallet',
-        'system_revenue',
-        wallet.id,
-        amount,
-        client
-      );
-
-      // 4. Simulate integration with external VTU provider (e.g. VTpass)
-      const providerSuccess = await this.callExternalVTUProvider(type, amount, recipient_phone, network, plan_code);
-
-      if (providerSuccess) {
-        // Success: transition VALIDATING -> SUCCESSFUL
-        txn = await TransactionStateMachine.transitionTo(txn.id, States.SUCCESSFUL, null, 'Fulfillment delivered successfully', client);
-        await client.query('COMMIT');
-        
-        // Notify user via WebSocket
-        sendToUser(userId, {
-          type: 'notification',
-          title: 'Order Successful',
-          message: `${narration} delivered to ${recipient_phone}.`,
-          timestamp: new Date().toISOString()
-        });
-
-        return txn;
-      } else {
-        // Failure: transition VALIDATING -> FAILED, issue automatic refund
-        txn = await TransactionStateMachine.transitionTo(txn.id, States.FAILED, null, 'VTU Provider rejected delivery', client);
-        
-        // Refund: Reverse Ledger entries (Debit system_revenue, Credit user_wallet)
-        await WalletService.postLedgerTransaction(
-          txn.id,
-          'system_revenue',
-          'user_wallet',
-          wallet.id,
-          amount,
-          client
-        );
-
-        // Transition: FAILED -> REVERSED status
-        txn = await TransactionStateMachine.transitionTo(txn.id, States.REVERSED, null, 'Auto-refund: funds credited back to wallet', client);
-
-        await client.query('COMMIT');
-
-        // Notify user of failure & refund via WebSocket
-        sendToUser(userId, {
-          type: 'notification',
-          title: 'Order Failed & Refunded',
-          message: `${type} purchase failed. ₦${amount} refunded to wallet.`,
-          timestamp: new Date().toISOString()
-        });
-
-        return txn;
-      }
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
-  }
-
-  /**
-   * Helper to simulate VTU delivery API (100% executable mock fallback/real simulator).
-   */
-  static async callExternalVTUProvider(type, amount, phone, network, plan) {
-    // If testing fail scenarios, we can mock it
-    if (phone === '07000000000') {
-      return false; // Simulate failure
-    }
-    // Simulate latency
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return true;
   }
 
   /**
