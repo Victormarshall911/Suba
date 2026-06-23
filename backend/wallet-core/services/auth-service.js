@@ -1,11 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import * as db from '../db/index.js';
-import { WalletService } from './wallet-service.js';
 
 export class AuthService {
   /**
-   * Register a new user, create their wallet, and assign their virtual account details.
+   * Register a new user and assign their virtual account details.
    */
   static async register({ email, phone_number, full_name, password }) {
     const emailLower = email.toLowerCase().trim();
@@ -33,25 +32,16 @@ export class AuthService {
       );
       const user = userResult.rows[0];
 
-      // 2. Create wallet
-      const wallet = await WalletService.createWallet(user.id, client);
-
-      // 3. Assign unique bank transfer virtual account (Sterling Bank mock)
-      const lastDigits = Math.floor(100000 + Math.random() * 900000); // 6 random digits
-      const virtualAccount = `9922${lastDigits}`; // unique virtual account number
+      await client.query('COMMIT');
+      
+      // 2. Generate deterministic virtual account details
+      const lastDigits = user.phone_number.replace(/\D/g, '').slice(-6);
+      const virtualAccount = `9922${lastDigits}`;
       const bankName = 'Sterling Bank';
       const reference = `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
-      await client.query(
-        `INSERT INTO funding_references (user_id, virtual_account_number, bank_name, reference)
-         VALUES ($1, $2, $3, $4)`,
-        [user.id, virtualAccount, bankName, reference]
-      );
-
-      await client.query('COMMIT');
-      
       console.log(`[AUTH SERVICE] Registered new user ${emailLower}. Assigned Virtual Account: ${virtualAccount}`);
-      return { ...user, wallet: { id: wallet.id, balance: wallet.balance }, virtualAccount, bankName, reference };
+      return { ...user, virtualAccount, bankName, reference };
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -80,12 +70,10 @@ export class AuthService {
       throw new Error("Authentication failed: Incorrect email or password.");
     }
 
-    const wallet = await WalletService.getWalletByUserId(user.id);
-    const virtualAccountResult = await db.query(
-      'SELECT virtual_account_number, bank_name, reference FROM funding_references WHERE user_id = $1',
-      [user.id]
-    );
-    const va = virtualAccountResult.rows[0] || {};
+    const lastDigits = user.phone_number.replace(/\D/g, '').slice(-6);
+    const virtual_account_number = `9922${lastDigits}`;
+    const bank_name = 'Sterling Bank';
+    const virtual_reference = `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
     const payload = {
       userId: user.id,
@@ -105,11 +93,10 @@ export class AuthService {
         phone_number: user.phone_number,
         full_name: user.full_name,
         role: user.role,
-        balance: wallet ? parseFloat(wallet.balance) : 0,
-        is_frozen: wallet ? wallet.is_frozen : false,
-        virtual_account_number: va.virtual_account_number,
-        bank_name: va.bank_name,
-        virtual_reference: va.reference
+        is_frozen: !user.is_active,
+        virtual_account_number,
+        bank_name,
+        virtual_reference
       }
     };
   }
@@ -127,12 +114,10 @@ export class AuthService {
       throw new Error("User not found.");
     }
 
-    const wallet = await WalletService.getWalletByUserId(userId);
-    const virtualAccountResult = await db.query(
-      'SELECT virtual_account_number, bank_name, reference FROM funding_references WHERE user_id = $1',
-      [userId]
-    );
-    const va = virtualAccountResult.rows[0] || {};
+    const lastDigits = user.phone_number.replace(/\D/g, '').slice(-6);
+    const virtual_account_number = `9922${lastDigits}`;
+    const bank_name = 'Sterling Bank';
+    const virtual_reference = `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
     return {
       id: user.id,
@@ -142,11 +127,10 @@ export class AuthService {
       role: user.role,
       is_active: user.is_active,
       created_at: user.created_at,
-      balance: wallet ? parseFloat(wallet.balance) : 0,
-      is_frozen: wallet ? wallet.is_frozen : false,
-      virtual_account_number: va.virtual_account_number,
-      bank_name: va.bank_name,
-      virtual_reference: va.reference
+      is_frozen: !user.is_active,
+      virtual_account_number,
+      bank_name,
+      virtual_reference
     };
   }
 }

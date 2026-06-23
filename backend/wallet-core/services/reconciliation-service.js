@@ -1,11 +1,11 @@
 import * as db from '../db/index.js';
 import { TransactionStateMachine, States } from './state-machine.js';
-import { WalletService } from './wallet-service.js';
 import { sendToUser } from './websocket-service.js';
 
 export class ReconciliationService {
   /**
-   * Generates summary statistics and lists for the Admin Reconciliation Dashboard.
+   * Generates summary statistics for the Admin Reconciliation panel.
+   * Pulls metrics on transactions, anomalies, assets, and mismatches.
    */
   static async getDashboardMetrics(filters = {}) {
     const { startDate, endDate, userId } = filters;
@@ -13,13 +13,11 @@ export class ReconciliationService {
     let dateFilterSql = '';
     let userFilterSql = '';
 
-    // Apply date range filters if present
     if (startDate && endDate) {
       queryParams.push(new Date(startDate), new Date(endDate));
       dateFilterSql = `AND created_at BETWEEN $1 AND $2`;
     }
 
-    // Apply user ID filter if present
     if (userId) {
       queryParams.push(userId);
       const paramIndex = queryParams.length;
@@ -28,7 +26,7 @@ export class ReconciliationService {
 
     // 1. Fetch pending, failed, and review transactions count
     const pendingRes = await db.query(
-      `SELECT COUNT(*) FROM transactions WHERE status IN ('INITIATED', 'PENDING_PAYMENT', 'VALIDATING') ${userFilterSql} ${dateFilterSql}`,
+      `SELECT COUNT(*) FROM transactions WHERE status IN ('INITIATED', 'PAYMENT_PENDING', 'PROCESSING', 'PAYMENT_CONFIRMED') ${userFilterSql} ${dateFilterSql}`,
       queryParams
     );
     const failedRes = await db.query(
@@ -36,7 +34,7 @@ export class ReconciliationService {
       queryParams
     );
     const manualReviewRes = await db.query(
-      `SELECT t.*, u.full_name, u.email 
+      `SELECT t.*, t.external_reference AS reference, u.full_name, u.email 
        FROM transactions t 
        JOIN users u ON t.user_id = u.id 
        WHERE t.status = 'MANUAL_REVIEW' ${userId ? `AND t.user_id = $1` : ''} 
@@ -44,42 +42,32 @@ export class ReconciliationService {
       userId ? [userId] : []
     );
 
-    // 2. Mismatched webhook entries (logged failures or mismatch errors)
+    // 2. Mismatched webhook entries
     const mismatchedWebhooksRes = await db.query(
       `SELECT * FROM webhook_logs 
        WHERE status = 'FAILED' OR error_message IS NOT NULL 
        ORDER BY created_at DESC LIMIT 50`
     );
 
-    // 3. Daily funding summary (today's successful virtual account payments)
+    // 3. Daily successful deposits (paid bank transfers)
     const dailyFundingRes = await db.query(
       `SELECT COALESCE(SUM(amount), 0.00) as total, COUNT(*) as count 
        FROM transactions 
-       WHERE type = 'FUNDING' AND status = 'SUCCESSFUL' AND created_at >= CURRENT_DATE`
+       WHERE type = 'AIRTIME' AND status = 'FULFILLED' AND created_at >= CURRENT_DATE`
     );
 
-    // 4. Double-entry ledger imbalance detection
-    // In strict double entry, sum(debit) - sum(credit) for each transaction must equal 0, 
-    // and overall sum(debit) must equal sum(credit).
-    const imbalanceRes = await db.query(
-      `SELECT type, COALESCE(SUM(amount), 0.00) as total 
-       FROM ledger_entries 
-       GROUP BY type`
-    );
+    // 4. Double-entry ledger imbalance check (re-adapted to sum value of total assets allocated vs transactions paid)
+    const assetSumRes = await db.query("SELECT COALESCE(SUM(value_denomination), 0.00) as total FROM assets");
+    const txnSumRes = await db.query("SELECT COALESCE(SUM(amount), 0.00) as total FROM transactions WHERE status = 'FULFILLED'");
 
-    let debits = 0;
-    let credits = 0;
-    imbalanceRes.rows.forEach(row => {
-      if (row.type === 'DEBIT') debits = parseFloat(row.total);
-      if (row.type === 'CREDIT') credits = parseFloat(row.total);
-    });
+    const totalAssets = parseFloat(assetSumRes.rows[0].total);
+    const totalPayments = parseFloat(txnSumRes.rows[0].total);
+    const imbalanceAmount = Math.abs(totalAssets - totalPayments);
+    const isImbalanced = imbalanceAmount > 0.01;
 
-    const imbalanceAmount = Math.abs(debits - credits);
-    const isImbalanced = imbalanceAmount > 0.001; // handling floating point comparison
-
-    // 5. Query active fraud flags
+    // 5. Fraud flags
     const activeFraudFlagsRes = await db.query(
-      `SELECT f.*, u.full_name, u.email 
+      `SELECT f.*, f.reason AS rule_triggered, u.full_name, u.email 
        FROM fraud_flags f
        JOIN users u ON f.user_id = u.id
        WHERE f.status = 'ACTIVE' ORDER BY f.created_at DESC`
@@ -95,8 +83,8 @@ export class ReconciliationService {
         count: parseInt(dailyFundingRes.rows[0]?.count || 0)
       },
       ledgerAudit: {
-        totalDebits: debits,
-        totalCredits: credits,
+        totalDebits: totalPayments, // Representing total fiat payments
+        totalCredits: totalAssets,   // Representing total digital assets delivered
         imbalance: imbalanceAmount,
         isImbalanced
       },
@@ -105,14 +93,13 @@ export class ReconciliationService {
   }
 
   /**
-   * Retrieves full transaction audit trace (lifecycle status logs) for tracing.
+   * Retrieves full transaction status log trace.
    */
   static async getTransactionTrace(transactionId) {
     const txnRes = await db.query(
-      `SELECT t.*, u.full_name, u.email, w.is_frozen 
+      `SELECT t.*, u.full_name, u.email 
        FROM transactions t
        JOIN users u ON t.user_id = u.id
-       JOIN wallets w ON t.wallet_id = w.id
        WHERE t.id = $1`,
       [transactionId]
     );
@@ -126,8 +113,8 @@ export class ReconciliationService {
       [transactionId]
     );
 
-    const ledgerRes = await db.query(
-      `SELECT * FROM ledger_entries 
+    const logsRes = await db.query(
+      `SELECT * FROM fulfillment_logs 
        WHERE transaction_id = $1 
        ORDER BY created_at ASC`,
       [transactionId]
@@ -136,12 +123,12 @@ export class ReconciliationService {
     return {
       transaction: txnRes.rows[0],
       statusHistory: historyRes.rows,
-      ledgerEntries: ledgerRes.rows
+      fulfillmentLogs: logsRes.rows
     };
   }
 
   /**
-   * Resolves a transaction stuck in MANUAL_REVIEW (Admin override).
+   * Resolves a transaction in MANUAL_REVIEW queue (Admin Override).
    */
   static async resolveManualReview(transactionId, adminId, approve, reason) {
     const client = await db.getClient();
@@ -158,82 +145,106 @@ export class ReconciliationService {
         throw new Error(`Transaction is not in MANUAL_REVIEW status (Current: ${txn.status})`);
       }
 
-      const walletRes = await client.query('SELECT id, is_frozen FROM wallets WHERE id = $1', [txn.wallet_id]);
-      const wallet = walletRes.rows[0];
-
-      // Insert record into admin overrides
+      // Log admin override action
       await client.query(
-        `INSERT INTO admin_overrides (admin_id, target_wallet_id, amount, type, reason)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [adminId, txn.wallet_id, txn.amount, approve ? 'CREDIT' : 'DEBIT', reason]
+        `INSERT INTO admin_actions (action_type, target_id, performed_by)
+         VALUES ($1, $2, $3)`,
+        [`OVERRIDE_${approve ? 'APPROVE' : 'DECLINE'}`, transactionId, adminId]
       );
 
       if (approve) {
-        // Unfreeze the wallet if it was frozen
-        if (wallet && wallet.is_frozen) {
-          await WalletService.setWalletFreezeStatus(wallet.id, false, client);
-        }
-
-        // Post Settlement Ledger Entries: Debit system_bank_asset, Credit user_wallet
-        await WalletService.postLedgerTransaction(
-          txn.id,
-          'system_bank_asset',
-          'user_wallet',
-          txn.wallet_id,
-          txn.amount,
-          client
+        // Reactivate user account upon override approval
+        await client.query(
+          'UPDATE users SET is_active = true WHERE id = $1',
+          [txn.user_id]
         );
 
-        // Transition: MANUAL_REVIEW -> SUCCESSFUL
-        await TransactionStateMachine.transitionTo(
-          txn.id,
-          States.SUCCESSFUL,
-          adminId,
-          `Admin Approved Override: ${reason}`,
-          client
+        // Transition: MANUAL_REVIEW -> PROCESSING
+        await TransactionStateMachine.transitionTo(txn.id, States.PROCESSING, adminId, `Override: ${reason}`, client);
+
+        // Deliver asset
+        await client.query(
+          `INSERT INTO assets (user_id, asset_type, value_denomination, status)
+           VALUES ($1, $2, $3, 'AVAILABLE')`,
+          [txn.user_id, txn.type === 'DATA' ? 'DATA' : 'AIRTIME', txn.amount]
         );
+
+        // Settle transaction FULFILLED
+        await TransactionStateMachine.transitionTo(txn.id, States.FULFILLED, adminId, 'Fulfillment override processed', client);
 
         // Notify user via WebSocket
         sendToUser(txn.user_id, {
           type: 'notification',
-          title: 'Transaction Approved',
-          message: `Your pending funding of ₦${txn.amount} was approved by administrator override.`,
+          title: 'Transaction Approved! 🚀',
+          message: `Your pending deposit of ₦${txn.amount} has been approved by administrator override.`,
           timestamp: new Date().toISOString()
         });
-
       } else {
-        // Transition: MANUAL_REVIEW -> FAILED
-        await TransactionStateMachine.transitionTo(
-          txn.id,
-          States.FAILED,
-          adminId,
-          `Admin Rejected Override: ${reason}`,
-          client
-        );
+        // Settle transaction FAILED
+        await TransactionStateMachine.transitionTo(txn.id, States.FAILED, adminId, `Decline Override: ${reason}`, client);
 
-        // Notify user via WebSocket
         sendToUser(txn.user_id, {
           type: 'notification',
-          title: 'Transaction Declined',
-          message: `Your pending funding of ₦${txn.amount} was declined after administrative review.`,
+          title: 'Transaction Declined ❌',
+          message: `Your pending deposit of ₦${txn.amount} has been declined after admin audit.`,
           timestamp: new Date().toISOString()
         });
       }
 
-      // Mark user fraud flags as RESOLVED
+      // Mark fraud flags as RESOLVED
       await client.query(
         "UPDATE fraud_flags SET status = 'RESOLVED' WHERE transaction_id = $1",
         [transactionId]
       );
 
       await client.query('COMMIT');
-      console.log(`👮 [ADMIN OVERRIDE] Transaction ${transactionId} resolved by admin ${adminId}. Approve: ${approve}`);
-      return { success: true, newStatus: approve ? States.SUCCESSFUL : States.FAILED };
+      console.log(`👮 [ADMIN OVERRIDE] Settle manual review completed: ${transactionId}`);
+      return { success: true, newStatus: approve ? States.FULFILLED : States.FAILED };
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
     } finally {
       client.release();
     }
+  }
+
+  // ===========================================================================
+  // ADMIN CAREER / JOBS BOARD MANAGEMENT
+  // ===========================================================================
+
+  static async createJob({ title, description, requirements, location, employment_type, deadline }) {
+    const result = await db.query(
+      `INSERT INTO jobs (title, description, requirements, location, employment_type, deadline, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'OPEN') RETURNING *`,
+      [title, description, requirements, location, employment_type, new Date(deadline)]
+    );
+    return result.rows[0];
+  }
+
+  static async updateJob(jobId, { status }) {
+    const result = await db.query(
+      `UPDATE jobs SET status = $1 WHERE id = $2 RETURNING *`,
+      [status, jobId]
+    );
+    return result.rows[0];
+  }
+
+  static async deleteJob(jobId) {
+    await db.query('DELETE FROM jobs WHERE id = $1', [jobId]);
+    return { success: true };
+  }
+
+  static async applyForJob({ jobId, userId, cvUrl, coverLetter }) {
+    const result = await db.query(
+      `INSERT INTO job_applications (job_id, user_id, cv_url, cover_letter, status)
+       VALUES ($1, $2, $3, $4, 'RECEIVED') RETURNING *`,
+      [jobId, userId, cvUrl, coverLetter]
+    );
+    return result.rows[0];
+  }
+
+  static async getOpenJobs() {
+    const result = await db.query("SELECT * FROM jobs WHERE status = 'OPEN' ORDER BY created_at DESC");
+    return result.rows;
   }
 }

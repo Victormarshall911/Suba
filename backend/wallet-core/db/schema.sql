@@ -9,18 +9,18 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE txn_type_enum AS ENUM ('FUNDING', 'DATA_PURCHASE', 'REFUND');
+    CREATE TYPE suba_txn_type_enum AS ENUM ('AIRTIME', 'DATA', 'BILL_PAYMENT');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE txn_status_enum AS ENUM (
+    CREATE TYPE suba_txn_status_enum AS ENUM (
         'INITIATED',
-        'PENDING_PAYMENT',
-        'PAYMENT_RECEIVED',
-        'VALIDATING',
-        'SUCCESSFUL',
+        'PAYMENT_PENDING',
+        'PAYMENT_CONFIRMED',
+        'PROCESSING',
+        'FULFILLED',
         'FAILED',
         'REVERSED',
         'FLAGGED_FRAUD',
@@ -31,12 +31,48 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE ledger_entry_type_enum AS ENUM ('DEBIT', 'CREDIT');
+    CREATE TYPE asset_type_enum AS ENUM ('AIRTIME', 'DATA', 'VOUCHER');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- 1. Users Table
+DO $$ BEGIN
+    CREATE TYPE asset_status_enum AS ENUM ('AVAILABLE', 'USED', 'EXPIRED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE ambassador_status_enum AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE ambassador_level_enum AS ENUM ('BRONZE', 'SILVER', 'GOLD');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE commission_status_enum AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'PAID', 'REVERSED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE job_status_enum AS ENUM ('OPEN', 'CLOSED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE app_status_enum AS ENUM ('RECEIVED', 'UNDER_REVIEW', 'SHORTLISTED', 'REJECTED', 'ACCEPTED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- 1. Users Table (KYC Added)
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -44,125 +80,157 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(255) NOT NULL,
     password_hash TEXT NOT NULL,
     role user_role_enum NOT NULL DEFAULT 'USER',
+    kyc_level INTEGER NOT NULL DEFAULT 1,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS ix_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS ix_users_phone_number ON users(phone_number);
 
--- 2. Wallets Table
-CREATE TABLE IF NOT EXISTS wallets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
-    pin_hash TEXT,
-    is_frozen BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT ck_wallets_balance_non_negative CHECK (balance >= 0.00)
-);
-
-CREATE INDEX IF NOT EXISTS ix_wallets_user_id ON wallets(user_id);
-
--- 3. Transactions Table (State Machine Bound)
+-- 2. Transactions Table
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    wallet_id UUID NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
-    type txn_type_enum NOT NULL,
+    type suba_txn_type_enum NOT NULL,
+    provider VARCHAR(50) NOT NULL, -- Paystack / Flutterwave / VTpass / Clubkonnect
     amount NUMERIC(12, 2) NOT NULL,
-    status txn_status_enum NOT NULL DEFAULT 'INITIATED',
-    reference VARCHAR(255) UNIQUE NOT NULL,
-    recipient_phone VARCHAR(14),
-    network VARCHAR(20),
-    plan_code VARCHAR(100),
-    narration TEXT,
-    provider_response JSONB,
+    status suba_txn_status_enum NOT NULL DEFAULT 'INITIATED',
+    external_reference VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT ck_transactions_amount_positive CHECK (amount > 0)
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS ix_transactions_reference ON transactions(reference);
-CREATE INDEX IF NOT EXISTS ix_transactions_user_id ON transactions(user_id);
-CREATE INDEX IF NOT EXISTS ix_transactions_created_at ON transactions(created_at);
+CREATE INDEX IF NOT EXISTS ix_tx_reference ON transactions(external_reference);
+CREATE INDEX IF NOT EXISTS ix_tx_user_id ON transactions(user_id);
 
--- 4. Immutable Ledger Entries (Double-Entry Bookkeeping)
-CREATE TABLE IF NOT EXISTS ledger_entries (
+-- 3. Payment Events Table
+CREATE TABLE IF NOT EXISTS payment_events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
-    wallet_id UUID REFERENCES wallets(id) ON DELETE SET NULL, -- Null for system-wide asset/liability accounts
-    account_type VARCHAR(50) NOT NULL, -- 'user_wallet', 'system_bank_asset', 'system_revenue'
-    type ledger_entry_type_enum NOT NULL,
-    amount NUMERIC(12, 2) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT ck_ledger_amount_positive CHECK (amount > 0)
+    gateway_response JSONB NOT NULL,
+    webhook_payload JSONB NOT NULL,
+    signature_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS ix_ledger_transaction_id ON ledger_entries(transaction_id);
-CREATE INDEX IF NOT EXISTS ix_ledger_wallet_id ON ledger_entries(wallet_id);
-CREATE INDEX IF NOT EXISTS ix_ledger_created_at ON ledger_entries(created_at);
+-- 4. Fulfillment Logs Table
+CREATE TABLE IF NOT EXISTS fulfillment_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+    provider_response JSONB,
+    success BOOLEAN NOT NULL,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
--- 5. Funding References
-CREATE TABLE IF NOT EXISTS funding_references (
+-- 5. Asset Inventory (Replaces Wallet Balance)
+CREATE TABLE IF NOT EXISTS assets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    virtual_account_number VARCHAR(50) NOT NULL,
-    bank_name VARCHAR(100) NOT NULL,
-    reference VARCHAR(255) UNIQUE NOT NULL,
-    amount NUMERIC(12, 2),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    asset_type asset_type_enum NOT NULL,
+    value_denomination NUMERIC(12, 2) NOT NULL, -- E.g., 2000 airtime or 5GB data values
+    status asset_status_enum NOT NULL DEFAULT 'AVAILABLE',
+    transferable BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX IF NOT EXISTS ix_funding_references_ref ON funding_references(reference);
-CREATE INDEX IF NOT EXISTS ix_funding_references_user ON funding_references(user_id);
+CREATE INDEX IF NOT EXISTS ix_assets_user_id ON assets(user_id);
 
--- 6. Webhook Logs
-CREATE TABLE IF NOT EXISTS webhook_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    provider VARCHAR(50) NOT NULL,
-    event_type VARCHAR(100) NOT NULL,
-    payload JSONB NOT NULL,
-    signature TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL, -- 'PROCESSED', 'FAILED', 'IGNORED'
-    error_message TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS ix_webhook_logs_created_at ON webhook_logs(created_at);
-
--- 7. Admin Overrides
-CREATE TABLE IF NOT EXISTS admin_overrides (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    admin_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    target_wallet_id UUID NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
-    amount NUMERIC(12, 2) NOT NULL,
-    type ledger_entry_type_enum NOT NULL,
-    reason TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- 8. Fraud Flags
+-- 6. Fraud Flags
 CREATE TABLE IF NOT EXISTS fraud_flags (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
-    rule_triggered VARCHAR(255) NOT NULL,
-    details JSONB NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- 'ACTIVE', 'RESOLVED'
+    reason TEXT NOT NULL,
+    severity VARCHAR(20) NOT NULL, -- LOW, MEDIUM, HIGH
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, RESOLVED
+    details JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS ix_fraud_flags_user_id ON fraud_flags(user_id);
+-- 6b. Webhook Logs
+CREATE TABLE IF NOT EXISTS webhook_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    event_type VARCHAR(100),
+    provider VARCHAR(50),
+    error_message TEXT,
+    signature TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
--- 9. Transaction Status History (Audit Trail)
+-- 7. Admin Actions
+CREATE TABLE IF NOT EXISTS admin_actions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    action_type VARCHAR(100) NOT NULL,
+    target_id UUID NOT NULL,
+    performed_by UUID NOT NULL REFERENCES users(id),
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. Ambassadors Table (Lifecycle)
+CREATE TABLE IF NOT EXISTS ambassadors (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    referral_code VARCHAR(50) UNIQUE NOT NULL,
+    status ambassador_status_enum NOT NULL DEFAULT 'PENDING',
+    level ambassador_level_enum NOT NULL DEFAULT 'BRONZE',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_ambassadors_code ON ambassadors(referral_code);
+
+-- 9. Referrals Table
+CREATE TABLE IF NOT EXISTS referrals (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ambassador_id UUID NOT NULL REFERENCES ambassadors(id) ON DELETE CASCADE,
+    referred_user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    transaction_count INTEGER NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, INACTIVE
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Commissions Table
+CREATE TABLE IF NOT EXISTS commissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ambassador_id UUID NOT NULL REFERENCES ambassadors(id) ON DELETE CASCADE,
+    transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+    amount NUMERIC(12, 2) NOT NULL,
+    status commission_status_enum NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. Jobs Table (Careers)
+CREATE TABLE IF NOT EXISTS jobs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    requirements TEXT NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    employment_type VARCHAR(50) NOT NULL, -- Full-time, Part-time, Contract, Internship
+    deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+    status job_status_enum NOT NULL DEFAULT 'OPEN',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Job Applications Table
+CREATE TABLE IF NOT EXISTS job_applications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    cv_url TEXT NOT NULL,
+    cover_letter TEXT,
+    status app_status_enum NOT NULL DEFAULT 'RECEIVED',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 13. Transaction Status History (Audit Trail)
 CREATE TABLE IF NOT EXISTS transaction_status_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
-    from_status txn_status_enum,
-    to_status txn_status_enum NOT NULL,
-    changed_by UUID REFERENCES users(id) ON DELETE SET NULL, -- Null if system
+    from_status suba_txn_status_enum,
+    to_status suba_txn_status_enum NOT NULL,
+    changed_by UUID REFERENCES users(id) ON DELETE SET NULL,
     remarks TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

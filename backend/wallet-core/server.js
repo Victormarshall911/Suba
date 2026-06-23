@@ -10,7 +10,9 @@ import { AuthService } from './services/auth-service.js';
 import { TransactionService } from './services/transaction-service.js';
 import { handlePaystackWebhook } from './controllers/webhook-controller.js';
 import { ReconciliationService } from './services/reconciliation-service.js';
-import { WalletService } from './services/wallet-service.js';
+import { AssetService } from './services/asset-service.js';
+import { GrowthService } from './services/growth-service.js';
+import * as db from './db/index.js';
 
 dotenv.config();
 
@@ -108,40 +110,70 @@ app.get('/api/v1/auth/me', authenticateJWT, async (req, res) => {
   }
 });
 
-// 4. Wallet Endpoint: Initiate Wallet Funding
+// 4. Transactions: Initiate Payment for Asset Purchase
+app.post('/api/v1/transactions/payment/initiate', authenticateJWT, async (req, res) => {
+  try {
+    const { type, amount, provider } = req.body;
+    const data = await TransactionService.initiateAssetPurchase(req.user.userId, { type, amount, provider });
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 4b. Wallet Funding Endpoint (Map to Asset Purchase for backward compatibility)
 app.post('/api/v1/wallet/fund/initiate', authenticateJWT, async (req, res) => {
   try {
     const { amount } = req.body;
-    const data = await TransactionService.initiateFunding(req.user.userId, amount);
+    const data = await TransactionService.initiateAssetPurchase(req.user.userId, { type: 'AIRTIME', amount });
     res.status(201).json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// 5. Wallet Endpoint: Purchase Airtime or Data (VTU)
-app.post('/api/v1/wallet/purchase', authenticateJWT, async (req, res) => {
+// 5. Assets: Get User Available Inventory
+app.get('/api/v1/assets/inventory', authenticateJWT, async (req, res) => {
   try {
-    const { type, amount, recipient_phone, network, plan_code, narration } = req.body;
-    const data = await TransactionService.purchaseVTU(req.user.userId, {
-      type,
-      amount,
-      recipient_phone,
-      network,
-      plan_code,
-      narration
-    });
-    res.status(201).json(data);
+    const assets = await AssetService.getInventory(req.user.userId);
+    res.status(200).json(assets);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// 6. Wallet Endpoint: Get user transaction logs
+// 5b. Assets: Transfer Asset Internally
+app.post('/api/v1/assets/transfer', authenticateJWT, async (req, res) => {
+  try {
+    const { assetId, recipientIdentifier } = req.body;
+    if (!assetId || !recipientIdentifier) {
+      return res.status(400).json({ message: 'Validation failed: assetId and recipientIdentifier are required.' });
+    }
+    const data = await AssetService.transferAsset(req.user.userId, assetId, recipientIdentifier);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 5c. Assets: Redeem (VTU dispatch)
+app.post('/api/v1/assets/redeem', authenticateJWT, async (req, res) => {
+  try {
+    const { assetId, targetPhone } = req.body;
+    if (!assetId || !targetPhone) {
+      return res.status(400).json({ message: 'Validation failed: assetId and targetPhone are required.' });
+    }
+    const data = await AssetService.redeemAsset(req.user.userId, assetId, targetPhone);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6. User Transactions: Get logs
 app.get('/api/v1/wallet/transactions', authenticateJWT, async (req, res) => {
   try {
     const transactions = await TransactionService.getTransactionsByUserId(req.user.userId);
-    // Wrap inside pagination-like structure for frontend compatibility
     res.status(200).json({ items: transactions, total: transactions.length });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -190,15 +222,168 @@ app.post('/api/v1/admin/transactions/:id/resolve', authenticateJWT, requireAdmin
   }
 });
 
-// 11. Admin Endpoint: Freeze or unfreeze a wallet
+// 6b. Ambassador: Apply
+app.post('/api/v1/ambassador/apply', authenticateJWT, async (req, res) => {
+  try {
+    const { location, social_links, reason_for_joining, referral_code } = req.body;
+    const data = await GrowthService.applyAmbassador(req.user.userId, { location, social_links, reason_for_joining, referral_code });
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6c. Ambassador: Profile statistics
+app.get('/api/v1/ambassador/profile', authenticateJWT, async (req, res) => {
+  try {
+    const data = await GrowthService.getProfile(req.user.userId);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6d. Ambassador: Referrals
+app.get('/api/v1/ambassador/referrals', authenticateJWT, async (req, res) => {
+  try {
+    const profile = await GrowthService.getProfile(req.user.userId);
+    if (!profile) {
+      return res.status(400).json({ message: 'User is not an active ambassador.' });
+    }
+    const result = await db.query(
+      `SELECT r.*, u.full_name, u.email 
+       FROM referrals r
+       JOIN users u ON r.referred_user_id = u.id
+       WHERE r.ambassador_id = $1`,
+      [profile.ambassador_id]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6e. Ambassador: Earnings
+app.get('/api/v1/ambassador/earnings', authenticateJWT, async (req, res) => {
+  try {
+    const profile = await GrowthService.getProfile(req.user.userId);
+    if (!profile) {
+      return res.status(400).json({ message: 'User is not an active ambassador.' });
+    }
+    const result = await db.query(
+      `SELECT c.*, t.type AS txn_type, t.amount AS txn_amount
+       FROM commissions c
+       JOIN transactions t ON c.transaction_id = t.id
+       WHERE c.ambassador_id = $1
+       ORDER BY c.created_at DESC`,
+      [profile.ambassador_id]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6f. Careers: Public jobs listing
+app.get('/api/v1/careers', async (req, res) => {
+  try {
+    const data = await ReconciliationService.getOpenJobs();
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6g. Careers: Apply for job
+app.post('/api/v1/jobs/apply', authenticateJWT, async (req, res) => {
+  try {
+    const { jobId, cvUrl, coverLetter } = req.body;
+    if (!jobId || !cvUrl) {
+      return res.status(400).json({ message: 'Validation failed: jobId and cvUrl are required.' });
+    }
+    const data = await ReconciliationService.applyForJob({ jobId, userId: req.user.userId, cvUrl, coverLetter });
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin GET: Retrieve all job postings (both OPEN and CLOSED)
+app.get('/api/v1/admin/jobs', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM jobs ORDER BY created_at DESC');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin GET: Retrieve all candidate job applications
+app.get('/api/v1/admin/jobs/applications', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT ja.*, j.title AS job_title, u.full_name AS applicant_name, u.email AS applicant_email 
+       FROM job_applications ja
+       JOIN jobs j ON ja.job_id = j.id
+       JOIN users u ON ja.user_id = u.id
+       ORDER BY ja.created_at DESC`
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6h. Admin: Post job opening
+app.post('/api/v1/admin/jobs', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { title, description, requirements, location, employment_type, deadline } = req.body;
+    if (!title || !description || !requirements || !location || !employment_type || !deadline) {
+      return res.status(400).json({ message: 'Validation failed: All job details are required.' });
+    }
+    const data = await ReconciliationService.createJob({ title, description, requirements, location, employment_type, deadline });
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6i. Admin: Update job opening
+app.patch('/api/v1/admin/jobs/:id', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ message: 'Validation failed: status is required.' });
+    }
+    const data = await ReconciliationService.updateJob(req.params.id, { status });
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6j. Admin: Delete job opening
+app.delete('/api/v1/admin/jobs/:id', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const data = await ReconciliationService.deleteJob(req.params.id);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 11. Admin Endpoint: Freeze or unfreeze a wallet (Map to suspend user account)
 app.post('/api/v1/admin/wallets/:id/freeze', authenticateJWT, requireAdmin, async (req, res) => {
   try {
     const { is_frozen } = req.body;
     if (is_frozen === undefined) {
       return res.status(400).json({ message: 'Validation failed: is_frozen (boolean) is required.' });
     }
-    const data = await WalletService.setWalletFreezeStatus(req.params.id, is_frozen);
-    res.status(200).json(data);
+    await db.query(
+      'UPDATE users SET is_active = $1 WHERE id = $2',
+      [!is_frozen, req.params.id]
+    );
+    res.status(200).json({ id: req.params.id, is_frozen });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

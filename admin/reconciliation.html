@@ -243,7 +243,104 @@
         </div>
       </div>
 
+      <!-- Job Postings & Career Applications Management -->
+      <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface); display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-weight: 700; color: var(--clr-text-primary)">Careers & Job Openings Board</h4>
+          <button class="btn btn-primary btn-sm" onclick="openCreateJobModal()">➕ Post New Job</button>
+        </div>
+        <div class="admin-table-container" style="border: none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Job Title</th>
+                <th>Location</th>
+                <th>Type</th>
+                <th>Deadline</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminJobsTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--clr-text-light)">Loading job postings...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Job Applications List -->
+      <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
+          <h4 style="font-weight: 700; color: var(--clr-text-primary)">Job Candidate Applications</h4>
+        </div>
+        <div class="admin-table-container" style="border: none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Applicant</th>
+                <th>Job Applied</th>
+                <th>CV Document</th>
+                <th>Cover Letter</th>
+                <th>Applied Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="adminJobApplicationsTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--clr-text-light)">Loading job applications...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
+  </div>
+
+  <!-- Create Job Modal -->
+  <div class="modal-backdrop" id="createJobModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Post New Job Opening</h3>
+        <button class="modal-close" onclick="closeCreateJobModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="jobTitle" class="form-label">Job Title</label>
+          <input type="text" id="jobTitle" class="form-input" placeholder="e.g. VTU Operations Analyst">
+        </div>
+        <div class="form-group">
+          <label for="jobDescription" class="form-label">Description</label>
+          <textarea id="jobDescription" class="form-input" rows="3" placeholder="Duties and role description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="jobRequirements" class="form-label">Requirements</label>
+          <textarea id="jobRequirements" class="form-input" rows="3" placeholder="Key skills and experience..."></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="jobLocation" class="form-label">Location</label>
+            <input type="text" id="jobLocation" class="form-input" placeholder="e.g. Remote, Lagos">
+          </div>
+          <div class="form-group">
+            <label for="jobEmploymentType" class="form-label">Employment Type</label>
+            <select id="jobEmploymentType" class="form-input">
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Contract">Contract</option>
+              <option value="Internship">Internship</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="jobDeadline" class="form-label">Application Deadline</label>
+          <input type="date" id="jobDeadline" class="form-input">
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="confirmCreateJobBtn">Publish Opening</button>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts -->
@@ -253,6 +350,14 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       
+      // Make sure we have job modals accessible
+      window.openCreateJobModal = () => {
+        SUBAComponents.openModal('createJobModal');
+      };
+      window.closeCreateJobModal = () => {
+        SUBAComponents.closeModal('createJobModal');
+      };
+
       async function loadDashboard() {
         const startDate = document.getElementById('filterStartDate').value;
         const endDate = document.getElementById('filterEndDate').value;
@@ -355,6 +460,10 @@
               `).join('');
             }
           }
+          
+          // Load Careers and Applications
+          await loadJobsAndApplications();
+
         } catch (err) {
           console.error("Failed to load dashboard reconciliation data:", err);
           SUBAComponents.showToast({
@@ -362,6 +471,64 @@
             message: 'Make sure your Node.js server is running and you are logged in as an ADMIN.',
             type: 'error'
           });
+        }
+      }
+
+      async function loadJobsAndApplications() {
+        try {
+          const [jobs, applications] = await Promise.all([
+            SUBAApi.request('/admin/jobs', { method: 'GET' }),
+            SUBAApi.request('/admin/jobs/applications', { method: 'GET' })
+          ]);
+
+          // Render Jobs
+          const jobsBody = document.getElementById('adminJobsTableBody');
+          if (!jobs || jobs.length === 0) {
+            jobsBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--clr-text-light)">No job postings created yet.</td></tr>`;
+          } else {
+            jobsBody.innerHTML = jobs.map(job => `
+              <tr>
+                <td><strong>${job.title}</strong></td>
+                <td>${job.location}</td>
+                <td><span class="badge badge-secondary">${job.employment_type}</span></td>
+                <td>${new Date(job.deadline).toLocaleDateString()}</td>
+                <td>
+                  <span class="badge ${job.status === 'OPEN' ? 'badge-success' : 'badge-dark'}">${job.status}</span>
+                </td>
+                <td>
+                  <div style="display:flex; gap:6px">
+                    ${job.status === 'OPEN' ? `<button class="btn btn-secondary btn-sm" onclick="toggleJobStatus('${job.id}', 'CLOSED')">Close</button>` : `<button class="btn btn-primary btn-sm" onclick="toggleJobStatus('${job.id}', 'OPEN')">Open</button>`}
+                    <button class="btn btn-secondary btn-sm" style="color:var(--clr-error); border-color:var(--clr-error)" onclick="deleteJob('${job.id}')">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('');
+          }
+
+          // Render Applications
+          const appsBody = document.getElementById('adminJobApplicationsTableBody');
+          if (!applications || applications.length === 0) {
+            appsBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--clr-text-light)">No applicant CVs submitted yet.</td></tr>`;
+          } else {
+            appsBody.innerHTML = applications.map(app => `
+              <tr>
+                <td><strong>${app.applicant_name}</strong><br><span style="font-size:10px; color:var(--clr-text-secondary)">${app.applicant_email}</span></td>
+                <td>${app.job_title}</td>
+                <td>
+                  <a href="${app.cv_url}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">📄 View CV</a>
+                </td>
+                <td>
+                  <span style="font-size:12px; display:inline-block; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${app.cover_letter || ''}">
+                    ${app.cover_letter || 'No cover letter'}
+                  </span>
+                </td>
+                <td>${new Date(app.created_at).toLocaleDateString()}</td>
+                <td><span class="badge badge-pending">${app.status}</span></td>
+              </tr>
+            `).join('');
+          }
+        } catch (err) {
+          console.error("Failed to load jobs and applications:", err);
         }
       }
 
@@ -374,7 +541,7 @@
 
       // Resolve override queue function
       window.resolveOverride = async function(id, approve) {
-        const reason = prompt(`Enter reason details for this administrative ${approve ? 'approval' : 'decline'} override:`);
+        const reason = prompt('Enter reason details for this administrative ' + (approve ? 'approval' : 'decline') + ' override:');
         if (!reason) {
           alert('Resolution reason details are mandatory.');
           return;
@@ -401,7 +568,100 @@
             type: 'error'
           });
         }
-      }
+      };
+
+      // Job management functions
+      window.toggleJobStatus = async function(id, status) {
+        try {
+          await SUBAApi.request(`/admin/jobs/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status })
+          });
+          SUBAComponents.showToast({
+            title: 'Job Status Updated',
+            message: `Job is now ${status}`,
+            type: 'success'
+          });
+          await loadJobsAndApplications();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Action Failed',
+            message: err.message,
+            type: 'error'
+          });
+        }
+      };
+
+      window.deleteJob = async function(id) {
+        if (!confirm('Are you sure you want to permanently delete this job posting?')) return;
+        try {
+          await SUBAApi.request(`/admin/jobs/${id}`, {
+            method: 'DELETE'
+          });
+          SUBAComponents.showToast({
+            title: 'Job Deleted',
+            message: 'Job posting permanently deleted.',
+            type: 'success'
+          });
+          await loadJobsAndApplications();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Action Failed',
+            message: err.message,
+            type: 'error'
+          });
+        }
+      };
+
+      // Add Job Posting submit handler
+      const confirmCreateJobBtn = document.getElementById('confirmCreateJobBtn');
+      confirmCreateJobBtn.addEventListener('click', async () => {
+        const title = document.getElementById('jobTitle').value.trim();
+        const description = document.getElementById('jobDescription').value.trim();
+        const requirements = document.getElementById('jobRequirements').value.trim();
+        const location = document.getElementById('jobLocation').value.trim();
+        const employment_type = document.getElementById('jobEmploymentType').value;
+        const deadline = document.getElementById('jobDeadline').value;
+
+        if (!title || !description || !requirements || !location || !deadline) {
+          SUBAComponents.showToast({
+            title: 'Fields Missing',
+            message: 'Please fill in all job opening fields.',
+            type: 'error'
+          });
+          return;
+        }
+
+        confirmCreateJobBtn.classList.add('is-loading');
+        try {
+          await SUBAApi.request('/admin/jobs', {
+            method: 'POST',
+            body: JSON.stringify({ title, description, requirements, location, employment_type, deadline })
+          });
+          SUBAComponents.closeModal('createJobModal');
+          SUBAComponents.showToast({
+            title: 'Job Published',
+            message: 'New job posting has been successfully published.',
+            type: 'success'
+          });
+          // Reset inputs
+          document.getElementById('jobTitle').value = '';
+          document.getElementById('jobDescription').value = '';
+          document.getElementById('jobRequirements').value = '';
+          document.getElementById('jobLocation').value = '';
+          document.getElementById('jobDeadline').value = '';
+          
+          await loadJobsAndApplications();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Publish Failed',
+            message: err.message,
+            type: 'error'
+          });
+        } finally {
+          confirmCreateJobBtn.classList.remove('is-loading');
+        }
+      });
     });
   </script>
 </body>

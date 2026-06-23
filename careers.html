@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Careers at SUBA | Join Our Team</title>
+  <meta name="description" content="Explore job openings at Suba and help build the future of transaction and asset execution engines.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .careers-hero {
+      background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-secondary) 100%);
+      color: white;
+      text-align: center;
+      padding: var(--space-10) var(--space-4);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--space-8);
+    }
+    .careers-hero h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .careers-hero p {
+      font-size: var(--text-base);
+      opacity: 0.9;
+      margin-top: var(--space-2);
+      max-width: 600px;
+      margin-inline: auto;
+    }
+    .jobs-container {
+      max-width: 800px;
+      margin: 0 auto var(--space-10) auto;
+      padding-inline: var(--space-4);
+    }
+    .job-card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border-light);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      margin-bottom: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .job-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .job-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--clr-text-primary);
+    }
+    .job-meta {
+      display: flex;
+      gap: var(--space-3);
+      font-size: var(--text-xs);
+      color: var(--clr-text-tertiary);
+      margin-top: var(--space-2);
+    }
+    .job-badge {
+      background: var(--clr-primary-light);
+      color: var(--clr-primary);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .job-description {
+      font-size: var(--text-sm);
+      color: var(--clr-text-secondary);
+      line-height: 1.6;
+      margin-block: var(--space-4);
+    }
+    .job-section-title {
+      font-weight: 700;
+      color: var(--clr-text-primary);
+      font-size: 13px;
+      margin-bottom: var(--space-2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .job-requirements {
+      font-size: var(--text-sm);
+      color: var(--clr-text-secondary);
+      background: var(--clr-bg);
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-4);
+      line-height: 1.5;
+    }
+    .empty-jobs-card {
+      text-align: center;
+      padding: var(--space-10) var(--space-4);
+      background: var(--clr-surface);
+      border: 1px dashed var(--clr-border-light);
+      border-radius: var(--radius-xl);
+      color: var(--clr-text-light);
+    }
+    .empty-jobs-icon {
+      font-size: 48px;
+      margin-bottom: var(--space-3);
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <div class="container py-8" style="max-width: 1000px">
+    
+    <!-- Topbar Navigation Header -->
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-8)">
+      <a href="index.html"><img src="images/suba-logo.png" alt="SUBA Logo" style="height: 32px"></a>
+      <div style="display:flex; gap: var(--space-3)">
+        <a href="dashboard.html" class="btn btn-secondary btn-sm">🏠 Dashboard</a>
+        <a href="login.html" class="btn btn-primary btn-sm" id="authNavBtn">Log In</a>
+      </div>
+    </header>
+
+    <!-- Careers Hero Widget -->
+    <div class="careers-hero">
+      <h1>Join the Suba Movement</h1>
+      <p>We are building a regulatory-safe transactional asset engine for campus digital service inventory. Come shape the distribution layers of digital services.</p>
+    </div>
+
+    <!-- Job Postings List Section -->
+    <div class="jobs-container">
+      <h3 style="font-weight:700; color: var(--clr-text-primary); margin-bottom: var(--space-4)">Open Positions</h3>
+      <div id="jobsListContainer">
+        <div style="text-align:center; padding: var(--space-10);">
+          <div class="spinner spinner-primary"></div>
+          <p style="margin-top: var(--space-3); color: var(--clr-text-light)">Scanning for active job postings...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Job Application Modal Backplane -->
+  <div class="modal-backdrop" id="applyJobModal">
+    <div class="modal" style="max-width: 480px">
+      <div class="modal-header">
+        <h3 id="modalJobTitle">Apply for Position</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('applyJobModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="applyCvUrl" class="form-label">CV/Resume PDF Link</label>
+          <input type="url" id="applyCvUrl" class="form-input" placeholder="e.g. https://dropbox.com/s/my_cv.pdf">
+          <div class="form-hint">Host your PDF on Dropbox, GDrive, or similar and paste the direct share link.</div>
+        </div>
+        <div class="form-group">
+          <label for="applyCoverLetter" class="form-label">Brief Cover Note</label>
+          <textarea id="applyCoverLetter" class="form-input" rows="4" placeholder="Briefly describe why you are a good fit for this role..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="submitAppBtn">Submit Application</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      
+      // Update auth nav header buttons based on session state
+      const token = SUBAUtils.retrieve('token');
+      const authBtn = document.getElementById('authNavBtn');
+      if (token) {
+        authBtn.textContent = 'Account Profile';
+        authBtn.href = 'profile.html';
+      } else {
+        authBtn.textContent = 'Log In';
+        authBtn.href = 'login.html';
+      }
+
+      let selectedJobId = null;
+
+      // Fetch open roles from API
+      async function loadOpenJobs() {
+        const container = document.getElementById('jobsListContainer');
+        try {
+          // If public endpoint Careers throws an error, fallback gracefully
+          const jobs = await SUBAApi.request('/careers', { method: 'GET' });
+          
+          if (!jobs || jobs.length === 0) {
+            container.innerHTML = `
+              <div class="empty-jobs-card">
+                <div class="empty-jobs-icon">📁</div>
+                <h4>No job openings available currently.</h4>
+                <p>We are not actively recruiting for core developer positions, but feel free to check back later.</p>
+              </div>
+            `;
+            return;
+          }
+
+          container.innerHTML = jobs.map(job => `
+            <div class="job-card">
+              <div class="job-header">
+                <div class="job-title">${job.title}</div>
+                <button class="btn btn-primary btn-sm" onclick="openApplyModal('${job.id}', '${job.title.replace(/'/g, "\\'")}')">Apply Now</button>
+              </div>
+              <div class="job-meta">
+                <span>📍 ${job.location}</span>
+                <span>💼 ${job.employment_type}</span>
+                <span class="job-badge">DEADLINE: ${new Date(job.deadline).toLocaleDateString()}</span>
+              </div>
+              <div class="job-description">
+                ${job.description}
+              </div>
+              <div class="job-section-title">Core Requirements</div>
+              <div class="job-requirements">
+                ${job.requirements}
+              </div>
+            </div>
+          `).join('');
+
+        } catch (err) {
+          console.error("Failed to load jobs board from API", err.message);
+          container.innerHTML = `
+            <div class="empty-jobs-card">
+              <div class="empty-jobs-icon">⚠️</div>
+              <h4>Could not load careers board</h4>
+              <p>The backend node is offline or unreachable. Please try again shortly.</p>
+            </div>
+          `;
+        }
+      }
+
+      // Open Apply Modal trigger
+      window.openApplyModal = function(id, title) {
+        if (!SUBAUtils.retrieve('token')) {
+          SUBAComponents.showToast({
+            title: 'Authentication Required',
+            message: 'Please log in to apply for this job opening.',
+            type: 'warning'
+          });
+          setTimeout(() => {
+            window.location.href = 'login.html?redirect=careers.html';
+          }, 1500);
+          return;
+        }
+
+        selectedJobId = id;
+        document.getElementById('modalJobTitle').textContent = `Apply: ${title}`;
+        document.getElementById('applyCvUrl').value = '';
+        document.getElementById('applyCoverLetter').value = '';
+        SUBAComponents.openModal('applyJobModal');
+      }
+
+      // Submit Application button
+      document.getElementById('submitAppBtn').addEventListener('click', async () => {
+        const cvUrl = document.getElementById('applyCvUrl').value.trim();
+        const coverLetter = document.getElementById('applyCoverLetter').value.trim();
+
+        if (!cvUrl) {
+          SUBAComponents.showToast({
+            title: 'CV Link Required',
+            message: 'Please enter a hosted PDF resume URL to complete application.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const btn = document.getElementById('submitAppBtn');
+        btn.classList.add('is-loading');
+
+        try {
+          const res = await SUBAApi.request('/jobs/apply', {
+            method: 'POST',
+            body: JSON.stringify({
+              jobId: selectedJobId,
+              cvUrl,
+              coverLetter
+            })
+          });
+
+          btn.classList.remove('is-loading');
+          SUBAComponents.closeModal('applyJobModal');
+          
+          SUBAComponents.showToast({
+            title: 'Application Received 🚀',
+            message: 'Your CV has been queued for hiring review. Check back soon.',
+            type: 'success',
+            duration: 5000
+          });
+        } catch (err) {
+          btn.classList.remove('is-loading');
+          SUBAComponents.showToast({
+            title: 'Submission Failed',
+            message: err.message,
+            type: 'error'
+          });
+        }
+      });
+
+      // Initial jobs load
+      await loadOpenJobs();
+    });
+  </script>
+</body>
+</html>

@@ -3,7 +3,9 @@ import jwt from 'jsonwebtoken';
 import { AuthService } from '../services/auth-service.js';
 import { TransactionService } from '../services/transaction-service.js';
 import { ReconciliationService } from '../services/reconciliation-service.js';
-import { WalletService } from '../services/wallet-service.js';
+import { AssetService } from '../services/asset-service.js';
+import { GrowthService } from '../services/growth-service.js';
+import { FraudService } from '../services/fraud-service.js';
 import { States } from '../services/state-machine.js';
 import * as db from '../db/index.js';
 
@@ -13,109 +15,134 @@ process.env.PAYSTACK_WEBHOOK_SECRET = 'test-webhook-secret';
 process.env.APP_ENV = 'development';
 
 async function runTests() {
-  console.log("🧪 Starting Suba Wallet Core verification test suite...\n");
+  console.log("🧪 Starting Suba Transaction & Asset System verification test suite...\n");
   
   // Make sure DB schema is loaded
   await db.initializeDatabase();
 
-  let testUser = null;
+  let ambassadorUser = null;
+  let referredUser = null;
   let testAdmin = null;
 
   try {
     // -------------------------------------------------------------------------
-    // TEST 1: User Registration
+    // TEST 1: User Registration & Virtual Account Generation
     // -------------------------------------------------------------------------
-    console.log("1. Testing User Registration...");
-    testUser = await AuthService.register({
-      email: `test_student_${Date.now()}@suba.edu.ng`,
+    console.log("1. Testing User Registration & Deterministic Virtual Accounts...");
+    ambassadorUser = await AuthService.register({
+      email: `ambassador_${Date.now()}@suba.edu.ng`,
       phone_number: `080${Math.floor(10000000 + Math.random() * 90000000)}`,
-      full_name: 'Test Student',
+      full_name: 'Ambassador Candidate',
       password: 'SecurePassword123'
     });
-    console.log(`✅ User registered. Email: ${testUser.email}`);
-    console.log(`✅ Virtual Account Generated: ${testUser.virtualAccount} (${testUser.bankName})`);
+    console.log(`   ✅ Registered User. Email: ${ambassadorUser.email}`);
+    console.log(`   ✅ Virtual Account details: ${ambassadorUser.virtualAccount} (${ambassadorUser.bankName})`);
     
-    if (testUser.wallet.balance !== 0) {
-      throw new Error("Wallet balance must start at ₦0.00");
+    if (!ambassadorUser.virtualAccount.startsWith('9922')) {
+      throw new Error("Virtual account must be prefixed with 9922");
     }
-    console.log("✅ Starting wallet balance is ₦0.00 as expected.");
+    console.log("   ✅ Virtual account prefix (9922) verified.");
 
     // -------------------------------------------------------------------------
-    // TEST 2: Admin Registration
+    // TEST 2: Admin Registration Setup
     // -------------------------------------------------------------------------
     console.log("\n2. Testing Admin Account Setup...");
-    // Manually register then elevate role in database
     const adminUser = await AuthService.register({
-      email: `admin_override_${Date.now()}@suba.ng`,
+      email: `admin_reconcile_${Date.now()}@suba.ng`,
       phone_number: `090${Math.floor(10000000 + Math.random() * 90000000)}`,
-      full_name: 'System Administrator',
+      full_name: 'Suba Super Admin',
       password: 'AdminPassword456'
     });
     await db.query("UPDATE users SET role = 'ADMIN' WHERE id = $1", [adminUser.id]);
     
-    // Perform login to fetch full credentials
     testAdmin = await AuthService.login({
       email: adminUser.email,
       password: 'AdminPassword456'
     });
-    console.log(`✅ Admin logged in. Role is: ${testAdmin.user.role}`);
+    console.log(`   ✅ Admin logged in. Role verified: ${testAdmin.user.role}`);
 
     // -------------------------------------------------------------------------
-    // TEST 3: Wallet Funding Initiation
+    // TEST 3: Become Ambassador (Lifecycle Registration)
     // -------------------------------------------------------------------------
-    console.log("\n3. Testing Wallet Funding Initiation...");
-    const depositAmount = 2500.00;
-    const fundingTxn = await TransactionService.initiateFunding(testUser.id, depositAmount);
-    console.log(`✅ Funding transaction initiated. Ref: ${fundingTxn.reference}`);
-    
-    if (fundingTxn.status !== States.PENDING_PAYMENT) {
-      throw new Error(`Expected initiated state ${States.PENDING_PAYMENT}, got ${fundingTxn.status}`);
-    }
-    console.log(`✅ Transaction state is ${fundingTxn.status} (audited).`);
+    console.log("\n3. Testing Ambassador Lifecycle Application...");
+    const applyRes = await GrowthService.applyAmbassador(ambassadorUser.id, {
+      location: 'Lagos University Campus',
+      social_links: 'twitter.com/suba_amb',
+      reason_for_joining: 'Promoting student VTU services for growth.'
+    });
+    console.log(`   ✅ Ambassador application logged. Status: ${applyRes.status}, Code: ${applyRes.referral_code}`);
+
+    // Admin approves the application
+    await db.query("UPDATE ambassadors SET status = 'APPROVED' WHERE user_id = $1", [ambassadorUser.id]);
+    console.log("   ✅ Ambassador application approved by Admin.");
+
+    const updatedProfile = await GrowthService.getProfile(ambassadorUser.id);
+    console.log(`   ✅ Ambassador level initialized: ${updatedProfile.level}`);
 
     // -------------------------------------------------------------------------
-    // TEST 4: HMAC Signature & Webhook Processing (Bank Transfer)
+    // TEST 4: Refer New User (Viral Referral Attribution)
     // -------------------------------------------------------------------------
-    console.log("\n4. Testing Paystack Webhook Settlement (Signature Verification)...");
-    
-    // Build Paystack charge.success webhook payload
+    console.log("\n4. Testing Referral signup attribution...");
+    referredUser = await AuthService.register({
+      email: `referred_student_${Date.now()}@suba.edu.ng`,
+      phone_number: `081${Math.floor(10000000 + Math.random() * 90000000)}`,
+      full_name: 'Referred Student',
+      password: 'StudentPassword999'
+    });
+
+    // Attribute the referral
+    await db.query(
+      `INSERT INTO referrals (ambassador_id, referred_user_id) 
+       VALUES ($1, $2)`,
+      [updatedProfile.ambassador_id, referredUser.id]
+    );
+    console.log(`   ✅ Referred user registered and mapped to Ambassador referral code.`);
+
+    // -------------------------------------------------------------------------
+    // TEST 5: Purchase Transaction & Paystack Webhook Event Processing
+    // -------------------------------------------------------------------------
+    console.log("\n5. Testing Webhook Asset Purchase Fulfillment & Commission Ledgers...");
+    const purchaseAmount = 1000.00;
+    const initiateTxn = await TransactionService.initiateAssetPurchase(referredUser.id, {
+      type: 'AIRTIME',
+      amount: purchaseAmount,
+      provider: 'paystack'
+    });
+    console.log(`   ✅ Asset purchase transaction initiated. Ref: ${initiateTxn.reference}`);
+
+    // Simulate Paystack charge.success webhook payload
     const webhookPayload = {
       event: 'charge.success',
       data: {
-        reference: fundingTxn.reference,
-        amount: depositAmount * 100, // in kobo
+        reference: initiateTxn.reference,
+        amount: purchaseAmount * 100, // in kobo
         channel: 'bank_transfer',
         customer: {
-          email: testUser.email
+          email: referredUser.email
         },
         authorization: {
           channel: 'bank_transfer'
         }
       }
     };
-    
     const rawBody = JSON.stringify(webhookPayload);
     const signature = crypto
       .createHmac('sha512', process.env.PAYSTACK_WEBHOOK_SECRET)
       .update(rawBody)
       .digest('hex');
 
-    // Simulate calling the webhook handler
     const mockReq = {
       headers: { 'x-paystack-signature': signature },
       rawBody: rawBody,
       body: webhookPayload
     };
-
     let responseCode = 0;
     let responseBody = null;
     const mockRes = {
       status: (code) => {
         responseCode = code;
         return {
-          json: (body) => {
-            responseBody = body;
-          }
+          json: (body) => { responseBody = body; }
         };
       },
       json: (body) => {
@@ -124,165 +151,149 @@ async function runTests() {
       }
     };
 
-    // Import controller and run
     const { handlePaystackWebhook } = await import('../controllers/webhook-controller.js');
     await handlePaystackWebhook(mockReq, mockRes);
-
-    console.log(`✅ Webhook response code: ${responseCode}`);
-    console.log(`✅ Webhook output status: ${responseBody.status}`);
+    
+    console.log(`   ✅ Webhook Response Code: ${responseCode}`);
+    console.log(`   ✅ Webhook Output Status: ${responseBody.status}`);
 
     if (responseCode !== 200 || responseBody.status !== 'ok') {
-      throw new Error(`Webhook failed: ${JSON.stringify(responseBody)}`);
+      throw new Error(`Webhook transaction confirmation failed: ${JSON.stringify(responseBody)}`);
+    }
+
+    // Verify Asset allocated in inventory
+    const userAssets = await AssetService.getInventory(referredUser.id);
+    console.log(`   ✅ Asset inventory loaded for referred user. Count: ${userAssets.length}`);
+    if (userAssets.length !== 1 || parseFloat(userAssets[0].value_denomination) !== purchaseAmount) {
+      throw new Error("Asset purchase was not correctly credited to user inventory.");
+    }
+    console.log(`   ✅ User inventory details: ${userAssets[0].asset_type} card value ₦${userAssets[0].value_denomination}`);
+
+    // Verify Commission logged for Ambassador
+    const ambProfile = await GrowthService.getProfile(ambassadorUser.id);
+    console.log(`   ✅ Ambassador referral count: ${ambProfile.total_referrals}`);
+    console.log(`   ✅ Ambassador commission earnings: Total Earned: ₦${ambProfile.total_earned}`);
+    if (ambProfile.total_earned !== 15.00) { // 1.5% Bronze rate on 1000
+      throw new Error(`Expected ₦15.00 bronze commission, got ₦${ambProfile.total_earned}`);
+    }
+    console.log("   ✅ Bronze tier commission rate correctly calculated and protected.");
+
+    // -------------------------------------------------------------------------
+    // TEST 6: Asset Internal Transfer & Redemption Flows
+    // -------------------------------------------------------------------------
+    console.log("\n6. Testing Asset internal transfers and physical redemptions...");
+    const targetAssetId = userAssets[0].id;
+    
+    // Transfer asset internally
+    const transferRes = await AssetService.transferAsset(referredUser.id, targetAssetId, ambassadorUser.email);
+    console.log(`   ✅ Asset transferred successfully. Recipient: ${transferRes.recipient}`);
+
+    const recipientAssets = await AssetService.getInventory(ambassadorUser.id);
+    console.log(`   ✅ Recipient inventory loaded. Count: ${recipientAssets.length}`);
+    if (recipientAssets.length !== 1 || recipientAssets[0].id !== targetAssetId) {
+      throw new Error("Transfer failed: Asset not found in recipient's inventory.");
+    }
+
+    // Redeem asset (dispatch VTU to phone number)
+    const redeemRes = await AssetService.redeemAsset(ambassadorUser.id, targetAssetId, '08039999999');
+    console.log(`   ✅ Physical redemption dispatched. VTU reference: ${redeemRes.txnReference}`);
+
+    const postRedeemAssets = await AssetService.getInventory(ambassadorUser.id);
+    if (postRedeemAssets.length !== 0) {
+      throw new Error("Redemption failed: Asset must be removed from available inventory.");
+    }
+    console.log("   ✅ Asset successfully marked as USED and consumed.");
+
+    // -------------------------------------------------------------------------
+    // TEST 7: Fraud Detection Window velocity checks
+    // -------------------------------------------------------------------------
+    console.log("\n7. Testing Fraud Velocity Lock triggers...");
+    
+    // Trigger abnormal transaction velocity rule by initiating >5 transactions in short period
+    let lastTxn = null;
+    for (let i = 0; i < 6; i++) {
+      lastTxn = await TransactionService.initiateAssetPurchase(referredUser.id, {
+        type: 'DATA',
+        amount: 250.00
+      });
+    }
+    
+    // Evaluate fraud velocity lock rules on the last transaction
+    await FraudService.evaluateTransaction(referredUser.id, lastTxn.id, 250.00, {});
+    
+    // Check if account frozen and transaction flags raised
+    const checkReferred = await AuthService.getMe(referredUser.id);
+    console.log(`   ✅ Suspend status of referred user: ${!checkReferred.is_active ? 'SUSPENDED' : 'ACTIVE'}`);
+    if (checkReferred.is_active) {
+      throw new Error("Fraud System Error: Account must be suspended due to transaction velocity flag.");
+    }
+    console.log("   ✅ User account frozen successfully.");
+
+    // -------------------------------------------------------------------------
+    // TEST 8: Admin Reconciliation Dashboard Metrics
+    // -------------------------------------------------------------------------
+    console.log("\n8. Testing Admin Reconciliation Dashboard Auditing...");
+    const metrics = await ReconciliationService.getDashboardMetrics();
+    console.log(`   ✅ Reconciliation stats loaded:`);
+    console.log(`      - Daily funding: ₦${metrics.dailyFunding.total} (${metrics.dailyFunding.count} txns)`);
+    console.log(`      - Ledger debits (fiat): ₦${metrics.ledgerAudit.totalDebits}`);
+    console.log(`      - Ledger credits (assets): ₦${metrics.ledgerAudit.totalCredits}`);
+    console.log(`      - Imbalance detected: ${metrics.ledgerAudit.isImbalanced}`);
+    console.log(`      - Active Fraud Flags in queue: ${metrics.activeFraudFlags.length}`);
+    console.log(`      - Manual Review Queue items: ${metrics.manualReviewQueue.length}`);
+
+    if (metrics.manualReviewQueue.length === 0) {
+      throw new Error("Manual review queue must contain the flagged velocity transaction.");
     }
 
     // -------------------------------------------------------------------------
-    // TEST 5: Double-Entry Ledger Verification
+    // TEST 9: Admin Override Manual Queue Resolution
     // -------------------------------------------------------------------------
-    console.log("\n5. Auditing Double-Entry Ledger and Account Balances...");
+    console.log("\n9. Testing Admin manual override and user activation...");
+    const targetReviewTxnId = metrics.manualReviewQueue[0].id;
     
-    // Fetch user wallet
-    const updatedWallet = await WalletService.getWalletByUserId(testUser.id);
-    console.log(`✅ Current cached wallet balance: ₦${updatedWallet.balance}`);
-    if (parseFloat(updatedWallet.balance) !== depositAmount) {
-      throw new Error(`Expected wallet balance ₦${depositAmount}, got ₦${updatedWallet.balance}`);
-    }
-
-    // Compute balance from ledger sum
-    const auditedBalance = await WalletService.auditWalletBalance(updatedWallet.id);
-    console.log(`✅ Direct ledger-audited balance sum: ₦${auditedBalance}`);
-    if (auditedBalance !== depositAmount) {
-      throw new Error(`Balance inconsistency: Ledger states ₦${auditedBalance} but wallet cache shows ₦${updatedWallet.balance}`);
-    }
-    console.log("✅ Ledger matches wallet balance cache exactly.");
-
-    // Check trace for transaction
-    const trace = await ReconciliationService.getTransactionTrace(fundingTxn.id);
-    console.log(`✅ Status History Transition Trail:`);
-    trace.statusHistory.forEach(log => {
-      console.log(`   - [${log.created_at}] ${log.from_status || 'NULL'} -> ${log.to_status} (${log.remarks})`);
-    });
-    
-    if (trace.ledgerEntries.length !== 2) {
-      throw new Error("Ledger entries must contain exactly 1 DEBIT and 1 CREDIT entry.");
-    }
-    console.log("✅ Double-entry bookkeeping matches: 2 ledger records created.");
-
-    // -------------------------------------------------------------------------
-    // TEST 6: Rule-Based Fraud Detection System
-    // -------------------------------------------------------------------------
-    console.log("\n6. Testing Fraud Rule Trigger (Sudden large deposit on new user account)...");
-    
-    const largeDepositAmount = 75000.00;
-    const fraudTxn = await TransactionService.initiateFunding(testUser.id, largeDepositAmount);
-    
-    // Build Paystack charge.success webhook payload for large amount
-    const fraudPayload = {
-      event: 'charge.success',
-      data: {
-        reference: fraudTxn.reference,
-        amount: largeDepositAmount * 100, // in kobo
-        channel: 'bank_transfer',
-        customer: {
-          email: testUser.email
-        },
-        authorization: {
-          channel: 'bank_transfer'
-        }
-      }
-    };
-    
-    const rawBodyFraud = JSON.stringify(fraudPayload);
-    const signatureFraud = crypto
-      .createHmac('sha512', process.env.PAYSTACK_WEBHOOK_SECRET)
-      .update(rawBodyFraud)
-      .digest('hex');
-
-    const mockReqFraud = {
-      headers: { 'x-paystack-signature': signatureFraud },
-      rawBody: rawBodyFraud,
-      body: fraudPayload
-    };
-
-    let fraudCode = 0;
-    let fraudResponse = null;
-    const mockResFraud = {
-      status: (code) => {
-        fraudCode = code;
-        return {
-          json: (body) => {
-            fraudResponse = body;
-          }
-        };
-      },
-      json: (body) => {
-        fraudCode = 200;
-        fraudResponse = body;
-      }
-    };
-
-    await handlePaystackWebhook(mockReqFraud, mockResFraud);
-    console.log(`✅ Fraud Webhook status: ${fraudResponse.status}`);
-    
-    const frozenWallet = await WalletService.getWalletByUserId(testUser.id);
-    console.log(`✅ Wallet freeze status: ${frozenWallet.is_frozen}`);
-    if (!frozenWallet.is_frozen) {
-      throw new Error("Fraud System Error: Wallet must be frozen after triggering fraud flags.");
-    }
-    console.log("✅ User wallet frozen as expected.");
-
-    const finalFraudTxnRes = await db.query('SELECT status FROM transactions WHERE id = $1', [fraudTxn.id]);
-    const finalFraudTxn = finalFraudTxnRes.rows[0];
-    console.log(`✅ Transaction state: ${finalFraudTxn.status}`);
-    if (finalFraudTxn.status !== States.MANUAL_REVIEW) {
-      throw new Error(`Fraud Txn must be in MANUAL_REVIEW, currently ${finalFraudTxn.status}`);
-    }
-    console.log("✅ Transaction moved to manual review queue.");
-
-    // -------------------------------------------------------------------------
-    // TEST 7: Admin Override manual queue
-    // -------------------------------------------------------------------------
-    console.log("\n7. Testing Admin Override resolution of manual queue...");
-    
-    const resolveResult = await ReconciliationService.resolveManualReview(
-      fraudTxn.id,
-      testAdmin.user.id,
-      true, // Approve transaction
-      "Valid user identity verified after video call verification."
+    await ReconciliationService.resolveManualReview(
+      targetReviewTxnId,
+      adminUser.id,
+      true, // Approve
+      "Manually verified customer profile and velocity pattern."
     );
-    console.log(`✅ Override complete. Status transitioned to: ${resolveResult.newStatus}`);
 
-    const unfrozenWallet = await WalletService.getWalletByUserId(testUser.id);
-    console.log(`✅ Post-override Wallet freeze status: ${unfrozenWallet.is_frozen}`);
-    if (unfrozenWallet.is_frozen) {
-      throw new Error("Override Error: Wallet must be unfrozen upon admin approval.");
+    const postOverrideUser = await AuthService.getMe(referredUser.id);
+    console.log(`   ✅ User status post-override: ${postOverrideUser.is_active ? 'ACTIVE (Unfrozen)' : 'SUSPENDED'}`);
+    if (!postOverrideUser.is_active) {
+      throw new Error("Override failure: User must be set active after manual override approval.");
     }
-    
-    const afterApprovalBalance = await WalletService.auditWalletBalance(unfrozenWallet.id);
-    console.log(`✅ New wallet balance audited: ₦${afterApprovalBalance}`);
-    if (afterApprovalBalance !== (depositAmount + largeDepositAmount)) {
-      throw new Error(`Improper balance. Expected ₦${depositAmount + largeDepositAmount}, got ₦${afterApprovalBalance}`);
-    }
-    console.log("✅ Balance credited after admin override approval.");
+    console.log("   ✅ User account reactivated successfully.");
 
     // -------------------------------------------------------------------------
-    // TEST 8: Reconciliation Dashboard Analytics & Ledger Imbalance Checks
+    // TEST 10: Careers Job Board creation and applications
     // -------------------------------------------------------------------------
-    console.log("\n8. Testing Reconciliation Dashboard Analytics & Ledger Imbalance Checks...");
-    const reconMetrics = await ReconciliationService.getDashboardMetrics();
-    console.log(`✅ System metrics retrieved:`);
-    console.log(`   - Pending Transactions count: ${reconMetrics.pendingCount}`);
-    console.log(`   - Failed Transactions count: ${reconMetrics.failedCount}`);
-    console.log(`   - Daily Funding settled: ₦${reconMetrics.dailyFunding.total}`);
-    console.log(`   - Total Ledger Debits: ₦${reconMetrics.ledgerAudit.totalDebits}`);
-    console.log(`   - Total Ledger Credits: ₦${reconMetrics.ledgerAudit.totalCredits}`);
-    console.log(`   - Ledger Imbalance detected: ${reconMetrics.ledgerAudit.isImbalanced}`);
+    console.log("\n10. Testing Careers Board job posting and CV submission...");
+    const job = await ReconciliationService.createJob({
+      title: 'VTU Operations Analyst',
+      description: 'Review provider performance logs and audit ledger entries daily.',
+      requirements: 'Attention to detail, experience with finance reconciliation tools.',
+      location: 'Remote, Nigeria',
+      employment_type: 'Full-time',
+      deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+    });
+    console.log(`    ✅ Job opening published: ${job.title} (${job.id})`);
 
-    if (reconMetrics.ledgerAudit.isImbalanced) {
-      throw new Error("Double-entry constraint failure: Debits and Credits must balance!");
+    const openJobs = await ReconciliationService.getOpenJobs();
+    if (openJobs.length !== 1 || openJobs[0].id !== job.id) {
+      throw new Error("Job search failed: Open job not found in listing.");
     }
-    console.log("✅ Reconciliation verification checks out: Debits match Credits.");
 
-    console.log("\n🌟 All test checks passed successfully! Suba Wallet Core is 100% compliant.");
+    const application = await ReconciliationService.applyForJob({
+      jobId: job.id,
+      userId: ambassadorUser.id,
+      cvUrl: 'https://subastorage.blob.core.windows.net/cvs/cv_ambassador.pdf',
+      coverLetter: 'Interested in VTU audits and finance execution engines.'
+    });
+    console.log(`    ✅ CV application submitted successfully. Current Status: ${application.status}`);
+
+    console.log("\n🌟 All test checks passed successfully! Suba Transaction + Asset + Growth System is 100% compliant.");
     
   } catch (error) {
     console.error("\n❌ Verification Test Suite FAILED:", error);
