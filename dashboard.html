@@ -283,6 +283,11 @@
         return;
       }
 
+      // Show skeleton overlay if no cached user yet
+      if (!SUBAUtils.retrieve('user')) {
+        SUBAComponents.showPageSkeleton();
+      }
+
       // Function to update UI with user object
       const updateUI = (user) => {
         const fullName = user.full_name || 'User';
@@ -309,35 +314,36 @@
 
       // Fetch live user data from backend in background
       try {
-        const user = await SUBAApi.request('/auth/me', { method: 'GET' });
+        const [user, txns] = await Promise.all([
+          SUBAApi.request('/auth/me', { method: 'GET' }),
+          SUBAApi.request('/wallet/transactions?page=1&size=5', { method: 'GET' })
+        ]);
+
         if (user) {
           SUBAUtils.store('user', user);
           updateUI(user);
         }
 
         // Fetch recent transactions
-        const txns = await SUBAApi.request('/wallet/transactions?page=1&size=5', { method: 'GET' });
         const list = document.getElementById('recentTxnsList');
         
         if (!txns || !txns.items || txns.items.length === 0) {
           list.innerHTML = `
             <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
-              No recent transactions found
+              No transactions yet
             </div>
           `;
         } else {
           list.innerHTML = '';
           txns.items.forEach(txn => {
-            const isCredit = txn.type === 'CREDIT';
-            const icon = txn.type === 'FUNDING' ? '💰' : (txn.type === 'AIRTIME' ? '📱' : '📶');
-            const colorClass = txn.type === 'FUNDING' ? 'wallet' : (txn.type === 'AIRTIME' ? 'airtime' : 'data');
+            const isCredit = txn.type === 'FUNDING';
+            const icon = txn.type === 'FUNDING' ? '💰' : (txn.type === 'AIRTIME_PURCHASE' ? '📱' : '📶');
+            const colorClass = txn.type === 'FUNDING' ? 'wallet' : (txn.type === 'AIRTIME_PURCHASE' ? 'airtime' : 'data');
             const sign = isCredit ? '+' : '-';
             const amtClass = isCredit ? 'credit' : 'debit';
-            
-            // Format date relative (e.g., Just now, 2 hours ago) or simple date string
-            const dateStr = new Date(txn.created_at).toLocaleString();
+            const dateStr = new Date(txn.created_at).toLocaleString('en-NG', { dateStyle: 'short', timeStyle: 'short' });
 
-            const txnHtml = `
+            list.insertAdjacentHTML('beforeend', `
               <div class="txn-item" onclick="window.location.href='transactions.html'">
                 <div class="txn-icon ${colorClass}">${icon}</div>
                 <div class="txn-details">
@@ -349,12 +355,18 @@
                   <div class="txn-subtitle">${dateStr}</div>
                 </div>
               </div>
-            `;
-            list.insertAdjacentHTML('beforeend', txnHtml);
+            `);
           });
         }
       } catch (err) {
-        console.error("Failed to load live user data", err);
+        console.error('Failed to load dashboard data', err);
+        document.getElementById('recentTxnsList').innerHTML = `
+          <div class="empty-state" style="text-align:center; padding: var(--space-6) 0; color: var(--clr-text-light);">
+            Could not load transactions
+          </div>`;
+      } finally {
+        // Always remove skeleton once data attempt completes
+        SUBAComponents.hidePageSkeleton();
       }
 
       // Fund Wallet modal triggers

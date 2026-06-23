@@ -378,13 +378,53 @@ const SUBAComponents = {
      ============================================ */
 
   initOTPInputs() {
-    const inputs = document.querySelectorAll('.otp-input');
+    const inputs = Array.from(document.querySelectorAll('.otp-input'));
     if (!inputs.length) return;
 
     inputs.forEach((input, index) => {
+      // Use numeric virtual keyboard on mobile
+      input.setAttribute('inputmode', 'numeric');
+      input.setAttribute('autocomplete', index === 0 ? 'one-time-code' : 'off');
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace') {
+          e.preventDefault();
+          if (input.value) {
+            input.value = '';
+            input.classList.remove('filled');
+          } else if (index > 0) {
+            inputs[index - 1].focus();
+            inputs[index - 1].value = '';
+            inputs[index - 1].classList.remove('filled');
+          }
+        } else if (e.key === 'ArrowLeft' && index > 0) {
+          e.preventDefault();
+          inputs[index - 1].focus();
+        } else if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+          e.preventDefault();
+          inputs[index + 1].focus();
+        }
+      });
+
       input.addEventListener('input', (e) => {
-        const value = e.target.value;
-        if (value.length === 1) {
+        const val = e.target.value.replace(/\D/g, ''); // strip non-digits
+        if (!val) {
+          input.value = '';
+          input.classList.remove('filled');
+          return;
+        }
+        // If user pasted multi-digit, distribute across boxes
+        if (val.length > 1) {
+          val.split('').forEach((char, i) => {
+            if (inputs[index + i]) {
+              inputs[index + i].value = char;
+              inputs[index + i].classList.add('filled');
+            }
+          });
+          const nextEmpty = inputs.find((inp, i) => i >= index && !inp.value);
+          (nextEmpty || inputs[inputs.length - 1]).focus();
+        } else {
+          input.value = val;
           input.classList.add('filled');
           if (index < inputs.length - 1) {
             inputs[index + 1].focus();
@@ -392,19 +432,25 @@ const SUBAComponents = {
         }
       });
 
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !input.value && index > 0) {
-          inputs[index - 1].focus();
-          inputs[index - 1].classList.remove('filled');
-        }
+      // Handle paste on any box — distribute from box 0
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData)
+          .getData('text')
+          .replace(/\D/g, '')
+          .slice(0, inputs.length);
+        pasted.split('').forEach((char, i) => {
+          if (inputs[i]) {
+            inputs[i].value = char;
+            inputs[i].classList.add('filled');
+          }
+        });
+        const focusIndex = Math.min(pasted.length, inputs.length - 1);
+        inputs[focusIndex].focus();
       });
 
-      // Prevent non-numeric input
-      input.addEventListener('beforeinput', (e) => {
-        if (e.data && !/^\d$/.test(e.data)) {
-          e.preventDefault();
-        }
-      });
+      // Select existing value on focus so re-typing replaces it
+      input.addEventListener('focus', () => input.select());
     });
   },
 
@@ -413,7 +459,58 @@ const SUBAComponents = {
      ============================================ */
 
   /**
-   * Show/hide skeleton loading in an element
+   * Show a full page loading skeleton overlay
+   * Usage: SUBAComponents.showPageSkeleton()
+   *        SUBAComponents.hidePageSkeleton()
+   */
+  showPageSkeleton() {
+    if (document.getElementById('subaPageSkeleton')) return;
+    const el = document.createElement('div');
+    el.id = 'subaPageSkeleton';
+    el.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9999',
+      'background:var(--clr-bg,#fff)',
+      'display:flex', 'flex-direction:column', 'gap:16px',
+      'padding:24px 20px', 'overflow:hidden',
+    ].join(';');
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <div class="skeleton" style="width:40px;height:40px;border-radius:50%;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div class="skeleton skeleton-text" style="width:55%;height:14px"></div>
+          <div class="skeleton skeleton-text" style="width:30%;height:10px;margin-top:6px"></div>
+        </div>
+      </div>
+      <div class="skeleton" style="width:100%;height:120px;border-radius:16px"></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        ${Array(4).fill('<div class="skeleton" style="height:72px;border-radius:12px"></div>').join('')}
+      </div>
+      <div class="skeleton skeleton-text" style="width:40%;height:13px;margin-top:4px"></div>
+      ${Array(3).fill(`
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--clr-border-light,#eee)">
+          <div class="skeleton" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div class="skeleton skeleton-text" style="width:60%;height:12px"></div>
+            <div class="skeleton skeleton-text" style="width:40%;height:10px;margin-top:5px"></div>
+          </div>
+          <div class="skeleton skeleton-text" style="width:60px;height:12px"></div>
+        </div>
+      `).join('')}
+    `;
+    document.body.appendChild(el);
+  },
+
+  hidePageSkeleton() {
+    const el = document.getElementById('subaPageSkeleton');
+    if (el) {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.25s ease';
+      setTimeout(() => el.remove(), 260);
+    }
+  },
+
+  /**
+   * Inject a skeleton placeholder into a specific container element
    * @param {HTMLElement} element
    * @param {boolean} show
    */
