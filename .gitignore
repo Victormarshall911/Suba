@@ -45,3 +45,10 @@ backend/suba/tests/
 # Local Databases
 *.sqlite3
 *.db
+
+# Node.js dependencies
+node_modules/
+dist/
+.npm/
+package-lock.json
+
