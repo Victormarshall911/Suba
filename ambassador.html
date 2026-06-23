@@ -99,15 +99,15 @@
           <div class="grid-3">
             <div class="card card-sm">
               <span style="font-size: var(--text-xs); color: var(--clr-text-tertiary)">TOTAL COMMISSIONS</span>
-              <h3 style="font-size: var(--text-xl); margin-top: 4px" id="totalCommissions">₦4,520</h3>
+              <h3 style="font-size: var(--text-xl); margin-top: 4px" id="totalCommissions">₦0</h3>
             </div>
             <div class="card card-sm">
               <span style="font-size: var(--text-xs); color: var(--clr-text-tertiary)">WITHDRAWN FUNDS</span>
-              <h3 style="font-size: var(--text-xl); margin-top: 4px" id="withdrawnCommissions">₦3,000</h3>
+              <h3 style="font-size: var(--text-xl); margin-top: 4px" id="withdrawnCommissions">₦0</h3>
             </div>
             <div class="card card-sm" style="border-color: var(--clr-primary-subtle)">
               <span style="font-size: var(--text-xs); color: var(--clr-primary)">CLEARED BALANCE</span>
-              <h3 style="font-size: var(--text-xl); margin-top: 4px; color: var(--clr-primary)" id="clearedCommissions">₦1,520</h3>
+              <h3 style="font-size: var(--text-xl); margin-top: 4px; color: var(--clr-primary)" id="clearedCommissions">₦0</h3>
             </div>
           </div>
 
@@ -269,6 +269,7 @@
           }
         } catch (err) {
           console.error("Failed to load ambassador stats", err);
+          document.getElementById('leaderboardList').innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-error); font-size:var(--text-sm)">Failed to load data</div>';
         } finally {
           SUBAComponents.hidePageSkeleton();
         }
