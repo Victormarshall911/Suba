@@ -38,6 +38,13 @@ if not settings.DATABASE_URL.startswith("sqlite"):
         "pool_pre_ping": True,
         "pool_size": 10,
         "max_overflow": 20,
+        # Required for Supabase: PgBouncer uses transaction-mode pooling
+        # which does not support prepared statements. Setting
+        # statement_cache_size=0 disables asyncpg's prepared statement cache.
+        "connect_args": {
+            "statement_cache_size": 0,
+            "prepared_statement_cache_size": 0,
+        },
     })
 
 engine = create_async_engine(
