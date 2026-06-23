@@ -207,39 +207,20 @@
   <script src="js/components.js"></script>
   <script src="js/api.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Mock history list database
-      let transactionsDb = [
-        { ref: 'SUBA-17850239', type: 'data', name: 'Airtel 2GB Data', dest: '08027654321', price: 500, status: 'successful', date: '2026-06-15T12:43:00-07:00' },
-        { ref: 'SUBA-17849822', type: 'airtime', name: 'MTN ₦200 Airtime', dest: '08031234567', price: 200, status: 'successful', date: '2026-06-15T11:45:00-07:00' },
-        { ref: 'SUBA-17847610', type: 'wallet', name: 'Funded Wallet', dest: 'Paystack Gateway', price: 5000, status: 'successful', date: '2026-06-15T09:30:00-07:00', method: 'credit' },
-        { ref: 'SUBA-17832045', type: 'electricity', name: 'IKEDC Token ₦2,000', dest: 'Meter 01011234567', price: 2100, status: 'successful', date: '2026-06-14T15:20:00-07:00' },
-        { ref: 'SUBA-17821104', type: 'data', name: 'MTN 1GB SME Data', dest: '08031234567', price: 260, status: 'successful', date: '2026-06-13T10:05:00-07:00' }
-      ];
+    document.addEventListener('DOMContentLoaded', async () => {
+      let transactionsDb = [];
 
       const user = SUBAUtils.retrieve('user');
       if (user) {
-        const initials = ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase();
+        const fullName = user.full_name || 'User';
+        const names = fullName.split(' ');
+        const firstName = names[0];
+        const lastName = names.length > 1 ? names[names.length - 1] : '';
+        const initials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase() || 'U';
+
         document.getElementById('desktopUserAvatar').textContent = initials;
         document.getElementById('topbarUserAvatar').textContent = initials;
-        document.getElementById('desktopUserName').textContent = `${user.firstName} ${user.lastName}`;
-
-        // If user has funded their wallet in this session, prepend a mock transaction
-        // Check if user has wallet balance change in storage (simulating live additions)
-        // If balance > 4250 (which was initial mock balance), mock addition
-        if (user.balance > 425000) {
-          const addedVal = (user.balance - 425000) / 100;
-          transactionsDb.unshift({
-            ref: SUBAUtils.generateRequestId().substring(0,13),
-            type: 'wallet',
-            name: 'Funded Wallet',
-            dest: 'Paystack Gateway',
-            price: addedVal,
-            status: 'successful',
-            date: new Date().toISOString(),
-            method: 'credit'
-          });
-        }
+        document.getElementById('desktopUserName').textContent = fullName;
       }
 
       let activeFilterType = 'all';
@@ -359,7 +340,39 @@
         });
       }
 
+      async function loadTransactions() {
+        try {
+          const res = await SUBAApi.request('/wallet/transactions', { method: 'GET' });
+          if (res && res.items) {
+            transactionsDb = res.items.map(t => {
+              let typeMapped = 'data';
+              if (t.type === 'FUNDING') typeMapped = 'wallet';
+              else if (t.type === 'DATA_PURCHASE') {
+                if (t.narration?.toLowerCase()?.includes('airtime')) typeMapped = 'airtime';
+                else if (t.narration?.toLowerCase()?.includes('electricity')) typeMapped = 'electricity';
+              }
+              
+              const isCredit = t.type === 'FUNDING' || t.type === 'REFUND';
+              
+              return {
+                ref: t.reference,
+                type: typeMapped,
+                name: t.narration || (t.type === 'FUNDING' ? 'Wallet Funded' : 'VTU Purchase'),
+                dest: t.recipient_phone || t.reference || 'N/A',
+                price: parseFloat(t.amount),
+                status: t.status.toLowerCase(),
+                date: t.created_at,
+                method: isCredit ? 'credit' : 'debit'
+              };
+            });
+          }
+        } catch (err) {
+          console.error("Failed to load transactions:", err);
+        }
+      }
+
       // Initial render
+      await loadTransactions();
       renderTransactions();
 
       // Search typing trigger

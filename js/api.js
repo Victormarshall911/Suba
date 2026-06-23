@@ -5,7 +5,7 @@
 
 const SUBAApi = {
   // Base configuration
-  BASE_URL: 'https://suba-backend-production.up.railway.app/api/v1',
+  BASE_URL: 'http://localhost:8000/api/v1',
 
   /**
    * Helper to fetch resources with authorization headers

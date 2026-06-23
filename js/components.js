@@ -669,21 +669,126 @@ const SUBAComponents = {
       }
 
       sendBtn.classList.add('is-loading');
+      
+      // Send real-time support message via WebSocket event hook
+      if (window.SUBASocket && window.SUBASocket.readyState === WebSocket.OPEN) {
+        window.SUBASocket.send(JSON.stringify({
+          type: 'support_message',
+          message: msg
+        }));
+      }
+
       setTimeout(() => {
         sendBtn.classList.remove('is-loading');
         msgText.value = '';
         popover.classList.remove('active');
-        SUBAComponents.showToast({
-          title: 'Ticket Submitted!',
-          message: 'Support team will contact you shortly.',
-          type: 'success'
-        });
+        // Toast notification will be sent back from backend and trigger chime
       }, 1200);
     });
+  },
+
+  /* ============================================
+     SOUND NOTIFICATION & WEBSOCKET ENGINE
+     ============================================ */
+
+  playAlertSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      // Sweet dual chime sound
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      osc.start(ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      
+      setTimeout(() => {
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1046.5, ctx.currentTime); // C6
+        gain2.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc2.start(ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        setTimeout(() => osc2.stop(), 400);
+      }, 150);
+      
+      setTimeout(() => osc.stop(), 200);
+    } catch (err) {
+      console.error("Audio Context play failed", err);
+    }
+  },
+
+  initWebSocket() {
+    const token = SUBAUtils.retrieve('token');
+    if (!token) return;
+
+    try {
+      const wsUrl = window.location.protocol === 'https:' 
+        ? `wss://${window.location.host}` 
+        : `ws://localhost:8000`;
+      
+      const socket = new WebSocket(wsUrl);
+      window.SUBASocket = socket;
+
+      socket.addEventListener('open', () => {
+        console.log('🔌 WebSocket connection active.');
+        socket.send(JSON.stringify({ type: 'auth', token }));
+      });
+
+      socket.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'notification') {
+            this.playAlertSound();
+            SUBAComponents.showToast({
+              title: data.title,
+              message: data.message,
+              type: 'success',
+              duration: 5000
+            });
+            
+            // Reload user data to update balance
+            if (window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('transactions.html')) {
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          } else if (data.type === 'admin_notification') {
+            this.playAlertSound();
+            SUBAComponents.showToast({
+              title: data.title,
+              message: data.message,
+              type: data.category === 'fraud_alert' ? 'error' : 'info',
+              duration: 6000
+            });
+            
+            if (window.location.pathname.includes('/admin/')) {
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          }
+        } catch (err) {
+          console.error('Error handling websocket message:', err);
+        }
+      });
+
+      socket.addEventListener('close', () => {
+        setTimeout(() => this.initWebSocket(), 5000);
+      });
+    } catch (err) {
+      console.error('WebSocket connection failed:', err);
+    }
   }
 };
 
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   SUBAComponents.init();
+  SUBAComponents.initWebSocket();
 });
+

@@ -204,20 +204,30 @@
         <button class="modal-close" onclick="SUBAComponents.closeModal('fundWalletModal')">✕</button>
       </div>
       <div class="modal-body">
+        <div class="card" style="background: var(--clr-surface); border: 1px solid var(--clr-border-light); padding: var(--space-4); margin-bottom: var(--space-4); border-radius: var(--radius-lg)">
+          <div style="font-size: var(--text-xs); color: var(--clr-text-secondary); margin-bottom: 2px; font-weight: 600">DEPOSIT BANK NAME</div>
+          <div id="fundBankName" style="font-weight: 700; margin-bottom: var(--space-3); font-size: var(--text-base)">Sterling Bank</div>
+          
+          <div style="font-size: var(--text-xs); color: var(--clr-text-secondary); margin-bottom: 2px; font-weight: 600">DEDICATED ACCOUNT NUMBER</div>
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span id="fundAccountNumber" style="font-size: 20px; font-weight: 700; font-family: var(--font-mono)">9922000000</span>
+            <button class="btn btn-secondary btn-sm" onclick="SUBAUtils.copyToClipboard(document.getElementById('fundAccountNumber').textContent).then(() => SUBAComponents.showToast({title: 'Copied', message: 'Account number copied.', type: 'success'}))">📋 Copy</button>
+          </div>
+          
+          <div style="font-size: var(--text-xs); color: var(--clr-text-secondary); margin-top: var(--space-3); margin-bottom: 2px; font-weight: 600">ACCOUNT REFERENCE ID</div>
+          <div id="fundReference" style="font-family: var(--font-mono); font-size: var(--text-xs); color: var(--clr-text-secondary)">REF-VA-xxxx</div>
+        </div>
+
         <div class="form-group">
-          <label for="fundAmount" class="form-label">Enter Amount to Fund (₦)</label>
+          <label for="fundAmount" class="form-label">Pre-notify Deposit (₦)</label>
           <input type="number" id="fundAmount" class="form-input" placeholder="e.g. 1000" min="100">
-          <div class="form-hint" style="margin-top: 6px">Minimum wallet funding is ₦100. Protected by Paystack.</div>
+          <div class="form-hint" style="margin-top: 6px">Minimum deposit is ₦100. Transfer to the dedicated bank account above.</div>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-6)">
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fundAmount').value=500">₦500</button>
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fundAmount').value=1000">₦1,000</button>
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fundAmount').value=2000">₦2,000</button>
-        </div>
-        <button class="btn btn-primary btn-block btn-lg" id="confirmFundBtn">Pay Securely via Paystack</button>
+        <button class="btn btn-primary btn-block btn-lg" id="confirmFundBtn">I Have Transferred the Funds</button>
       </div>
     </div>
   </div>
+
 
   <!-- Saved Recipient Modal -->
   <div class="modal-backdrop" id="addRecipientModal">
@@ -302,6 +312,13 @@
         document.getElementById('greetingMessage').textContent = `Hey, ${firstName} 👋`;
         document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance || 0);
         
+        const bankEl = document.getElementById('fundBankName');
+        const accEl = document.getElementById('fundAccountNumber');
+        const refEl = document.getElementById('fundReference');
+        if (bankEl) bankEl.textContent = user.bank_name || 'Sterling Bank';
+        if (accEl) accEl.textContent = user.virtual_account_number || '9922000000';
+        if (refEl) refEl.textContent = user.virtual_reference || 'REF-VA-xxxx';
+        
         const refElement = document.getElementById('referralCode');
         if (refElement) refElement.textContent = user.referral_code || 'SUBA001';
       };
@@ -378,7 +395,7 @@
         SUBAComponents.openModal('fundWalletModal');
       });
 
-      confirmFundBtn.addEventListener('click', () => {
+      confirmFundBtn.addEventListener('click', async () => {
         const val = parseFloat(fundAmount.value);
         if (!val || val < 100) {
           SUBAComponents.showToast({
@@ -390,42 +407,30 @@
         }
 
         confirmFundBtn.classList.add('is-loading');
-        setTimeout(() => {
+        try {
+          const res = await SUBAApi.request('/wallet/fund/initiate', {
+            method: 'POST',
+            body: JSON.stringify({ amount: val })
+          });
+          
           confirmFundBtn.classList.remove('is-loading');
           SUBAComponents.closeModal('fundWalletModal');
           
-          // Add to wallet balance simulation
-          if (user) {
-            user.balance += (val * 100);
-            SUBAUtils.store('user', user);
-            document.getElementById('walletBalance').textContent = SUBAUtils.formatNumber(user.balance / 100);
-          }
-
-          // Add to transaction log list (simulate a new credit transaction)
-          const list = document.getElementById('recentTxnsList');
-          const txn = document.createElement('div');
-          txn.className = 'txn-item';
-          txn.onclick = () => window.location.href = 'transactions.html';
-          txn.innerHTML = `
-            <div class="txn-icon wallet">💰</div>
-            <div class="txn-details">
-              <div class="txn-title">Funded Wallet</div>
-              <div class="txn-subtitle">Via Paystack • Success</div>
-            </div>
-            <div class="txn-right">
-              <div class="txn-amount credit">+₦${SUBAUtils.formatNumber(val)}</div>
-              <div class="txn-subtitle">Just now</div>
-            </div>
-          `;
-          list.insertBefore(txn, list.firstChild);
-
           SUBAComponents.showToast({
-            title: 'Wallet Funded!',
-            message: `₦${SUBAUtils.formatNumber(val)} credited successfully.`,
-            type: 'success'
+            title: 'Funding Initiated',
+            message: `Please transfer ₦${SUBAUtils.formatNumber(val)} to the virtual account. Your balance will update automatically upon receipt.`,
+            type: 'success',
+            duration: 8000
           });
           fundAmount.value = '';
-        }, 2000);
+        } catch (err) {
+          confirmFundBtn.classList.remove('is-loading');
+          SUBAComponents.showToast({
+            title: 'Funding Failed',
+            message: err.message || 'Could not initiate funding.',
+            type: 'error'
+          });
+        }
       });
 
       // Copy referral code link
