@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ledger Reconciliation | SUBA — System Management</title>
+  <meta name="description" content="Reconcile daily virtual account settlements and review double-entry ledger audits.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <style>
+    .reconciliation-card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border-light);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      margin-bottom: var(--space-5);
+    }
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-5);
+    }
+    .imbalance-alert {
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .imbalance-alert.healthy {
+      background: var(--clr-success-light);
+      border: 1px solid var(--clr-success-light);
+      color: var(--clr-success-dark);
+    }
+    .imbalance-alert.warning {
+      background: var(--clr-error-light);
+      border: 1px solid var(--clr-error-light);
+      color: var(--clr-error-dark);
+    }
+    .badge-fraud {
+      background: #FFEBEB;
+      color: #E50000;
+      border: 1px solid #FFA3A3;
+      padding: 2px 8px;
+      font-size: 10px;
+      border-radius: 9999px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="reconciliation.html" class="sidebar-nav-item active" data-page="reconciliation">
+          <span class="sidebar-icon">👛</span>
+          <span>Reconciliation</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h1 style="font-size: 24px; font-weight: 700; color: var(--clr-text-primary)">Ledger Reconciliation Panel</h1>
+          <p>Verify double-entry consistency, review fraud locks, and process manual authorization override queues.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Reconciliation Node</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+
+      <!-- Filters & Imbalance Bar -->
+      <div class="reconciliation-card">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3)">
+          <div style="display: flex; align-items: center; gap: var(--space-3)">
+            <input type="date" id="filterStartDate" class="form-input" style="max-width: 160px; padding: 6px 12px">
+            <span style="color: var(--clr-text-light)">to</span>
+            <input type="date" id="filterEndDate" class="form-input" style="max-width: 160px; padding: 6px 12px">
+            <button class="btn btn-primary btn-sm" id="btnApplyFilter">Apply Filter</button>
+          </div>
+          <div class="search-bar" style="margin-bottom:0; max-width: 280px">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="adminUserSearch" placeholder="Search by User ID...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Double-Entry Imbalance Status -->
+      <div id="imbalanceAlertContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Metric Grid -->
+      <div class="metric-row">
+        <div class="card stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="metricsDailyFunding">₦0.00</div>
+          <div class="stat-label">TODAY'S BANK DEPOSITS</div>
+          <span class="stat-trend up" id="metricsDailyCount">0 txns</span>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background:#FFF9E6; color:#D9A300">⏳</div>
+          <div class="stat-value" style="color:#D9A300" id="metricsPendingCount">0</div>
+          <div class="stat-label">ACTIVE PENDING PAYMENTS</div>
+        </div>
+        <div class="card stat-card" style="border-color: var(--clr-error-light)">
+          <div class="stat-icon" style="background: var(--clr-error-light); color: var(--clr-error-dark)">⚠️</div>
+          <div class="stat-value" style="color: var(--clr-error-dark)" id="metricsFailedCount">0</div>
+          <div class="stat-label">FAILED TRANSACTIONS</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background:#EAF9E6; color:#008A00">👛</div>
+          <div class="stat-value" style="color:#008A00" id="metricsLedgerSum">₦0.00</div>
+          <div class="stat-label">AUDITED LEDGER SUM</div>
+        </div>
+      </div>
+
+      <!-- Manual Review Override Queue -->
+      <div class="reconciliation-card" style="padding: 0; overflow: hidden">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
+          <h4 style="font-weight: 700; color: var(--clr-text-primary)">Manual Override Authorization Queue</h4>
+        </div>
+        <div class="admin-table-container" style="border: none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Txn Ref</th>
+                <th>User Details</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Trigger Reason</th>
+                <th>Initiated At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="manualReviewTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--clr-text-light)">Loading manual review queue...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Fraud Flag logs -->
+      <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
+          <h4 style="font-weight: 700; color: var(--clr-text-primary)">Active Fraud Alerts (Security Flags)</h4>
+        </div>
+        <div class="admin-table-container" style="border: none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Trigger Time</th>
+                <th>User Details</th>
+                <th>Rule Triggered</th>
+                <th>Metadata</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="fraudFlagsTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--clr-text-light)">Loading fraud alerts...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mismatched Webhooks -->
+      <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
+          <h4 style="font-weight: 700; color: var(--clr-text-primary)">Mismatched & Failed Webhook Entries</h4>
+        </div>
+        <div class="admin-table-container" style="border: none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Logged At</th>
+                <th>Event Type</th>
+                <th>Provider</th>
+                <th>Error Details</th>
+                <th>Signature (Truncated)</th>
+              </tr>
+            </thead>
+            <tbody id="mismatchedWebhooksTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--clr-text-light)">Loading webhooks...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      
+      async function loadDashboard() {
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+        const userId = document.getElementById('adminUserSearch').value.trim();
+
+        let queryParams = [];
+        if (startDate) queryParams.push(`startDate=${startDate}`);
+        if (endDate) queryParams.push(`endDate=${endDate}`);
+        if (userId) queryParams.push(`userId=${userId}`);
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+
+        try {
+          const res = await SUBAApi.request(`/admin/reconciliation/dashboard${queryString}`, { method: 'GET' });
+          if (res) {
+            // Update metrics
+            document.getElementById('metricsDailyFunding').textContent = `₦${SUBAUtils.formatNumber(res.dailyFunding.total)}`;
+            document.getElementById('metricsDailyCount').textContent = `${res.dailyFunding.count} deposits`;
+            document.getElementById('metricsPendingCount').textContent = res.pendingCount;
+            document.getElementById('metricsFailedCount').textContent = res.failedCount;
+            
+            const ledgerSum = res.ledgerAudit.totalCredits;
+            document.getElementById('metricsLedgerSum').textContent = `₦${SUBAUtils.formatNumber(ledgerSum)}`;
+
+            // Render imbalance status
+            const imbalanceContainer = document.getElementById('imbalanceAlertContainer');
+            if (res.ledgerAudit.isImbalanced) {
+              imbalanceContainer.innerHTML = `
+                <div class="imbalance-alert warning">
+                  <span style="font-size:20px">⚠️</span>
+                  <div>
+                    <h5 style="font-weight:700">Ledger Imbalance Detected</h5>
+                    <p style="font-size:12px; margin-top:2px">Debits sum (₦${SUBAUtils.formatNumber(res.ledgerAudit.totalDebits)}) does not equal Credits sum (₦${SUBAUtils.formatNumber(res.ledgerAudit.totalCredits)}). Discrepancy is <strong>₦${SUBAUtils.formatNumber(res.ledgerAudit.imbalance)}</strong>.</p>
+                  </div>
+                </div>
+              `;
+            } else {
+              imbalanceContainer.innerHTML = `
+                <div class="imbalance-alert healthy">
+                  <span style="font-size:20px">✅</span>
+                  <div>
+                    <h5 style="font-weight:700">Ledger Audits Balanced</h5>
+                    <p style="font-size:12px; margin-top:2px">All accounts reconcile. Debit and credit sums match exactly: <strong>₦${SUBAUtils.formatNumber(res.ledgerAudit.totalDebits)}</strong>.</p>
+                  </div>
+                </div>
+              `;
+            }
+
+            // Render Manual Review Queue
+            const manualBody = document.getElementById('manualReviewTableBody');
+            if (!res.manualReviewQueue || res.manualReviewQueue.length === 0) {
+              manualBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--clr-text-light)">No transactions currently pending administrative authorization override.</td></tr>`;
+            } else {
+              manualBody.innerHTML = res.manualReviewQueue.map(item => `
+                <tr>
+                  <td><span style="font-family: var(--font-mono); font-size:11px; font-weight:700">${item.reference}</span></td>
+                  <td><strong>${item.full_name}</strong><br><span style="font-size:10px; color:var(--clr-text-secondary)">${item.email}</span></td>
+                  <td><span class="badge badge-dark">${item.type}</span></td>
+                  <td><strong>₦${SUBAUtils.formatNumber(item.amount)}</strong></td>
+                  <td><span class="badge-fraud">FRAUD LOCK</span></td>
+                  <td>${new Date(item.created_at).toLocaleString()}</td>
+                  <td>
+                    <div style="display:flex; gap:6px">
+                      <button class="btn btn-primary btn-sm" onclick="resolveOverride('${item.id}', true)">Approve</button>
+                      <button class="btn btn-secondary btn-sm" style="color:var(--clr-error); border-color:var(--clr-error)" onclick="resolveOverride('${item.id}', false)">Decline</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('');
+            }
+
+            // Render Fraud alerts
+            const fraudBody = document.getElementById('fraudFlagsTableBody');
+            if (!res.activeFraudFlags || res.activeFraudFlags.length === 0) {
+              fraudBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--clr-text-light)">No active security anomalies flagged.</td></tr>`;
+            } else {
+              fraudBody.innerHTML = res.activeFraudFlags.map(item => `
+                <tr>
+                  <td>${new Date(item.created_at).toLocaleString()}</td>
+                  <td><strong>${item.full_name}</strong><br><span style="font-size:10px; color:var(--clr-text-secondary)">${item.email}</span></td>
+                  <td><span class="badge-fraud">${item.rule_triggered}</span></td>
+                  <td><pre style="font-size:10px; padding:4px; margin:0; background:var(--clr-bg); font-family:var(--font-mono); border-radius:4px">${JSON.stringify(item.details)}</pre></td>
+                  <td><span class="badge badge-dark">${item.status}</span></td>
+                </tr>
+              `).join('');
+            }
+
+            // Render Webhooks
+            const webBody = document.getElementById('mismatchedWebhooksTableBody');
+            if (!res.mismatchedWebhooks || res.mismatchedWebhooks.length === 0) {
+              webBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--clr-text-light)">No failed webhook transmissions recorded.</td></tr>`;
+            } else {
+              webBody.innerHTML = res.mismatchedWebhooks.map(item => `
+                <tr>
+                  <td>${new Date(item.created_at).toLocaleString()}</td>
+                  <td><span class="badge badge-secondary">${item.event_type}</span></td>
+                  <td><span style="text-transform:uppercase; font-weight:600">${item.provider}</span></td>
+                  <td><span style="color:var(--clr-error-dark); font-weight:600">${item.error_message || 'N/A'}</span></td>
+                  <td><code style="font-size:10px; font-family:var(--font-mono)">${item.signature ? item.signature.substring(0, 20) + '...' : 'None'}</code></td>
+                </tr>
+              `).join('');
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load dashboard reconciliation data:", err);
+          SUBAComponents.showToast({
+            title: 'Reconciliation Fetch Error',
+            message: 'Make sure your Node.js server is running and you are logged in as an ADMIN.',
+            type: 'error'
+          });
+        }
+      }
+
+      // Initial load
+      await loadDashboard();
+
+      // Hook click handlers
+      document.getElementById('btnApplyFilter').addEventListener('click', loadDashboard);
+      document.getElementById('adminUserSearch').addEventListener('input', SUBAUtils.debounce(loadDashboard, 400));
+
+      // Resolve override queue function
+      window.resolveOverride = async function(id, approve) {
+        const reason = prompt(`Enter reason details for this administrative ${approve ? 'approval' : 'decline'} override:`);
+        if (!reason) {
+          alert('Resolution reason details are mandatory.');
+          return;
+        }
+
+        try {
+          const res = await SUBAApi.request(`/admin/transactions/${id}/resolve`, {
+            method: 'POST',
+            body: JSON.stringify({ approve, reason })
+          });
+          
+          if (res && res.success) {
+            SUBAComponents.showToast({
+              title: 'Override Successful',
+              message: `Transaction has been resolved status to: ${res.newStatus}`,
+              type: 'success'
+            });
+            await loadDashboard();
+          }
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Override Failed',
+            message: err.message,
+            type: 'error'
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
