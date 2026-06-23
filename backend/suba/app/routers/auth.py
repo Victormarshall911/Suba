@@ -109,9 +109,31 @@ async def login(
 )
 async def me(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
     """
     Return the profile of the currently authenticated user.
+    Auto-generates a referral code for legacy users who registered before
+    the referral system was added.
     password_hash is excluded from the response by the schema.
     """
+    if not current_user.referral_code:
+        import random
+        import string
+        from sqlalchemy import select as sa_select
+
+        def _gen():
+            return "SUBA" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+        code = _gen()
+        while True:
+            existing = await db.execute(sa_select(User).where(User.referral_code == code))
+            if existing.scalar_one_or_none() is None:
+                break
+            code = _gen()
+
+        current_user.referral_code = code
+        await db.commit()
+        await db.refresh(current_user)
+
     return UserResponse.model_validate(current_user)
