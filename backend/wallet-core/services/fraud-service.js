@@ -1,12 +1,9 @@
 import * as db from '../db/index.js';
-import { WalletService } from './wallet-service.js';
 import { TransactionStateMachine, States } from './state-machine.js';
 
 export class FraudService {
   /**
-   * Evaluates rules against a user transaction to check for anomalies.
-   * If an anomaly is found, it automatically flags the transaction,
-   * freezes the wallet, logs a fraud entry, and shifts the transaction status to FLAGGED_FRAUD.
+   * Evaluates anomaly checks against transaction parameters.
    */
   static async evaluateTransaction(userId, transactionId, amount, details = {}, client = null) {
     const dbClient = client || (await db.getClient());
@@ -16,26 +13,7 @@ export class FraudService {
 
       const now = new Date();
 
-      // Rule 1: Sudden high-value deposits from new accounts
-      // Check if user is younger than 24 hours and amount > 50,000
-      const userResult = await dbClient.query('SELECT created_at FROM users WHERE id = $1', [userId]);
-      const user = userResult.rows[0];
-      if (user) {
-        const ageHours = (now - new Date(user.created_at)) / (1000 * 60 * 60);
-        if (ageHours < 24 && amount > 50000) {
-          await this.triggerFraudActions(
-            userId, 
-            transactionId, 
-            'NEW_USER_HIGH_VALUE_DEPOSIT', 
-            { amount, accountAgeHours: ageHours }, 
-            dbClient
-          );
-          if (!client) await dbClient.query('COMMIT');
-          return true;
-        }
-      }
-
-      // Rule 2: Multiple failed funding attempts (> 3 in 10 mins)
+      // Rule 1: Multiple failed payments in short time window (>3 in 10 mins)
       const failedResult = await dbClient.query(
         `SELECT COUNT(*) FROM transactions 
          WHERE user_id = $1 AND status = 'FAILED' AND created_at >= $2`,
@@ -43,58 +21,41 @@ export class FraudService {
       );
       const failedCount = parseInt(failedResult.rows[0].count);
       if (failedCount > 3) {
-        await this.triggerFraudActions(
-          userId, 
-          transactionId, 
-          'EXCESSIVE_FAILED_ATTEMPTS', 
-          { failedCount10Mins: failedCount }, 
-          dbClient
-        );
+        await this.triggerFraudActions(userId, transactionId, 'EXCESSIVE_FAILED_PAYMENTS', { failedCount }, dbClient);
         if (!client) await dbClient.query('COMMIT');
         return true;
       }
 
-      // Rule 3: Repeated small test transfers (< 100 Naira, > 3 in 10 mins)
-      const smallResult = await dbClient.query(
-        `SELECT COUNT(*) FROM transactions 
-         WHERE user_id = $1 AND amount < 100.00 AND created_at >= $2`,
-        [userId, new Date(Date.now() - 10 * 60 * 1000)]
-      );
-      const smallCount = parseInt(smallResult.rows[0].count);
-      if (amount < 100.00 && smallCount > 3) {
-        await this.triggerFraudActions(
-          userId, 
-          transactionId, 
-          'REPEATED_SMALL_TEST_TRANSFERS', 
-          { smallCount10Mins: smallCount, currentAmount: amount }, 
-          dbClient
-        );
-        if (!client) await dbClient.query('COMMIT');
-        return true;
-      }
-
-      // Rule 4: Mismatch between expected and received amount
-      if (details.expectedAmount && parseFloat(details.expectedAmount) !== parseFloat(amount)) {
-        await this.triggerFraudActions(
-          userId, 
-          transactionId, 
-          'DEPOSIT_AMOUNT_MISMATCH', 
-          { expected: details.expectedAmount, received: amount }, 
-          dbClient
-        );
-        if (!client) await dbClient.query('COMMIT');
-        return true;
-      }
-
-      // Rule 5: Repeated webhook replay attempts (checked separately in Webhook Controller)
+      // Rule 2: Webhook replay attempts (duplicate reference signature)
       if (details.isReplay) {
-        await this.triggerFraudActions(
-          userId, 
-          transactionId, 
-          'WEBHOOK_REPLAY_ATTEMPT', 
-          { reference: details.reference, signature: details.signature }, 
-          dbClient
-        );
+        await this.triggerFraudActions(userId, transactionId, 'WEBHOOK_REPLAY_ATTEMPT', { signature: details.signature }, dbClient);
+        if (!client) await dbClient.query('COMMIT');
+        return true;
+      }
+
+      // Rule 3: Abnormal transaction velocity (>5 transactions in 5 minutes)
+      const velocityResult = await dbClient.query(
+        `SELECT COUNT(*) FROM transactions 
+         WHERE user_id = $1 AND created_at >= $2`,
+        [userId, new Date(Date.now() - 5 * 60 * 1000)]
+      );
+      const txCount = parseInt(velocityResult.rows[0].count);
+      if (txCount > 5) {
+        await this.triggerFraudActions(userId, transactionId, 'ABNORMAL_TRANSACTION_VELOCITY', { txCount5Mins: txCount }, dbClient);
+        if (!client) await dbClient.query('COMMIT');
+        return true;
+      }
+
+      // Rule 4: Mismatched payment vs product price
+      if (details.expectedAmount && parseFloat(details.expectedAmount) !== parseFloat(amount)) {
+        await this.triggerFraudActions(userId, transactionId, 'PAYMENT_AMOUNT_MISMATCH', { expected: details.expectedAmount, paid: amount }, dbClient);
+        if (!client) await dbClient.query('COMMIT');
+        return true;
+      }
+
+      // Rule 5: Suspicious IP/Device Patterns
+      if (details.suspiciousPattern) {
+        await this.triggerFraudActions(userId, transactionId, 'SUSPICIOUS_DEVICE_PATTERN', { pattern: details.suspiciousPattern }, dbClient);
         if (!client) await dbClient.query('COMMIT');
         return true;
       }
@@ -111,50 +72,38 @@ export class FraudService {
 
   /**
    * Action trigger suite when fraud is detected.
+   * Freezes user account, flags transaction, and pushes to manual review queue.
    */
-  static async triggerFraudActions(userId, transactionId, ruleTriggered, details, client) {
-    console.warn(`🚨 [FRAUD TRIGGERED] User ${userId} triggered rule ${ruleTriggered}. executing security actions...`);
+  static async triggerFraudActions(userId, transactionId, reason, details, client) {
+    console.warn(`🚨 [FRAUD DETECTED] Anomaly flagged for User ${userId}. Reason: ${reason}`);
 
-    // 1. Create fraud flag entry in the database
+    // 1. Insert fraud flag record
     await client.query(
-      'INSERT INTO fraud_flags (user_id, transaction_id, rule_triggered, details, status) VALUES ($1, $2, $3, $4, $5)',
-      [userId, transactionId, ruleTriggered, JSON.stringify(details), 'ACTIVE']
+      `INSERT INTO fraud_flags (user_id, transaction_id, reason, severity, status, details) 
+       VALUES ($1, $2, $3, 'HIGH', 'ACTIVE', $4)`,
+      [userId, transactionId, reason, JSON.stringify(details)]
     );
 
-    // 2. Fetch user's wallet
-    const walletResult = await client.query('SELECT id FROM wallets WHERE user_id = $1', [userId]);
-    const wallet = walletResult.rows[0];
-    if (wallet) {
-      // Freeze the wallet immediately
-      await WalletService.setWalletFreezeStatus(wallet.id, true, client);
-    }
+    // 2. Suspend user (freeze user temporarily)
+    await client.query(
+      'UPDATE users SET is_active = false WHERE id = $1',
+      [userId]
+    );
 
-    // 3. Move transaction to FLAGGED_FRAUD and then PUSH to MANUAL_REVIEW
+    // 3. Move transaction status to FLAGGED_FRAUD and MANUAL_REVIEW
     if (transactionId) {
-      await TransactionStateMachine.transitionTo(
-        transactionId, 
-        States.FLAGGED_FRAUD, 
-        null, 
-        `System Auto-Flagged: ${ruleTriggered}`, 
-        client
-      );
-      await TransactionStateMachine.transitionTo(
-        transactionId, 
-        States.MANUAL_REVIEW, 
-        null, 
-        'Moved to queue for administrator review', 
-        client
-      );
+      await TransactionStateMachine.transitionTo(transactionId, States.FLAGGED_FRAUD, null, `Flagged: ${reason}`, client);
+      await TransactionStateMachine.transitionTo(transactionId, States.MANUAL_REVIEW, null, 'Sent to admin override review queue', client);
     }
   }
 
   /**
-   * Check if a webhook signature was already processed (Replay protection).
+   * Check if signature was already logged (Replay prevention).
    */
   static async isSignatureReplayed(signature) {
     if (!signature) return false;
     const result = await db.query(
-      "SELECT id FROM webhook_logs WHERE signature = $1 AND status = 'PROCESSED' LIMIT 1",
+      "SELECT id FROM payment_events WHERE signature_verified = true AND webhook_payload->>'signature' = $1 LIMIT 1",
       [signature]
     );
     return result.rowCount > 0;
