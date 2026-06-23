@@ -79,7 +79,20 @@
         
         <!-- Profile info form card -->
         <div class="card" style="margin-bottom: var(--space-6)">
-          <h4 style="font-size: var(--text-base); margin-bottom: var(--space-4)">Profile Information</h4>
+          <h4 style="font-weight: 700; color: var(--clr-text-primary); margin-bottom: var(--space-4)">Profile Information</h4>
+          
+          <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-5); padding-bottom:var(--space-4); border-bottom:1px solid var(--clr-border-light)">
+            <div style="position:relative; width:80px; height:80px; border-radius:50%; background:var(--clr-primary-light); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; color:var(--clr-primary); overflow:hidden;" id="profilePicContainer">
+              <span id="profileAvatarText">U</span>
+            </div>
+            <div>
+              <h5 style="margin-bottom:2px; font-weight:700">Profile Picture</h5>
+              <p style="font-size:var(--text-xs); color:var(--clr-text-tertiary); margin-bottom:var(--space-2)">Upload a square image (JPG, PNG) up to 2MB.</p>
+              <input type="file" id="profilePicInput" accept="image/*" style="display:none">
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('profilePicInput').click()">Choose Image</button>
+            </div>
+          </div>
+
           <form id="profileForm" novalidate>
             <div class="grid-2 mb-4">
               <div class="form-group" style="margin-bottom:0">
@@ -196,15 +209,36 @@
         user = SUBAUtils.retrieve('user');
       }
 
+      const updateAvatars = (picDataUrl) => {
+        const desktopAvatar = document.getElementById('desktopUserAvatar');
+        const topbarAvatar = document.getElementById('topbarUserAvatar');
+        const profilePicContainer = document.getElementById('profilePicContainer');
+        
+        if (picDataUrl) {
+          const imgHtml = `<img src="${picDataUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+          if (desktopAvatar) desktopAvatar.innerHTML = imgHtml;
+          if (topbarAvatar) topbarAvatar.innerHTML = imgHtml;
+          if (profilePicContainer) profilePicContainer.innerHTML = imgHtml;
+        } else if (user) {
+          const fullName = user.full_name || 'User';
+          const names = fullName.split(' ');
+          const firstName = names[0];
+          const lastName = names.length > 1 ? names[names.length - 1] : '';
+          const initials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase() || 'U';
+          
+          if (desktopAvatar) desktopAvatar.textContent = initials;
+          if (topbarAvatar) topbarAvatar.textContent = initials;
+          const avatarText = document.getElementById('profileAvatarText');
+          if (avatarText) avatarText.textContent = initials;
+        }
+      };
+
       if (user) {
         const fullName = user.full_name || 'User';
         const names = fullName.split(' ');
         const firstName = names[0];
         const lastName = names.length > 1 ? names[names.length - 1] : '';
-        const initials = ((firstName?.[0] || '') + (lastName?.[0] || '')).toUpperCase() || 'U';
 
-        document.getElementById('desktopUserAvatar').textContent = initials;
-        document.getElementById('topbarUserAvatar').textContent = initials;
         document.getElementById('desktopUserName').textContent = fullName;
 
         document.getElementById('profFirstName').value = firstName;
@@ -214,6 +248,40 @@
         const rawPhone = user.phone_number || '';
         const phoneClean = rawPhone.startsWith('+234') ? rawPhone.substring(4) : (rawPhone.startsWith('0') ? rawPhone.substring(1) : rawPhone);
         document.getElementById('profPhone').value = phoneClean;
+        
+        // Render current profile pic if available
+        updateAvatars(user.profile_pic);
+      }
+
+      // Handle Profile Pic Upload
+      const fileInput = document.getElementById('profilePicInput');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+              SUBAComponents.showToast({
+                title: 'File Too Large',
+                message: 'Please select an image smaller than 2MB.',
+                type: 'error'
+              });
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+              const dataUrl = reader.result;
+              user.profile_pic = dataUrl;
+              SUBAUtils.store('user', user);
+              updateAvatars(dataUrl);
+              SUBAComponents.showToast({
+                title: 'Profile Pic Updated',
+                message: 'Your avatar was successfully uploaded.',
+                type: 'success'
+              });
+            };
+            reader.readAsDataURL(file);
+          }
+        });
       }
 
       // Handle Profile Submit

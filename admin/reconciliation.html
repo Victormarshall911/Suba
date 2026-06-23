@@ -243,6 +243,30 @@
         </div>
       </div>
 
+      <!-- Announcements Management Board -->
+      <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface); display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-weight: 700; color: var(--clr-text-primary)">Admin Announcements Board</h4>
+          <button class="btn btn-primary btn-sm" onclick="openCreateAnnouncementModal()">📢 Post Announcement</button>
+        </div>
+        <div class="admin-table-container" style="border: none; border-radius: 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Publish Time</th>
+                <th>Title</th>
+                <th>Content (Preview)</th>
+              </tr>
+            </thead>
+            <tbody id="adminAnnouncementsTableBody">
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--clr-text-light)">Loading announcements...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Job Postings & Career Applications Management -->
       <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
         <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface); display: flex; justify-content: space-between; align-items: center;">
@@ -343,6 +367,27 @@
     </div>
   </div>
 
+  <!-- Create Announcement Modal -->
+  <div class="modal-backdrop" id="createAnnouncementModal">
+    <div class="modal" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3>Publish New Announcement</h3>
+        <button class="modal-close" onclick="closeCreateAnnouncementModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="announcementTitle" class="form-label">Announcement Title</label>
+          <input type="text" id="announcementTitle" class="form-input" placeholder="e.g. Server Maintenance Notice">
+        </div>
+        <div class="form-group">
+          <label for="announcementContent" class="form-label">Content Message</label>
+          <textarea id="announcementContent" class="form-input" rows="4" placeholder="Type the announcement details here..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="confirmCreateAnnouncementBtn">Publish Announcement</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="../js/utils.js"></script>
   <script src="../js/components.js"></script>
@@ -356,6 +401,12 @@
       };
       window.closeCreateJobModal = () => {
         SUBAComponents.closeModal('createJobModal');
+      };
+      window.openCreateAnnouncementModal = () => {
+        SUBAComponents.openModal('createAnnouncementModal');
+      };
+      window.closeCreateAnnouncementModal = () => {
+        SUBAComponents.closeModal('createAnnouncementModal');
       };
 
       async function loadDashboard() {
@@ -461,8 +512,11 @@
             }
           }
           
-          // Load Careers and Applications
-          await loadJobsAndApplications();
+          // Load Careers, Applications, and Announcements
+          await Promise.all([
+            loadJobsAndApplications(),
+            loadAnnouncements()
+          ]);
 
         } catch (err) {
           console.error("Failed to load dashboard reconciliation data:", err);
@@ -471,6 +525,26 @@
             message: 'Make sure your Node.js server is running and you are logged in as an ADMIN.',
             type: 'error'
           });
+        }
+      }
+
+      async function loadAnnouncements() {
+        try {
+          const res = await SUBAApi.request('/announcements', { method: 'GET' });
+          const tbody = document.getElementById('adminAnnouncementsTableBody');
+          if (!res || res.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--clr-text-light)">No announcements posted yet.</td></tr>`;
+          } else {
+            tbody.innerHTML = res.map(ann => `
+              <tr>
+                <td style="white-space: nowrap;">${new Date(ann.created_at).toLocaleString()}</td>
+                <td><strong>${ann.title}</strong></td>
+                <td><span style="font-size:12px; display:inline-block; max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${ann.content}">${ann.content}</span></td>
+              </tr>
+            `).join('');
+          }
+        } catch (err) {
+          console.error("Failed to load admin announcements:", err);
         }
       }
 
@@ -660,6 +734,49 @@
           });
         } finally {
           confirmCreateJobBtn.classList.remove('is-loading');
+        }
+      });
+
+      // Publish Announcement submit handler
+      const confirmCreateAnnouncementBtn = document.getElementById('confirmCreateAnnouncementBtn');
+      confirmCreateAnnouncementBtn.addEventListener('click', async () => {
+        const title = document.getElementById('announcementTitle').value.trim();
+        const content = document.getElementById('announcementContent').value.trim();
+
+        if (!title || !content) {
+          SUBAComponents.showToast({
+            title: 'Fields Missing',
+            message: 'Please fill in all announcement fields.',
+            type: 'error'
+          });
+          return;
+        }
+
+        confirmCreateAnnouncementBtn.classList.add('is-loading');
+        try {
+          await SUBAApi.request('/admin/announcements', {
+            method: 'POST',
+            body: JSON.stringify({ title, content })
+          });
+          SUBAComponents.closeModal('createAnnouncementModal');
+          SUBAComponents.showToast({
+            title: 'Announcement Published',
+            message: 'New announcement has been successfully published.',
+            type: 'success'
+          });
+          // Reset inputs
+          document.getElementById('announcementTitle').value = '';
+          document.getElementById('announcementContent').value = '';
+          
+          await loadAnnouncements();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Publish Failed',
+            message: err.message,
+            type: 'error'
+          });
+        } finally {
+          confirmCreateAnnouncementBtn.classList.remove('is-loading');
         }
       });
     });

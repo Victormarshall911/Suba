@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -15,7 +16,30 @@ let isMock = false;
 
 // Mock database storage for standalone/test execution when DB is not available
 export const mockDb = {
-  users: [],
+  users: [
+    {
+      id: 'admin-uuid-1111-2222',
+      email: 'vitschisom00@gmail.com',
+      phone_number: '09071486028',
+      full_name: 'Admin Chisom',
+      password_hash: bcrypt.hashSync('sbadmin247', 10),
+      role: 'ADMIN',
+      kyc_level: 3,
+      is_active: true,
+      created_at: new Date()
+    },
+    {
+      id: 'student-uuid-3333-4444',
+      email: 'student@suba.edu.ng',
+      phone_number: '08039999999',
+      full_name: 'Test Student',
+      password_hash: bcrypt.hashSync('password123', 10),
+      role: 'USER',
+      kyc_level: 1,
+      is_active: true,
+      created_at: new Date()
+    }
+  ],
   transactions: [],
   payment_events: [],
   fulfillment_logs: [],
@@ -28,7 +52,8 @@ export const mockDb = {
   jobs: [],
   job_applications: [],
   transaction_status_history: [],
-  webhook_logs: []
+  webhook_logs: [],
+  announcements: []
 };
 
 // Check if we should fallback to mock mode
@@ -60,6 +85,31 @@ export async function initializeDatabase() {
       await client.query(schemaSql);
       console.log("📑 Database schema initialized successfully.");
     }
+    
+    // Seed default admin user if not exists
+    const adminCheck = await client.query("SELECT id FROM users WHERE email = $1", ['vitschisom00@gmail.com']);
+    if (adminCheck.rowCount === 0) {
+      const adminPassHash = bcrypt.hashSync('sbadmin247', 10);
+      await client.query(
+        `INSERT INTO users (email, phone_number, full_name, password_hash, role, kyc_level, is_active) 
+         VALUES ('vitschisom00@gmail.com', '09071486028', 'Admin Chisom', $1, 'ADMIN', 3, true)`,
+        [adminPassHash]
+      );
+      console.log("👤 Default Admin user seeded successfully in PostgreSQL.");
+    }
+
+    // Seed default test user if not exists
+    const userCheck = await client.query("SELECT id FROM users WHERE email = $1", ['student@suba.edu.ng']);
+    if (userCheck.rowCount === 0) {
+      const userPassHash = bcrypt.hashSync('password123', 10);
+      await client.query(
+        `INSERT INTO users (email, phone_number, full_name, password_hash, role, kyc_level, is_active) 
+         VALUES ('student@suba.edu.ng', '08039999999', 'Test Student', $1, 'USER', 1, true)`,
+        [userPassHash]
+      );
+      console.log("👤 Default Test User seeded successfully in PostgreSQL.");
+    }
+
     client.release();
   } catch (err) {
     console.error("⚠️ PostgreSQL connection failed. Active databases features will fall back to in-memory operational model for testing/standalone execution.", err.message);
@@ -108,6 +158,19 @@ function queryMock(text, params) {
   // ==========================================
   // INSERTS
   // ==========================================
+  
+  // 0. INSERT INTO announcements
+  if (normalized.startsWith('INSERT INTO announcements')) {
+    const id = crypto.randomUUID();
+    const title = params[0];
+    const content = params[1];
+    const created_at = new Date();
+    
+    const ann = { id, title, content, created_at };
+    mockDb.announcements = mockDb.announcements || [];
+    mockDb.announcements.push(ann);
+    return { rows: [ann], rowCount: 1 };
+  }
   
   // 1. INSERT INTO users
   if (normalized.startsWith('INSERT INTO users')) {
@@ -670,6 +733,13 @@ function queryMock(text, params) {
   // SELECT FROM webhook_logs (mock log check)
   if (normalized.includes('FROM webhook_logs')) {
     let res = mockDb.webhook_logs || [];
+    res.sort((a, b) => b.created_at - a.created_at);
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM announcements
+  if (normalized.includes('FROM announcements')) {
+    let res = mockDb.announcements || [];
     res.sort((a, b) => b.created_at - a.created_at);
     return { rows: res, rowCount: res.length };
   }

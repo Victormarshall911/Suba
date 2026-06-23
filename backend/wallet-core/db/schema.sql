@@ -236,3 +236,11 @@ CREATE TABLE IF NOT EXISTS transaction_status_history (
 );
 
 CREATE INDEX IF NOT EXISTS ix_status_history_txn_id ON transaction_status_history(transaction_id);
+
+-- 14. Announcements Table
+CREATE TABLE IF NOT EXISTS announcements (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

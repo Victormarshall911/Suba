@@ -32,6 +32,16 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
+// Simple Request/Response & API Uptime Logger Middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[API REQUEST] ${req.method} ${req.originalUrl} - Status: ${res.statusCode} (${duration}ms)`);
+  });
+  next();
+});
+
 // Parse JSON request bodies, capture raw body for webhook HMAC checks
 app.use(express.json({
   verify: (req, res, buf) => {
@@ -96,6 +106,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
     const data = await AuthService.login({ email, password });
     res.status(200).json(data);
   } catch (err) {
+    console.error(`❌ [AUTH FAILURE] Login failed for email: ${req.body.email}. Reason: ${err.message}`);
     res.status(400).json({ message: err.message });
   }
 });
@@ -278,8 +289,115 @@ app.get('/api/v1/ambassador/earnings', authenticateJWT, async (req, res) => {
        ORDER BY c.created_at DESC`,
       [profile.ambassador_id]
     );
+// 6e. Ambassador: Earnings route end
     res.status(200).json(result.rows);
   } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6e-1. Ambassador: Stats & Leaderboard (Auth/Ambassador mapping)
+app.get('/api/v1/auth/ambassador', authenticateJWT, async (req, res) => {
+  try {
+    let profile = await GrowthService.getProfile(req.user.userId);
+    
+    // Auto-approve ambassador on visit if not already one
+    if (!profile) {
+      console.log(`[GROWTH SERVICE] Dynamic initialize ambassador for user: ${req.user.userId}`);
+      const userRes = await db.query('SELECT full_name, email FROM users WHERE id = $1', [req.user.userId]);
+      const user = userRes.rows[0];
+      if (user) {
+        const code = `SUB-${Math.floor(1000 + Math.random() * 9000)}`;
+        await db.query(
+          `INSERT INTO ambassadors (user_id, referral_code, status, level)
+           VALUES ($1, $2, 'APPROVED', 'BRONZE')`,
+          [req.user.userId, code]
+        );
+        profile = await GrowthService.getProfile(req.user.userId);
+      }
+    }
+
+    if (!profile) {
+      return res.status(200).json({
+        total_commissions: 0,
+        withdrawn_funds: 0,
+        cleared_balance: 0,
+        leaderboard: []
+      });
+    }
+
+    // Load top ambassadors leaderboard
+    const leaderboardRes = await db.query(`
+      SELECT u.full_name, COALESCE(SUM(c.amount), 0) as amount
+      FROM commissions c
+      JOIN ambassadors a ON c.ambassador_id = a.id
+      JOIN users u ON a.user_id = u.id
+      WHERE c.status = 'APPROVED'
+      GROUP BY u.id, u.full_name
+      ORDER BY amount DESC
+      LIMIT 5
+    `);
+
+    const leaderboard = leaderboardRes.rows.map(row => {
+      const parts = row.full_name.split(' ');
+      const initials = (parts[0]?.[0] || 'U') + (parts[1]?.[0] || '');
+      return {
+        initials: initials.toUpperCase(),
+        full_name: row.full_name,
+        amount: parseFloat(row.amount)
+      };
+    });
+
+    // Ensure they see themselves if leaderboard is empty
+    if (leaderboard.length === 0) {
+      const parts = profile.full_name.split(' ');
+      const initials = (parts[0]?.[0] || 'U') + (parts[1]?.[0] || '');
+      leaderboard.push({
+        initials: initials.toUpperCase(),
+        full_name: profile.full_name,
+        amount: profile.total_earned
+      });
+    }
+
+    res.status(200).json({
+      total_commissions: profile.total_earned,
+      withdrawn_funds: profile.paid_earnings,
+      cleared_balance: profile.pending_earnings,
+      leaderboard
+    });
+  } catch (err) {
+    console.error(`❌ [API ERROR] Failed to fetch auth/ambassador: ${err.message}`);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6e-2. Announcements: Public listing
+app.get('/api/v1/announcements', async (req, res) => {
+  try {
+    console.log(`[DB QUERY] Fetching all announcements`);
+    const result = await db.query('SELECT * FROM announcements ORDER BY created_at DESC');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(`❌ [API ERROR] Failed to fetch announcements: ${err.message}`);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// 6e-3. Admin: Post announcement
+app.post('/api/v1/admin/announcements', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    if (!title || !content) {
+      return res.status(400).json({ message: 'Validation failed: title and content are required.' });
+    }
+    console.log(`[DB QUERY] Admin ${req.user.email} creating announcement: "${title}"`);
+    const result = await db.query(
+      'INSERT INTO announcements (title, content) VALUES ($1, $2) RETURNING *',
+      [title, content]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(`❌ [API ERROR] Failed to create announcement: ${err.message}`);
     res.status(400).json({ message: err.message });
   }
 });
@@ -397,6 +515,15 @@ app.get('/api/v1/admin/transactions', authenticateJWT, requireAdmin, async (req,
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+});
+
+// Global Error Handler Middleware
+app.use((err, req, res, next) => {
+  console.error("❌ [SERVER ERROR]", err.stack || err.message || err);
+  res.status(500).json({
+    message: "An unexpected system error occurred. Please contact support.",
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
 // =============================================================================

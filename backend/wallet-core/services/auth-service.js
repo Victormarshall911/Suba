@@ -85,6 +85,9 @@ export class AuthService {
       expiresIn: '24h'
     });
 
+    const ambResult = await db.query('SELECT referral_code FROM ambassadors WHERE user_id = $1', [user.id]);
+    const referral_code = ambResult.rowCount > 0 ? ambResult.rows[0].referral_code : null;
+
     return {
       access_token: token,
       user: {
@@ -96,7 +99,8 @@ export class AuthService {
         is_frozen: !user.is_active,
         virtual_account_number,
         bank_name,
-        virtual_reference
+        virtual_reference,
+        referral_code
       }
     };
   }
@@ -119,6 +123,9 @@ export class AuthService {
     const bank_name = 'Sterling Bank';
     const virtual_reference = `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
+    const ambResult = await db.query('SELECT referral_code FROM ambassadors WHERE user_id = $1', [user.id]);
+    const referral_code = ambResult.rowCount > 0 ? ambResult.rows[0].referral_code : null;
+
     return {
       id: user.id,
       email: user.email,
@@ -130,7 +137,8 @@ export class AuthService {
       is_frozen: !user.is_active,
       virtual_account_number,
       bank_name,
-      virtual_reference
+      virtual_reference,
+      referral_code
     };
   }
 }

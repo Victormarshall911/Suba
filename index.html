@@ -70,7 +70,7 @@
           </div>
           <div class="hero-stats">
             <div class="hero-stat">
-              <div class="stat-number" data-counter="50000" data-counter-suffix="+">0</div>
+              <div class="stat-number" data-counter="1200" data-counter-suffix="+">0</div>
               <div class="stat-label">Transactions</div>
             </div>
             <div class="hero-stat">
@@ -384,7 +384,7 @@
         <p>Join thousands of students saving money and getting instant delivery on SUBA.</p>
         <div class="cta-actions">
           <a href="register.html" class="btn btn-white btn-lg">Create Free Account</a>
-          <a href="https://wa.me/2340000000000" class="btn btn-dark btn-lg" style="background: #25D366; border-color: #25D366">Chat on WhatsApp</a>
+          <a href="https://wa.me/2349071486028" class="btn btn-dark btn-lg" style="background: #25D366; border-color: #25D366">Chat on WhatsApp</a>
         </div>
       </div>
     </section>
@@ -406,6 +406,7 @@
           <li><a href="#pricing">Pricing Plans</a></li>
           <li><a href="#how-to-use">How It Works</a></li>
           <li><a href="#faq">FAQs</a></li>
+          <li><a href="careers.html">Careers</a></li>
         </ul>
       </div>
 
@@ -422,7 +423,7 @@
       <div class="footer-col">
         <h5>Connect</h5>
         <ul>
-          <li><a href="https://wa.me/2340000000000">WhatsApp Support</a></li>
+          <li><a href="https://wa.me/2349071486028">WhatsApp Support</a></li>
           <li><a href="#">Announcements</a></li>
           <li><a href="register.html">Become Ambassador</a></li>
         </ul>
@@ -437,6 +438,39 @@
       </div>
     </div>
   </footer>
+
+  <!-- Welcome WhatsApp Invite Modal -->
+  <div class="modal-backdrop" id="whatsappInviteModal">
+    <div class="modal" style="max-width: 420px; text-align: center;">
+      <div class="modal-header">
+        <h3>Join Our Community! 🚀</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('whatsappInviteModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding-top: var(--space-4);">
+        <div style="font-size: 48px; margin-bottom: var(--space-4);">📢</div>
+        <h4 style="margin-bottom: var(--space-2); font-weight: 700; color: var(--clr-text-primary)">Stay Connected with SUBA</h4>
+        <p style="font-size: var(--text-sm); color: var(--clr-text-secondary); line-height: 1.5; margin-bottom: var(--space-6);">
+          Get cheap data updates, network status updates, and connect with other student ambassadors instantly.
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+          <!-- WhatsApp Channel Button -->
+          <a href="https://whatsapp.com/channel/PLACEHOLDER_CHANNEL_LINK" target="_blank" class="btn btn-primary btn-block btn-lg" style="background: #25D366; border-color: #25D366; text-decoration: none;">
+            🟢 Follow WhatsApp Channel
+          </a>
+          
+          <!-- Ambassadors Group Button -->
+          <a href="https://chat.whatsapp.com/PLACEHOLDER_GROUP_LINK" target="_blank" class="btn btn-secondary btn-block btn-lg" style="color: #25D366; border-color: #25D366; text-decoration: none;">
+            👥 Join Ambassadors Group
+          </a>
+          
+          <button class="btn btn-ghost btn-block" onclick="SUBAComponents.closeModal('whatsappInviteModal')" style="color: var(--clr-text-tertiary); font-size: var(--text-xs); margin-top: var(--space-2);">
+            Maybe later
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="js/utils.js"></script>
@@ -500,6 +534,14 @@
       if (typeof SUBAComponents !== 'undefined' && SUBAComponents.initTestimonialCarousel) {
         SUBAComponents.initTestimonialCarousel();
       }
+
+      // Show WhatsApp Invite modal on load
+      setTimeout(() => {
+        if (typeof SUBAComponents !== 'undefined') {
+          SUBAComponents.openModal('whatsappInviteModal');
+          SUBAComponents.playAlertSound();
+        }
+      }, 1500);
     });
   </script>
 </body>

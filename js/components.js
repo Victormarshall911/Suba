@@ -9,6 +9,7 @@ const SUBAComponents = {
    * Initialize all shared components
    */
   init() {
+    this.initDarkTheme();
     this.initHeader();
     this.initMobileMenu();
     this.initScrollAnimations();
@@ -16,6 +17,7 @@ const SUBAComponents = {
     this.initToastContainer();
     this.initCookieConsent();
     this.initFloatingSupport();
+    this.initAnnouncements();
   },
 
   /* ============================================
@@ -605,7 +607,7 @@ const SUBAComponents = {
             Need quick assistance with your transaction?
           </p>
           
-          <a href="https://wa.me/2348000000000" target="_blank" class="support-channel-link whatsapp" style="text-decoration: none;">
+          <a href="https://wa.me/2349071486028" target="_blank" class="support-channel-link whatsapp" style="text-decoration: none;">
             <span class="channel-icon">🟢</span>
             <div class="channel-info">
               <div class="channel-name" style="font-weight:600; font-size:13px; color: var(--clr-text-primary);">Chat on WhatsApp</div>
@@ -782,6 +784,168 @@ const SUBAComponents = {
       });
     } catch (err) {
       console.error('WebSocket connection failed:', err);
+    }
+  },
+
+  /* ============================================
+     DARK MODE LIFECYCLE
+     ============================================ */
+  initDarkTheme() {
+    const savedTheme = localStorage.getItem('suba_theme') || 'light';
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+      document.body.classList.add('dark-theme');
+    }
+
+    const toggleTheme = () => {
+      const isDark = document.body.classList.toggle('dark-theme');
+      document.documentElement.classList.toggle('dark-theme', isDark);
+      localStorage.setItem('suba_theme', isDark ? 'dark' : 'light');
+      updateToggleIcons();
+    };
+
+    const updateToggleIcons = () => {
+      document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+        const isDark = document.body.classList.contains('dark-theme');
+        btn.innerHTML = isDark ? '☀️' : '🌙';
+        btn.setAttribute('title', isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+      });
+    };
+
+    // Inject toggle buttons into headers/topbars if they exist
+    // 1. Homepage Header Actions
+    const headerActions = document.querySelector('.header-actions');
+    if (headerActions && !headerActions.querySelector('.theme-toggle-btn')) {
+      const btn = document.createElement('button');
+      btn.className = 'theme-toggle-btn btn btn-ghost btn-sm';
+      btn.style.fontSize = '18px';
+      btn.style.padding = '0 var(--space-2)';
+      btn.style.border = 'none';
+      btn.style.background = 'none';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleTheme();
+      });
+      const registerBtn = headerActions.querySelector('.btn-primary');
+      if (registerBtn) {
+        headerActions.insertBefore(btn, registerBtn);
+      } else {
+        headerActions.appendChild(btn);
+      }
+    }
+
+    // 2. Dashboard Topbar actions
+    const topbarActions = document.querySelector('.topbar-actions');
+    if (topbarActions && !topbarActions.querySelector('.theme-toggle-btn')) {
+      const btn = document.createElement('button');
+      btn.className = 'theme-toggle-btn bell-btn';
+      btn.style.marginRight = 'var(--space-2)';
+      btn.style.background = 'none';
+      btn.style.border = 'none';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleTheme();
+      });
+      const firstChild = topbarActions.firstChild;
+      topbarActions.insertBefore(btn, firstChild);
+    }
+
+    // 3. Auth Layout floating button
+    const authContent = document.querySelector('.auth-content');
+    if (authContent && !authContent.querySelector('.theme-toggle-btn')) {
+      const btn = document.createElement('button');
+      btn.className = 'theme-toggle-btn';
+      btn.style.cssText = 'position: absolute; top: 20px; right: 20px; font-size: 24px; z-index: 10; border: 1px solid var(--clr-border); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--clr-surface); box-shadow: var(--shadow-sm); cursor: pointer;';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleTheme();
+      });
+      authContent.appendChild(btn);
+    }
+
+    updateToggleIcons();
+  },
+
+  /* ============================================
+     ANNOUNCEMENTS
+     ============================================ */
+  initAnnouncements() {
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (link && (link.textContent.trim() === 'Announcements' || link.classList.contains('footer-announcements-link'))) {
+        e.preventDefault();
+        this.openAnnouncementsModal();
+      }
+    });
+  },
+
+  openAnnouncementsModal() {
+    let modal = document.getElementById('announcementsModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'modal-backdrop';
+      modal.id = 'announcementsModal';
+      modal.innerHTML = `
+        <div class="modal" style="max-width: 500px;">
+          <div class="modal-header">
+            <h3>Announcements 📢</h3>
+            <button class="modal-close" onclick="SUBAComponents.closeModal('announcementsModal')">✕</button>
+          </div>
+          <div class="modal-body" style="padding-top: var(--space-4); max-height: 400px; overflow-y: auto;">
+            <div id="announcementsList">
+              <div style="text-align: center; padding: var(--space-8); color: var(--clr-text-secondary);">
+                <div class="skeleton skeleton-text" style="width: 80%; height: 16px; margin: 0 auto 12px;"></div>
+                <div class="skeleton skeleton-text" style="width: 60%; height: 12px; margin: 0 auto;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    this.openModal('announcementsModal');
+    this.fetchAnnouncements();
+  },
+
+  async fetchAnnouncements() {
+    const listContainer = document.getElementById('announcementsList');
+    if (!listContainer) return;
+    
+    try {
+      const data = await SUBAApi.request('/announcements');
+      if (!data || data.length === 0) {
+        listContainer.innerHTML = `
+          <div style="text-align: center; padding: var(--space-8); color: var(--clr-text-secondary);">
+            <div style="font-size: 40px; margin-bottom: var(--space-3)">📭</div>
+            <p>No announcements posted by the admin yet.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      listContainer.innerHTML = data.map(ann => {
+        const dateStr = SUBAUtils.formatDate ? SUBAUtils.formatDate(ann.created_at) : new Date(ann.created_at).toLocaleString();
+        return `
+          <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); margin-bottom: var(--space-3); border-radius: var(--radius-md); background: var(--clr-bg-alt); text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); gap: 10px;">
+              <h4 style="font-size: 15px; font-weight: 700; color: var(--clr-text-primary); margin: 0;">${ann.title}</h4>
+              <span style="font-size: 10px; color: var(--clr-text-tertiary); white-space: nowrap;">
+                ${dateStr}
+              </span>
+            </div>
+            <p style="font-size: 13px; color: var(--clr-text-secondary); line-height: 1.5; white-space: pre-line; margin: 0;">${ann.content}</p>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Error fetching announcements:', err);
+      listContainer.innerHTML = `
+        <div style="text-align: center; padding: var(--space-6); color: var(--clr-error-dark);">
+          <p>Failed to load announcements.</p>
+          <p style="font-size: 11px; margin-top: 4px; color: var(--clr-text-tertiary)">${err.message || 'Check server connection'}</p>
+        </div>
+      `;
     }
   }
 };
