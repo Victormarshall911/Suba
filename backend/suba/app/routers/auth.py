@@ -21,6 +21,9 @@ from app.schemas.auth import (
     UserLoginRequest,
     UserRegisterRequest,
     UserResponse,
+    CheckEmailRequest,
+    CheckPhoneRequest,
+    CheckAvailabilityResponse,
 )
 from app.services import auth_service
 
@@ -31,6 +34,44 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
+
+# =============================================================================
+# Pre-Registration Checks
+# =============================================================================
+
+@router.post(
+    "/check-email",
+    response_model=CheckAvailabilityResponse,
+    summary="Check email availability",
+)
+async def check_email(
+    request: CheckEmailRequest,
+    db: AsyncSession = Depends(get_db),
+) -> CheckAvailabilityResponse:
+    from sqlalchemy import select
+    existing = await db.execute(select(User).where(User.email == request.email))
+    is_available = existing.scalar_one_or_none() is None
+    return CheckAvailabilityResponse(
+        is_available=is_available,
+        message="Available" if is_available else "A user with this email already exists"
+    )
+
+@router.post(
+    "/check-phone",
+    response_model=CheckAvailabilityResponse,
+    summary="Check phone number availability",
+)
+async def check_phone(
+    request: CheckPhoneRequest,
+    db: AsyncSession = Depends(get_db),
+) -> CheckAvailabilityResponse:
+    from sqlalchemy import select
+    existing = await db.execute(select(User).where(User.phone_number == request.phone_number))
+    is_available = existing.scalar_one_or_none() is None
+    return CheckAvailabilityResponse(
+        is_available=is_available,
+        message="Available" if is_available else "A user with this phone number already exists"
+    )
 
 # =============================================================================
 # POST /register — Create user + auto-create empty wallet

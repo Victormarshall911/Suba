@@ -318,6 +318,19 @@
           // Send Email OTP Real via Supabase
           step1NextBtn.classList.add('is-loading');
           try {
+            // Pre-check if email is already registered in our DB
+            const checkRes = await SUBAApi.request('/auth/check-email', {
+              method: 'POST',
+              body: JSON.stringify({ email: emailVal })
+            });
+            if (!checkRes.is_available) {
+              emailInput1.classList.add('is-error');
+              regEmailError.textContent = checkRes.message;
+              regEmailError.classList.remove('hidden');
+              step1NextBtn.classList.remove('is-loading');
+              return;
+            }
+
             if (!window.SUBASupabase) {
               throw new Error("Supabase is not initialized yet. Please wait a moment.");
             }
@@ -371,7 +384,7 @@
       const passwordError = document.getElementById('regPasswordError');
       const termsError = document.getElementById('termsError');
 
-      step2NextBtn.addEventListener('click', () => {
+      step2NextBtn.addEventListener('click', async () => {
         // Reset errors
         firstNameError.classList.add('hidden');
         lastNameError.classList.add('hidden');
@@ -435,7 +448,26 @@
         }
 
         if (isValid) {
-          transitionStep(3);
+          step2NextBtn.classList.add('is-loading');
+          try {
+            const checkRes = await SUBAApi.request('/auth/check-phone', {
+              method: 'POST',
+              body: JSON.stringify({ phone_number: '0' + formattedPhone })
+            });
+            if (!checkRes.is_available) {
+              phoneInput2.classList.add('is-error');
+              phoneError2.textContent = checkRes.message;
+              phoneError2.classList.remove('hidden');
+              return;
+            }
+            transitionStep(3);
+          } catch (err) {
+            console.error(err);
+            phoneError2.textContent = 'Failed to verify phone number availability.';
+            phoneError2.classList.remove('hidden');
+          } finally {
+            step2NextBtn.classList.remove('is-loading');
+          }
         }
       });
 

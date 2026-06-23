@@ -9,9 +9,8 @@ in API responses. password_hash is NEVER included in any response schema.
 
 import uuid
 from datetime import datetime
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from typing import Optional
 
 
 
@@ -147,6 +146,33 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# =============================================================================
+# Pre-Registration Checks
+# =============================================================================
+
+class CheckEmailRequest(BaseModel):
+    email: EmailStr = Field(..., description="Email address to check")
+
+class CheckPhoneRequest(BaseModel):
+    phone_number: str = Field(..., description="Phone number to check")
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v: str) -> str:
+        # Same logic as UserRegisterRequest to ensure consistency
+        cleaned = "".join(filter(str.isdigit, v))
+        if cleaned.startswith("234"):
+            cleaned = "0" + cleaned[3:]
+        if not (len(cleaned) >= 10 and cleaned.startswith("0")):
+            raise ValueError("Invalid Nigerian phone number format")
+        return cleaned
+
+class CheckAvailabilityResponse(BaseModel):
+    is_available: bool = Field(..., description="True if the resource is available (not registered)")
+    message: str = Field(..., description="Description of the result")
+
 
 
 class AuthResponse(BaseModel):
