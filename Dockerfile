@@ -16,5 +16,5 @@ COPY backend/suba/ .
 # Expose the port (Render/Railway will inject the PORT environment variable)
 EXPOSE 8000
 
-# Start the application
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Start: run DB migrations then start the application
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
