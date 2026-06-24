@@ -132,7 +132,7 @@
             
             <div id="leaderboardList" style="display: flex; flex-direction: column; gap: var(--space-3)">
               <!-- Dynamically populated from API -->
-              <div style="text-align:center; padding:var(--space-4); color:var(--clr-text-tertiary); font-size:var(--text-sm)">Loading leaderboard...</div>
+              <div style="text-align:center; padding:var(--space-4);"><div style="display:inline-block; width:24px; height:24px; border:3px solid var(--clr-border-light); border-top-color:var(--clr-primary); border-radius:50%; animation:spin 1s linear infinite;"></div></div>
             </div>
           </div>
 
@@ -142,7 +142,7 @@
             
             <div id="myReferralsList" style="display: flex; flex-direction: column; gap: var(--space-3)">
               <!-- Dynamically populated from API -->
-              <div style="text-align:center; padding:var(--space-4); color:var(--clr-text-tertiary); font-size:var(--text-sm)">Loading referrals...</div>
+              <div style="text-align:center; padding:var(--space-4);"><div style="display:inline-block; width:24px; height:24px; border:3px solid var(--clr-border-light); border-top-color:var(--clr-primary); border-radius:50%; animation:spin 1s linear infinite;"></div></div>
             </div>
           </div>
 
@@ -244,7 +244,6 @@
 
       // Load dynamic data
       const loadAmbassadorStats = async () => {
-        SUBAComponents.showPageSkeleton();
         try {
           const stats = await SUBAApi.request('/auth/ambassador');
           if (stats) {
@@ -307,8 +306,6 @@
           console.error("Failed to load ambassador stats", err);
           document.getElementById('leaderboardList').innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-error); font-size:var(--text-sm)">Failed to load data</div>';
           document.getElementById('myReferralsList').innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-error); font-size:var(--text-sm)">Failed to load data</div>';
-        } finally {
-          SUBAComponents.hidePageSkeleton();
         }
       };
 

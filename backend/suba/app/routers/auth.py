@@ -250,7 +250,7 @@ async def get_ambassador_stats(
         est_commission = ref_count * 1050.0  # mock value based on average referral
         initials = (user_obj.full_name[:2] if user_obj.full_name else "U").upper()
         leaderboard.append(LeaderboardEntry(
-            full_name=user_obj.full_name,
+            full_name=user_obj.full_name or "Unknown User",
             amount=est_commission,
             initials=initials
         ))
