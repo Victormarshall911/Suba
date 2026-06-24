@@ -26,6 +26,7 @@ from app.schemas.auth import (
     CheckAvailabilityResponse,
     AmbassadorStatsResponse,
     LeaderboardEntry,
+    ReferredUserEntry,
 )
 from app.services import auth_service
 
@@ -200,8 +201,24 @@ async def get_ambassador_stats(
     
     # 1. Calculate my commissions
     # Find all users I referred
-    referred_users = await db.execute(select(User.id).where(User.referred_by_id == current_user.id))
-    referred_ids = referred_users.scalars().all()
+    referred_users_result = await db.execute(
+        select(User.id, User.full_name, User.created_at)
+        .where(User.referred_by_id == current_user.id)
+        .order_by(desc(User.created_at))
+    )
+    referred_users_rows = referred_users_result.all()
+    referred_ids = [row.id for row in referred_users_rows]
+    
+    my_referrals = []
+    for row in referred_users_rows:
+        initials = (row.full_name[:2] if row.full_name else "U").upper()
+        # Format date as 'DD MMM YYYY'
+        joined_str = row.created_at.strftime("%d %b %Y") if row.created_at else "Unknown"
+        my_referrals.append(ReferredUserEntry(
+            full_name=row.full_name or "Unknown User",
+            initials=initials,
+            joined_date=joined_str
+        ))
     
     total_commissions = 0.0
     if referred_ids:
@@ -245,6 +262,7 @@ async def get_ambassador_stats(
         total_commissions=total_commissions,
         withdrawn_funds=0.0,
         cleared_balance=total_commissions,
-        leaderboard=leaderboard
+        leaderboard=leaderboard,
+        my_referrals=my_referrals
     )
 

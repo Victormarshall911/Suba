@@ -136,6 +136,16 @@
             </div>
           </div>
 
+          <!-- My Referrals widget -->
+          <div class="card" style="padding: var(--space-5); margin-top: var(--space-6)">
+            <h4 style="font-size: var(--text-sm); text-transform: uppercase; letter-spacing:0.05em; margin-bottom: var(--space-4)">My Referrals</h4>
+            
+            <div id="myReferralsList" style="display: flex; flex-direction: column; gap: var(--space-3)">
+              <!-- Dynamically populated from API -->
+              <div style="text-align:center; padding:var(--space-4); color:var(--clr-text-tertiary); font-size:var(--text-sm)">Loading referrals...</div>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -162,7 +172,11 @@
         <span class="nav-icon">📊</span>
         <span>History</span>
       </a>
-      <a href="profile.html" class="bottom-nav-item active" data-page="profile">
+      <a href="ambassador.html" class="bottom-nav-item active" data-page="ambassador">
+        <span class="nav-icon">🤝</span>
+        <span>Earn</span>
+      </a>
+      <a href="profile.html" class="bottom-nav-item" data-page="profile">
         <span class="nav-icon">⚙️</span>
         <span>Settings</span>
       </a>
@@ -266,10 +280,33 @@
             } else {
               lbList.innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-text-tertiary); font-size:var(--text-sm)">No referrers yet</div>';
             }
+            
+            const refList = document.getElementById('myReferralsList');
+            refList.innerHTML = '';
+            
+            if (stats.my_referrals && stats.my_referrals.length > 0) {
+              stats.my_referrals.forEach((entry, index) => {
+                const isLast = index === stats.my_referrals.length - 1;
+                const border = isLast ? '' : 'border-bottom: 1px solid var(--clr-border-light)';
+                
+                refList.insertAdjacentHTML('beforeend', `
+                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm); padding-bottom: var(--space-2); ${border}">
+                    <div style="display: flex; align-items: center; gap: var(--space-3)">
+                      <div class="avatar avatar-sm" style="font-size: 10px">${entry.initials}</div>
+                      <span class="fw-semibold">${entry.full_name}</span>
+                    </div>
+                    <span class="text-secondary" style="font-size: var(--text-xs)">${entry.joined_date}</span>
+                  </div>
+                `);
+              });
+            } else {
+              refList.innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-text-tertiary); font-size:var(--text-sm)">You haven\\'t referred anyone yet.</div>';
+            }
           }
         } catch (err) {
           console.error("Failed to load ambassador stats", err);
           document.getElementById('leaderboardList').innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-error); font-size:var(--text-sm)">Failed to load data</div>';
+          document.getElementById('myReferralsList').innerHTML = '<div style="text-align:center; padding:var(--space-4); color:var(--clr-error); font-size:var(--text-sm)">Failed to load data</div>';
         } finally {
           SUBAComponents.hidePageSkeleton();
         }

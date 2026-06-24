@@ -183,11 +183,17 @@ class LeaderboardEntry(BaseModel):
     amount: float
     initials: str
 
+class ReferredUserEntry(BaseModel):
+    full_name: str
+    initials: str
+    joined_date: str
+
 class AmbassadorStatsResponse(BaseModel):
     total_commissions: float
     withdrawn_funds: float
     cleared_balance: float
     leaderboard: list[LeaderboardEntry]
+    my_referrals: list[ReferredUserEntry]
 
 
 class AuthResponse(BaseModel):

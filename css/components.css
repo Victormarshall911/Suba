@@ -1668,7 +1668,7 @@
    ============================================ */
 .support-widget-container {
   position: fixed;
-  bottom: var(--space-6);
+  bottom: 80px; /* Elevated to clear mobile bottom nav */
   right: var(--space-6);
   z-index: var(--z-toast);
 }
