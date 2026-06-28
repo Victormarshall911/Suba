@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import * as db from '../db/index.js';
+import { WalletService } from './wallet-service.js';
 
 export class AuthService {
   /**
@@ -32,14 +33,24 @@ export class AuthService {
       );
       const user = userResult.rows[0];
 
-      await client.query('COMMIT');
-      
+      // 1b. Create wallet for user
+      await WalletService.createWallet(user.id, client);
+
       // 2. Generate deterministic virtual account details
       const lastDigits = user.phone_number.replace(/\D/g, '').slice(-6);
       const virtualAccount = `9922${lastDigits}`;
       const bankName = 'Sterling Bank';
       const reference = `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
+      // 2b. Insert funding reference
+      await client.query(
+        `INSERT INTO funding_references (user_id, virtual_account, bank_name, reference)
+         VALUES ($1, $2, $3, $4)`,
+        [user.id, virtualAccount, bankName, reference]
+      );
+
+      await client.query('COMMIT');
+      
       console.log(`[AUTH SERVICE] Registered new user ${emailLower}. Assigned Virtual Account: ${virtualAccount}`);
       return { ...user, virtualAccount, bankName, reference };
     } catch (err) {
@@ -70,10 +81,11 @@ export class AuthService {
       throw new Error("Authentication failed: Incorrect email or password.");
     }
 
-    const lastDigits = user.phone_number.replace(/\D/g, '').slice(-6);
-    const virtual_account_number = `9922${lastDigits}`;
-    const bank_name = 'Sterling Bank';
-    const virtual_reference = `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
+    const fundRefResult = await db.query('SELECT * FROM funding_references WHERE user_id = $1', [user.id]);
+    const fundRef = fundRefResult.rows[0];
+    const virtual_account_number = fundRef ? fundRef.virtual_account : `9922${user.phone_number.replace(/\D/g, '').slice(-6)}`;
+    const bank_name = fundRef ? fundRef.bank_name : 'Sterling Bank';
+    const virtual_reference = fundRef ? fundRef.reference : `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
     const payload = {
       userId: user.id,
@@ -118,10 +130,11 @@ export class AuthService {
       throw new Error("User not found.");
     }
 
-    const lastDigits = user.phone_number.replace(/\D/g, '').slice(-6);
-    const virtual_account_number = `9922${lastDigits}`;
-    const bank_name = 'Sterling Bank';
-    const virtual_reference = `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
+    const fundRefResult = await db.query('SELECT * FROM funding_references WHERE user_id = $1', [user.id]);
+    const fundRef = fundRefResult.rows[0];
+    const virtual_account_number = fundRef ? fundRef.virtual_account : `9922${user.phone_number.replace(/\D/g, '').slice(-6)}`;
+    const bank_name = fundRef ? fundRef.bank_name : 'Sterling Bank';
+    const virtual_reference = fundRef ? fundRef.reference : `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
     const ambResult = await db.query('SELECT referral_code FROM ambassadors WHERE user_id = $1', [user.id]);
     const referral_code = ambResult.rowCount > 0 ? ambResult.rows[0].referral_code : null;

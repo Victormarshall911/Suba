@@ -132,11 +132,11 @@ app.post('/api/v1/transactions/payment/initiate', authenticateJWT, async (req, r
   }
 });
 
-// 4b. Wallet Funding Endpoint (Map to Asset Purchase for backward compatibility)
+// 4b. Wallet Funding Endpoint
 app.post('/api/v1/wallet/fund/initiate', authenticateJWT, async (req, res) => {
   try {
     const { amount } = req.body;
-    const data = await TransactionService.initiateAssetPurchase(req.user.userId, { type: 'AIRTIME', amount });
+    const data = await TransactionService.initiateAssetPurchase(req.user.userId, { type: 'DEPOSIT', amount });
     res.status(201).json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });

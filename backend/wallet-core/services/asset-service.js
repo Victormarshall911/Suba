@@ -129,7 +129,7 @@ export class AssetService {
       
       const txnResult = await client.query(
         `INSERT INTO transactions (user_id, type, provider, amount, status, external_reference)
-         VALUES ($1, $2, 'vtpass', $3, 'PROCESSING', $4) RETURNING *`,
+         VALUES ($1, $2, 'vtpass', $3, 'VALIDATING', $4) RETURNING *`,
         [userId, asset.asset_type === 'AIRTIME' ? 'AIRTIME' : 'DATA', asset.value_denomination, reference]
       );
       const txn = txnResult.rows[0];
@@ -148,15 +148,15 @@ export class AssetService {
         [txn.id, JSON.stringify({ status: 'delivered', code: '200', reference })]
       );
 
-      // Transition transaction to FULFILLED
+      // Transition transaction to SUCCESSFUL
       await client.query(
-        `UPDATE transactions SET status = 'FULFILLED', updated_at = NOW() WHERE id = $1`,
+        `UPDATE transactions SET status = 'SUCCESSFUL', updated_at = NOW() WHERE id = $1`,
         [txn.id]
       );
 
       await client.query(
         'INSERT INTO transaction_status_history (transaction_id, from_status, to_status, remarks) VALUES ($1, $2, $3, $4)',
-        [txn.id, 'PROCESSING', 'FULFILLED', narration]
+        [txn.id, 'VALIDATING', 'SUCCESSFUL', narration]
       );
 
       await client.query('COMMIT');

@@ -4,6 +4,7 @@ import { TransactionStateMachine, States } from '../services/state-machine.js';
 import { AssetService } from '../services/asset-service.js';
 import { FraudService } from '../services/fraud-service.js';
 import { GrowthService } from '../services/growth-service.js';
+import { WalletService } from '../services/wallet-service.js';
 import { sendToUser, broadcastToAdmins } from '../services/websocket-service.js';
 
 export async function handlePaystackWebhook(req, res) {
@@ -80,7 +81,7 @@ export async function handlePaystackWebhook(req, res) {
     );
     const existingTxn = existingTxnRes.rows[0];
     
-    if (existingTxn && existingTxn.status === States.FULFILLED) {
+    if (existingTxn && existingTxn.status === States.SUCCESSFUL) {
       console.log(`ℹ️ [WEBHOOK] Transaction already fulfilled. Ref: ${reference}`);
       await client.query('COMMIT');
       return res.status(200).json({ status: 'ok', message: 'Already processed.' });
@@ -99,14 +100,14 @@ export async function handlePaystackWebhook(req, res) {
     // 4. Resolve or create transaction record
     let txn = existingTxn;
     if (!txn) {
-      // Direct payment to virtual account
+      // Direct payment to virtual account (wallet funding deposit)
       const insertResult = await client.query(
         `INSERT INTO transactions (user_id, type, provider, amount, status, external_reference)
-         VALUES ($1, 'AIRTIME', 'paystack', $2, 'INITIATED', $3) RETURNING *`,
+         VALUES ($1, 'DEPOSIT', 'paystack', $2, 'INITIATED', $3) RETURNING *`,
         [user.id, amountNaira, reference]
       );
       txn = insertResult.rows[0];
-      txn = await TransactionStateMachine.transitionTo(txn.id, States.PAYMENT_PENDING, null, 'Direct transfer detected', client);
+      txn = await TransactionStateMachine.transitionTo(txn.id, States.PENDING_PAYMENT, null, 'Direct transfer detected', client);
     }
 
     // 5. Create Payment Event record (Regulatory Signature verified)
@@ -116,9 +117,9 @@ export async function handlePaystackWebhook(req, res) {
       [txn.id, JSON.stringify(data), JSON.stringify(payload)]
     );
 
-    // Transition: PAYMENT_PENDING -> PAYMENT_CONFIRMED -> PROCESSING
-    txn = await TransactionStateMachine.transitionTo(txn.id, States.PAYMENT_CONFIRMED, null, 'Payment confirmed by gateway', client);
-    txn = await TransactionStateMachine.transitionTo(txn.id, States.PROCESSING, null, 'Processing delivery dispatch', client);
+    // Transition: PENDING_PAYMENT -> PAYMENT_RECEIVED -> VALIDATING
+    txn = await TransactionStateMachine.transitionTo(txn.id, States.PAYMENT_RECEIVED, null, 'Payment confirmed by gateway', client);
+    txn = await TransactionStateMachine.transitionTo(txn.id, States.VALIDATING, null, 'Processing delivery dispatch', client);
 
     // 6. Fraud system checks
     const isFraud = await FraudService.evaluateTransaction(
@@ -144,62 +145,100 @@ export async function handlePaystackWebhook(req, res) {
       return res.status(200).json({ status: 'flagged', message: 'Transaction flagged as fraud.' });
     }
 
-    // 7. Call Fulfillment Engine (VTpass)
-    const providerSuccess = await callVTUProvider(txn.type, amountNaira);
+    // Find user's wallet
+    const walletRes = await client.query('SELECT id FROM wallets WHERE user_id = $1', [user.id]);
+    const wallet = walletRes.rows[0];
+    if (!wallet) {
+      throw new Error(`Wallet not found for user ID: ${user.id}`);
+    }
 
-    // Log fulfillment attempt
-    await client.query(
-      `INSERT INTO fulfillment_logs (transaction_id, provider_response, success)
-       VALUES ($1, $2, $3)`,
-      [txn.id, JSON.stringify({ status: providerSuccess ? 'delivered' : 'failed' }), providerSuccess]
-    );
+    // 7. Handle transaction based on type (DEPOSIT vs Purchase)
+    if (txn.type === 'DEPOSIT') {
+      // Credit user's wallet using double-entry bookkeeping ledger (DEBIT system_bank_asset, CREDIT user_wallet)
+      await WalletService.postLedgerTransaction(txn.id, 'system_bank_asset', 'user_wallet', wallet.id, amountNaira, client);
 
-    if (providerSuccess) {
-      // Create Asset in inventory (replaces wallet balance)
-      await AssetService.createAsset(
-        user.id,
-        txn.type === 'DATA' ? 'DATA' : 'AIRTIME',
-        amountNaira,
-        client
-      );
-
-      // Transition to FULFILLED
-      txn = await TransactionStateMachine.transitionTo(txn.id, States.FULFILLED, null, 'Fulfillment delivered & Asset allocated', client);
-
-      // Calculate Ambassador Commission (if referred)
-      await GrowthService.calculateCommission(user.id, txn.id, amountNaira, client);
-      
-      // Settle commission status
-      await GrowthService.settleCommissions(txn.id, true, client);
+      // Transition to SUCCESSFUL
+      txn = await TransactionStateMachine.transitionTo(txn.id, States.SUCCESSFUL, null, 'Wallet credited successfully', client);
 
       await client.query('COMMIT');
 
       // Real-time WebSocket Alert to update client balance grid
       sendToUser(user.id, {
         type: 'notification',
-        title: 'Fulfillment Successful! 📦',
-        message: `Your payment of ₦${amountNaira} was reconciled. A new ${txn.type} asset is now available in your inventory.`,
+        title: 'Deposit Successful! 💰',
+        message: `Your deposit of ₦${amountNaira} was reconciled. Your wallet has been credited.`,
         timestamp: new Date().toISOString()
       });
 
       return res.status(200).json({ status: 'ok', message: 'Reconciled successfully.' });
     } else {
-      // Fail and trigger simulation refund
-      txn = await TransactionStateMachine.transitionTo(txn.id, States.FAILED, null, 'Fulfillment engine call failed', client);
-      txn = await TransactionStateMachine.transitionTo(txn.id, States.REVERSED, null, 'Simulated payment gateway reversal completed', client);
+      // It's a purchase (AIRTIME / DATA) - Route through wallet
+      // 7a. Credit user's wallet (DEBIT system_bank_asset, CREDIT user_wallet)
+      await WalletService.postLedgerTransaction(txn.id, 'system_bank_asset', 'user_wallet', wallet.id, amountNaira, client);
 
-      await GrowthService.settleCommissions(txn.id, false, client);
+      // 7b. Debit user's wallet for purchase (DEBIT user_wallet, CREDIT system_revenue)
+      await WalletService.postLedgerTransaction(txn.id, 'user_wallet', 'system_revenue', wallet.id, amountNaira, client);
 
-      await client.query('COMMIT');
+      // 7c. Call Fulfillment Engine (VTpass)
+      const providerSuccess = await callVTUProvider(txn.type, amountNaira);
 
-      sendToUser(user.id, {
-        type: 'notification',
-        title: 'Fulfillment Failed ❌',
-        message: `Your payment of ₦${amountNaira} could not be fulfilled. The funds have been refunded to your source card/bank.`,
-        timestamp: new Date().toISOString()
-      });
+      // Log fulfillment attempt
+      await client.query(
+        `INSERT INTO fulfillment_logs (transaction_id, provider_response, success)
+         VALUES ($1, $2, $3)`,
+        [txn.id, JSON.stringify({ status: providerSuccess ? 'delivered' : 'failed' }), providerSuccess]
+      );
 
-      return res.status(200).json({ status: 'failed', message: 'Fulfillment failed. Payment reversed.' });
+      if (providerSuccess) {
+        // Create Asset in inventory
+        await AssetService.createAsset(
+          user.id,
+          txn.type === 'DATA' ? 'DATA' : 'AIRTIME',
+          amountNaira,
+          client
+        );
+
+        // Transition to SUCCESSFUL
+        txn = await TransactionStateMachine.transitionTo(txn.id, States.SUCCESSFUL, null, 'Fulfillment delivered & Asset allocated', client);
+
+        // Calculate Ambassador Commission (if referred)
+        await GrowthService.calculateCommission(user.id, txn.id, amountNaira, client);
+        
+        // Settle commission status
+        await GrowthService.settleCommissions(txn.id, true, client);
+
+        await client.query('COMMIT');
+
+        // Real-time WebSocket Alert to update client balance grid
+        sendToUser(user.id, {
+          type: 'notification',
+          title: 'Fulfillment Successful! 📦',
+          message: `Your payment of ₦${amountNaira} was reconciled. A new ${txn.type} asset is now available in your inventory.`,
+          timestamp: new Date().toISOString()
+        });
+
+        return res.status(200).json({ status: 'ok', message: 'Reconciled successfully.' });
+      } else {
+        // Fail and trigger refund: reverse purchase debit (DEBIT system_revenue, CREDIT user_wallet)
+        await WalletService.postLedgerTransaction(txn.id, 'system_revenue', 'user_wallet', wallet.id, amountNaira, client);
+
+        // Transition to FAILED and REVERSED
+        txn = await TransactionStateMachine.transitionTo(txn.id, States.FAILED, null, 'Fulfillment engine call failed', client);
+        txn = await TransactionStateMachine.transitionTo(txn.id, States.REVERSED, null, 'Simulated payment gateway reversal completed', client);
+
+        await GrowthService.settleCommissions(txn.id, false, client);
+
+        await client.query('COMMIT');
+
+        sendToUser(user.id, {
+          type: 'notification',
+          title: 'Fulfillment Failed ❌',
+          message: `Your payment of ₦${amountNaira} could not be fulfilled. The funds have been refunded to your wallet.`,
+          timestamp: new Date().toISOString()
+        });
+
+        return res.status(200).json({ status: 'failed', message: 'Fulfillment failed. Payment reversed.' });
+      }
     }
 
   } catch (err) {
