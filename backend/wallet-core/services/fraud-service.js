@@ -1,3 +1,4 @@
+// Fraud detection module for transaction velocity and webhook replay attacks
 import * as db from '../db/index.js';
 import { TransactionStateMachine, States } from './state-machine.js';
 
