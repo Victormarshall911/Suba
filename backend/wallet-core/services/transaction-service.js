@@ -11,12 +11,13 @@ export class TransactionService {
     if (!amount || amount < 100) {
       throw new Error("Validation failed: Minimum transaction amount is ₦100.");
     }
-    if (!type || !['AIRTIME', 'DATA', 'BILL_PAYMENT'].includes(type)) {
+    if (!type || !['DEPOSIT', 'AIRTIME', 'DATA', 'BILL_PAYMENT'].includes(type)) {
       throw new Error("Validation failed: Invalid transaction type.");
     }
 
-    const reference = `REF-PURCHASE-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
-    const narration = `Direct purchase of ${type} — ₦${amount}`;
+    const prefix = type === 'DEPOSIT' ? 'DEP' : 'PURCHASE';
+    const reference = `REF-${prefix}-${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
+    const narration = `${type === 'DEPOSIT' ? 'Wallet deposit' : `Direct purchase of ${type}`} — ₦${amount}`;
 
     const client = await db.getClient();
     try {
@@ -29,25 +30,31 @@ export class TransactionService {
       );
       let txn = insertResult.rows[0];
 
-      // Transition INITIATED -> PAYMENT_PENDING
+      // Transition INITIATED -> PENDING_PAYMENT
       txn = await TransactionStateMachine.transitionTo(
         txn.id, 
-        States.PAYMENT_PENDING, 
+        States.PENDING_PAYMENT, 
         null, 
         'Awaiting gateway callback or webhook confirmation', 
         client
       );
 
+      // Load user's unique virtual account details
+      const fundRefResult = await client.query('SELECT * FROM funding_references WHERE user_id = $1', [userId]);
+      const fundRef = fundRefResult.rows[0];
+      const virtualAccountNumber = fundRef ? fundRef.virtual_account : '9922' + Math.floor(100000 + Math.random() * 900000);
+      const bankName = fundRef ? fundRef.bank_name : 'Sterling Bank';
+
       await client.query('COMMIT');
       
-      console.log(`[TRANSACTION SERVICE] Initiated asset purchase: User ${userId}, Ref: ${reference}`);
+      console.log(`[TRANSACTION SERVICE] Initiated ${type} transaction: User ${userId}, Ref: ${reference}`);
       return { 
         id: txn.id,
         reference: reference, 
         amount: amount, 
-        status: States.PAYMENT_PENDING,
-        bankName: 'Sterling Bank',
-        virtualAccountNumber: '9922' + Math.floor(100000 + Math.random() * 900000), // simulate NUBAN
+        status: States.PENDING_PAYMENT,
+        bankName: bankName,
+        virtualAccountNumber: virtualAccountNumber,
         paymentFlow: 'bank_transfer'
       };
     } catch (err) {
