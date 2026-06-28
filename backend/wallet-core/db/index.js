@@ -56,7 +56,13 @@ export const mockDb = {
   announcements: [],
   wallets: [],
   ledger_entries: [],
-  funding_references: []
+  funding_references: [],
+  sb_points: [],
+  point_history: [],
+  system_configs: [
+    { key: 'points_earning_rate', value: '100' },
+    { key: 'points_redemption_rate', value: '0.05' }
+  ]
 };
 
 // Check if we should fallback to mock mode
@@ -384,18 +390,98 @@ function queryMock(text, params) {
   // 10. INSERT INTO jobs
   if (normalized.startsWith('INSERT INTO jobs')) {
     const id = crypto.randomUUID();
-    const title = params[0];
-    const description = params[1];
-    const requirements = params[2];
-    const location = params[3];
-    const employment_type = params[4];
-    const deadline = params[5];
-    const status = params[6] || 'OPEN';
+    let title, department, employment_type, location, description, responsibilities, requirements, deadline, status;
+    if (params.length === 9) {
+      title = params[0];
+      department = params[1];
+      employment_type = params[2];
+      location = params[3];
+      description = params[4];
+      responsibilities = params[5];
+      requirements = params[6];
+      deadline = params[7];
+      status = params[8];
+    } else {
+      title = params[0];
+      description = params[1];
+      requirements = params[2];
+      location = params[3];
+      employment_type = params[4];
+      deadline = params[5];
+      status = params[6] || 'DRAFT';
+      department = 'Engineering';
+      responsibilities = 'Fulfill engineering duties';
+    }
     const created_at = new Date();
     
-    const job = { id, title, description, requirements, location, employment_type, deadline, status, created_at };
+    const job = { id, title, department, employment_type, location, description, responsibilities, requirements, deadline, status, created_at };
     mockDb.jobs.push(job);
     return { rows: [job], rowCount: 1 };
+  }
+
+  // INSERT INTO announcements
+  if (normalized.startsWith('INSERT INTO announcements')) {
+    const id = crypto.randomUUID();
+    const title = params[0];
+    const content = params[1];
+    const status = params[2] || 'DRAFT';
+    const created_at = new Date();
+    const updated_at = new Date();
+    const ann = { id, title, content, status, created_at, updated_at };
+    mockDb.announcements.push(ann);
+    return { rows: [ann], rowCount: 1 };
+  }
+
+  // INSERT INTO sb_points
+  if (normalized.startsWith('INSERT INTO sb_points')) {
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const current_points = parseInt(params[1] || 0);
+    const total_earned = parseInt(params[2] || 0);
+    const total_redeemed = parseInt(params[3] || 0);
+    const created_at = new Date();
+    const updated_at = new Date();
+    const p = { id, user_id, current_points, total_earned, total_redeemed, created_at, updated_at };
+    mockDb.sb_points.push(p);
+    return { rows: [p], rowCount: 1 };
+  }
+
+  // INSERT INTO point_history
+  if (normalized.startsWith('INSERT INTO point_history')) {
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const transaction_id = params[1] || null;
+    const points_earned = parseInt(params[2] || 0);
+    const points_redeemed = parseInt(params[3] || 0);
+    const reason = params[4];
+    const created_at = new Date();
+    const ph = { id, user_id, transaction_id, points_earned, points_redeemed, reason, created_at };
+    mockDb.point_history.push(ph);
+    return { rows: [ph], rowCount: 1 };
+  }
+
+  // INSERT INTO system_configs
+  if (normalized.startsWith('INSERT INTO system_configs')) {
+    let key = params[0];
+    let value = params[1];
+    if (!key) {
+      const match = normalized.match(/VALUES\s*\(\s*'([^']+)'\s*,\s*'([^']+)'/i);
+      if (match) {
+        key = match[1];
+        value = match[2];
+      }
+    }
+    const updated_at = new Date();
+    mockDb.system_configs = mockDb.system_configs || [];
+    const idx = mockDb.system_configs.findIndex(c => c.key === key);
+    if (idx !== -1) {
+      mockDb.system_configs[idx].value = value;
+      mockDb.system_configs[idx].updated_at = updated_at;
+      return { rows: [mockDb.system_configs[idx]], rowCount: 1 };
+    }
+    const c = { key, value, updated_at };
+    mockDb.system_configs.push(c);
+    return { rows: [c], rowCount: 1 };
   }
 
   // 11. INSERT INTO job_applications
@@ -440,6 +526,25 @@ function queryMock(text, params) {
     const idx = mockDb.wallets.findIndex(w => w.id === id);
     if (idx !== -1) {
       mockDb.wallets[idx].is_frozen = isFrozen;
+      mockDb.wallets[idx].updated_at = new Date();
+      return { rows: [mockDb.wallets[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE wallets SET balance = balance + or -
+  if (normalized.startsWith('UPDATE wallets SET balance = balance +') || normalized.startsWith('UPDATE wallets SET balance = balance -')) {
+    const amount = parseFloat(params[0]);
+    const userId = params[1];
+    console.log(`    🛠️ [MOCK DB UPDATE] Wallets balance update. Amount: ${amount}, UserID/WalletID: ${userId}, Query: ${normalized}`);
+    mockDb.wallets = mockDb.wallets || [];
+    const idx = mockDb.wallets.findIndex(w => w.user_id === userId || w.id === userId);
+    if (idx !== -1) {
+      if (normalized.includes('balance = balance +')) {
+        mockDb.wallets[idx].balance += amount;
+      } else {
+        mockDb.wallets[idx].balance -= amount;
+      }
       mockDb.wallets[idx].updated_at = new Date();
       return { rows: [mockDb.wallets[idx]], rowCount: 1 };
     }
@@ -567,6 +672,148 @@ function queryMock(text, params) {
       return { rows: [mockDb.jobs[idx]], rowCount: 1 };
     }
     return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE sb_points
+  if (normalized.startsWith('UPDATE sb_points')) {
+    mockDb.sb_points = mockDb.sb_points || [];
+    let idx = -1;
+    let userId = null;
+    let current_points = 0;
+    let total_redeemed = 0;
+    
+    const lowerNormalized = normalized.toLowerCase();
+    if (lowerNormalized.includes('current_points = current_points +') || lowerNormalized.includes('current_points = current_points -') || lowerNormalized.includes('greatest(0, current_points -')) {
+      const addedOrSubbed = parseInt(params[0]);
+      userId = params[1];
+      idx = mockDb.sb_points.findIndex(p => p.user_id === userId);
+      if (idx === -1) {
+        // Seed new record
+        const p = { id: crypto.randomUUID(), user_id: userId, current_points: 0, total_earned: 0, total_redeemed: 0, created_at: new Date(), updated_at: new Date() };
+        mockDb.sb_points.push(p);
+        idx = mockDb.sb_points.length - 1;
+      }
+      if (lowerNormalized.includes('current_points = current_points +')) {
+        mockDb.sb_points[idx].current_points += addedOrSubbed;
+        mockDb.sb_points[idx].total_earned += addedOrSubbed;
+      } else {
+        mockDb.sb_points[idx].current_points = Math.max(0, mockDb.sb_points[idx].current_points - addedOrSubbed);
+        mockDb.sb_points[idx].total_redeemed += addedOrSubbed;
+      }
+      mockDb.sb_points[idx].updated_at = new Date();
+      return { rows: [mockDb.sb_points[idx]], rowCount: 1 };
+    } else {
+      current_points = parseInt(params[0] || 0);
+      total_redeemed = parseInt(params[1] || 0);
+      userId = params[2];
+      idx = mockDb.sb_points.findIndex(p => p.user_id === userId);
+      if (idx !== -1) {
+        mockDb.sb_points[idx].current_points = current_points;
+        mockDb.sb_points[idx].total_redeemed = total_redeemed;
+        mockDb.sb_points[idx].updated_at = new Date();
+        return { rows: [mockDb.sb_points[idx]], rowCount: 1 };
+      }
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE system_configs SET value = $1 WHERE key = $2
+  if (normalized.startsWith('UPDATE system_configs SET value =')) {
+    const value = params[0];
+    const key = params[1];
+    mockDb.system_configs = mockDb.system_configs || [];
+    const idx = mockDb.system_configs.findIndex(c => c.key === key);
+    if (idx !== -1) {
+      mockDb.system_configs[idx].value = value;
+      mockDb.system_configs[idx].updated_at = new Date();
+      return { rows: [mockDb.system_configs[idx]], rowCount: 1 };
+    }
+    const c = { key, value, updated_at: new Date() };
+    mockDb.system_configs.push(c);
+    return { rows: [c], rowCount: 1 };
+  }
+
+  // UPDATE announcements SET title = $1, content = $2, status = $3 WHERE id = $4
+  if (normalized.startsWith('UPDATE announcements SET')) {
+    const title = params[0];
+    const content = params[1];
+    const status = params[2];
+    const id = params[3];
+    const idx = mockDb.announcements.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      mockDb.announcements[idx].title = title;
+      mockDb.announcements[idx].content = content;
+      mockDb.announcements[idx].status = status;
+      mockDb.announcements[idx].updated_at = new Date();
+      return { rows: [mockDb.announcements[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE jobs SET title = $1, department = $2... WHERE id = $10
+  if (normalized.startsWith('UPDATE jobs SET') && normalized.includes('department =')) {
+    const title = params[0];
+    const department = params[1];
+    const employment_type = params[2];
+    const location = params[3];
+    const description = params[4];
+    const responsibilities = params[5];
+    const requirements = params[6];
+    const deadline = params[7];
+    const status = params[8];
+    const id = params[9];
+    const idx = mockDb.jobs.findIndex(j => j.id === id);
+    if (idx !== -1) {
+      mockDb.jobs[idx].title = title;
+      mockDb.jobs[idx].department = department;
+      mockDb.jobs[idx].employment_type = employment_type;
+      mockDb.jobs[idx].location = location;
+      mockDb.jobs[idx].description = description;
+      mockDb.jobs[idx].responsibilities = responsibilities;
+      mockDb.jobs[idx].requirements = requirements;
+      mockDb.jobs[idx].deadline = deadline;
+      mockDb.jobs[idx].status = status;
+      return { rows: [mockDb.jobs[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // DELETE FROM jobs WHERE id = $1
+  if (normalized.startsWith('DELETE FROM jobs')) {
+    const id = params[0];
+    const idx = mockDb.jobs.findIndex(j => j.id === id);
+    if (idx !== -1) {
+      mockDb.jobs.splice(idx, 1);
+      return { rows: [], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // DELETE FROM announcements WHERE id = $1
+  if (normalized.startsWith('DELETE FROM announcements')) {
+    const id = params[0];
+    const idx = mockDb.announcements.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      mockDb.announcements.splice(idx, 1);
+      return { rows: [], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // DELETE FROM sb_points WHERE user_id = $1
+  if (normalized.startsWith('DELETE FROM sb_points')) {
+    const userId = params[0];
+    mockDb.sb_points = mockDb.sb_points || [];
+    mockDb.sb_points = mockDb.sb_points.filter(p => p.user_id !== userId);
+    return { rows: [], rowCount: 1 };
+  }
+
+  // DELETE FROM point_history WHERE user_id = $1
+  if (normalized.startsWith('DELETE FROM point_history')) {
+    const userId = params[0];
+    mockDb.point_history = mockDb.point_history || [];
+    mockDb.point_history = mockDb.point_history.filter(p => p.user_id !== userId);
+    return { rows: [], rowCount: 1 };
   }
 
   // UPDATE referrals SET transaction_count = transaction_count + 1
@@ -771,12 +1018,72 @@ function queryMock(text, params) {
 
   // SELECT FROM jobs
   if (normalized.includes('FROM jobs')) {
-    // Return open jobs
-    let res = mockDb.jobs;
-    if (normalized.includes("status = 'OPEN'")) {
-      res = res.filter(j => j.status === 'OPEN');
+    let res = mockDb.jobs || [];
+    if (normalized.includes("status = 'PUBLISHED'")) {
+      res = res.filter(j => j.status === 'PUBLISHED');
+    } else if (normalized.includes("status = 'OPEN'")) {
+      res = res.filter(j => j.status === 'PUBLISHED' || j.status === 'OPEN');
     }
     return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM sb_points
+  if (normalized.includes('FROM sb_points')) {
+    const val = params[0];
+    mockDb.sb_points = mockDb.sb_points || [];
+    let res = mockDb.sb_points.filter(p => p.user_id === val || p.id === val);
+    if (res.length === 0 && val) {
+      // Return empty default
+      res = [{ user_id: val, current_points: 0, total_earned: 0, total_redeemed: 0 }];
+    }
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM point_history
+  if (normalized.includes('FROM point_history')) {
+    mockDb.point_history = mockDb.point_history || [];
+    let res = mockDb.point_history;
+    if (normalized.includes('transaction_id =')) {
+      const txId = params[0];
+      res = res.filter(ph => ph.transaction_id === txId);
+    } else if (params.length > 0) {
+      const val = params[0];
+      res = res.filter(ph => ph.user_id === val);
+    }
+    
+    // Join details if requested
+    if (normalized.includes('join users') || normalized.includes('JOIN users') || normalized.includes('email') || normalized.includes('full_name')) {
+      res = res.map(ph => {
+        const user = mockDb.users.find(u => u.id === ph.user_id);
+        const txn = mockDb.transactions.find(t => t.id === ph.transaction_id);
+        return {
+          ...ph,
+          email: user ? user.email : 'Unknown Email',
+          full_name: user ? user.full_name : 'Unknown User',
+          reference: txn ? txn.external_reference : null
+        };
+      });
+    }
+    res.sort((a,b) => b.created_at - a.created_at);
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM system_configs
+  if (normalized.includes('FROM system_configs')) {
+    mockDb.system_configs = mockDb.system_configs || [];
+    let key = params[0];
+    if (!key) {
+      if (normalized.includes("'points_redemption_rate'")) {
+        key = 'points_redemption_rate';
+      } else if (normalized.includes("'points_earning_rate'")) {
+        key = 'points_earning_rate';
+      }
+    }
+    if (key) {
+      const res = mockDb.system_configs.filter(c => c.key === key);
+      return { rows: res, rowCount: res.length };
+    }
+    return { rows: mockDb.system_configs, rowCount: mockDb.system_configs.length };
   }
 
   // SELECT FROM job_applications
@@ -853,6 +1160,9 @@ function queryMock(text, params) {
   // SELECT FROM announcements
   if (normalized.includes('FROM announcements')) {
     let res = mockDb.announcements || [];
+    if (normalized.includes("status = 'PUBLISHED'")) {
+      res = res.filter(a => a.status === 'PUBLISHED');
+    }
     res.sort((a, b) => b.created_at - a.created_at);
     return { rows: res, rowCount: res.length };
   }

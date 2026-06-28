@@ -918,7 +918,7 @@ const SUBAComponents = {
         listContainer.innerHTML = `
           <div style="text-align: center; padding: var(--space-8); color: var(--clr-text-secondary);">
             <div style="font-size: 40px; margin-bottom: var(--space-3)">📭</div>
-            <p>No announcements posted by the admin yet.</p>
+            <p>There are no announcements at the moment. Please check back later.</p>
           </div>
         `;
         return;
@@ -941,9 +941,9 @@ const SUBAComponents = {
     } catch (err) {
       console.error('Error fetching announcements:', err);
       listContainer.innerHTML = `
-        <div style="text-align: center; padding: var(--space-6); color: var(--clr-error-dark);">
-          <p>Failed to load announcements.</p>
-          <p style="font-size: 11px; margin-top: 4px; color: var(--clr-text-tertiary)">${err.message || 'Check server connection'}</p>
+        <div style="text-align: center; padding: var(--space-8); color: var(--clr-text-secondary);">
+          <div style="font-size: 40px; margin-bottom: var(--space-3)">📭</div>
+          <p>There are no announcements at the moment. Please check back later.</p>
         </div>
       `;
     }

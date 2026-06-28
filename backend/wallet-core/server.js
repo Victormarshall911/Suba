@@ -13,6 +13,7 @@ import { ReconciliationService } from './services/reconciliation-service.js';
 import { AssetService } from './services/asset-service.js';
 import { GrowthService } from './services/growth-service.js';
 import * as db from './db/index.js';
+import { RewardService } from './services/reward-service.js';
 
 dotenv.config();
 
@@ -371,11 +372,11 @@ app.get('/api/v1/auth/ambassador', authenticateJWT, async (req, res) => {
   }
 });
 
-// 6e-2. Announcements: Public listing
+// 6e-2. Announcements: Public listing (published only)
 app.get('/api/v1/announcements', async (req, res) => {
   try {
-    console.log(`[DB QUERY] Fetching all announcements`);
-    const result = await db.query('SELECT * FROM announcements ORDER BY created_at DESC');
+    console.log(`[DB QUERY] Fetching published announcements`);
+    const result = await db.query("SELECT * FROM announcements WHERE status = 'PUBLISHED' ORDER BY created_at DESC");
     res.status(200).json(result.rows);
   } catch (err) {
     console.error(`❌ [API ERROR] Failed to fetch announcements: ${err.message}`);
@@ -383,21 +384,54 @@ app.get('/api/v1/announcements', async (req, res) => {
   }
 });
 
-// 6e-3. Admin: Post announcement
+// Admin Announcements list
+app.get('/api/v1/admin/announcements', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM announcements ORDER BY created_at DESC');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin Announcements creation
 app.post('/api/v1/admin/announcements', authenticateJWT, requireAdmin, async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, status } = req.body;
     if (!title || !content) {
       return res.status(400).json({ message: 'Validation failed: title and content are required.' });
     }
-    console.log(`[DB QUERY] Admin ${req.user.email} creating announcement: "${title}"`);
     const result = await db.query(
-      'INSERT INTO announcements (title, content) VALUES ($1, $2) RETURNING *',
-      [title, content]
+      'INSERT INTO announcements (title, content, status) VALUES ($1, $2, $3) RETURNING *',
+      [title, content, status || 'DRAFT']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(`❌ [API ERROR] Failed to create announcement: ${err.message}`);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin Announcements update
+app.patch('/api/v1/admin/announcements/:id', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { title, content, status } = req.body;
+    const result = await db.query(
+      'UPDATE announcements SET title = $1, content = $2, status = $3, updated_at = NOW() WHERE id = $4 RETURNING *',
+      [title, content, status, req.params.id]
+    );
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin Announcements deletion
+app.delete('/api/v1/admin/announcements/:id', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    await db.query('DELETE FROM announcements WHERE id = $1', [req.params.id]);
+    res.status(200).json({ success: true });
+  } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
@@ -455,11 +489,11 @@ app.get('/api/v1/admin/jobs/applications', authenticateJWT, requireAdmin, async 
 // 6h. Admin: Post job opening
 app.post('/api/v1/admin/jobs', authenticateJWT, requireAdmin, async (req, res) => {
   try {
-    const { title, description, requirements, location, employment_type, deadline } = req.body;
-    if (!title || !description || !requirements || !location || !employment_type || !deadline) {
+    const { title, department, employment_type, location, description, responsibilities, requirements, deadline, status } = req.body;
+    if (!title || !department || !employment_type || !location || !description || !responsibilities || !requirements || !deadline) {
       return res.status(400).json({ message: 'Validation failed: All job details are required.' });
     }
-    const data = await ReconciliationService.createJob({ title, description, requirements, location, employment_type, deadline });
+    const data = await ReconciliationService.createJob({ title, department, employment_type, location, description, responsibilities, requirements, deadline, status });
     res.status(201).json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -469,11 +503,7 @@ app.post('/api/v1/admin/jobs', authenticateJWT, requireAdmin, async (req, res) =
 // 6i. Admin: Update job opening
 app.patch('/api/v1/admin/jobs/:id', authenticateJWT, requireAdmin, async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!status) {
-      return res.status(400).json({ message: 'Validation failed: status is required.' });
-    }
-    const data = await ReconciliationService.updateJob(req.params.id, { status });
+    const data = await ReconciliationService.updateJob(req.params.id, req.body);
     res.status(200).json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -485,6 +515,121 @@ app.delete('/api/v1/admin/jobs/:id', authenticateJWT, requireAdmin, async (req, 
   try {
     const data = await ReconciliationService.deleteJob(req.params.id);
     res.status(200).json(data);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// ==========================================
+// SB POINTS API ENDPOINTS
+// ==========================================
+
+// User points status and history
+app.get('/api/v1/users/points', authenticateJWT, async (req, res) => {
+  try {
+    const stats = await RewardService.getPointsByUser(req.user.userId);
+    const history = await RewardService.getUserPointHistory(req.user.userId);
+    res.status(200).json({ stats, history });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// User points redemption
+app.post('/api/v1/users/points/redeem', authenticateJWT, async (req, res) => {
+  try {
+    const { points } = req.body;
+    if (!points || points <= 0) {
+      return res.status(400).json({ message: 'Validation failed: points must be a positive integer.' });
+    }
+    const result = await RewardService.redeemPoints(req.user.userId, points, `Points redeemed for discounts`);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin points configuration GET
+app.get('/api/v1/admin/points/config', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const rateRes = await db.query("SELECT * FROM system_configs WHERE key IN ('points_earning_rate', 'points_redemption_rate')");
+    const configs = {};
+    rateRes.rows.forEach(row => {
+      configs[row.key] = row.value;
+    });
+    res.status(200).json(configs);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin points configuration POST
+app.post('/api/v1/admin/points/config', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { earningRate, redemptionRate } = req.body;
+    if (earningRate) {
+      await db.query(
+        `INSERT INTO system_configs (key, value, updated_at) VALUES ('points_earning_rate', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+        [earningRate.toString()]
+      );
+    }
+    if (redemptionRate) {
+      await db.query(
+        `INSERT INTO system_configs (key, value, updated_at) VALUES ('points_redemption_rate', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+        [redemptionRate.toString()]
+      );
+    }
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin manually award points
+app.post('/api/v1/admin/points/award', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { email, points, reason } = req.body;
+    if (!email || !points || points <= 0 || !reason) {
+      return res.status(400).json({ message: 'Validation failed: email, points, and reason are required.' });
+    }
+    const result = await RewardService.manualAwardPoints(email, parseInt(points), reason);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin manually deduct points
+app.post('/api/v1/admin/points/deduct', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { email, points, reason } = req.body;
+    if (!email || !points || points <= 0 || !reason) {
+      return res.status(400).json({ message: 'Validation failed: email, points, and reason are required.' });
+    }
+    const result = await RewardService.manualDeductPoints(email, parseInt(points), reason);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin get point history logs
+app.get('/api/v1/admin/points/history', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const result = await RewardService.getPointHistory();
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin get point system analytics
+app.get('/api/v1/admin/points/analytics', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const result = await RewardService.getAnalytics();
+    res.status(200).json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

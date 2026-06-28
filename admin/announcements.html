@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcements Management | SUBA — System Management</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="reconciliation.html" class="sidebar-nav-item" data-page="reconciliation">
+          <span class="sidebar-icon">👛</span>
+          <span>Reconciliation</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <a href="points.html" class="sidebar-nav-item" data-page="points">
+          <span class="sidebar-icon">🎖️</span>
+          <span>SB Points</span>
+        </a>
+        <a href="careers.html" class="sidebar-nav-item" data-page="careers">
+          <span class="sidebar-icon">💼</span>
+          <span>Careers</span>
+        </a>
+        <a href="announcements.html" class="sidebar-nav-item active" data-page="announcements">
+          <span class="sidebar-icon">📢</span>
+          <span>Announcements</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>System Announcements</h3>
+          <p>Publish broadcasts, system status alerts, or promotional events to users.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" id="btnOpenNewAnnModal">➕ Write Announcement</button>
+        </div>
+      </div>
+
+      <!-- Announcements List Card -->
+      <div class="card">
+        <h4 style="font-weight:700; color:var(--clr-text-primary); margin:var(--space-4)">Broadcasts Directory</h4>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Announcement Title</th>
+                <th>Content Snippet</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="announcementsTableBody">
+              <tr>
+                <td colspan="5" style="text-align:center">Loading announcements...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Create/Edit Announcement Modal -->
+  <div class="modal-backdrop" id="annEditModal">
+    <div class="modal" style="max-width: 480px">
+      <div class="modal-header">
+        <h3 id="modalTitle">Write Announcement</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('annEditModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="inputAnnId">
+        <div class="form-group">
+          <label for="inputAnnTitle" class="form-label">Announcement Title</label>
+          <input type="text" id="inputAnnTitle" class="form-input" placeholder="e.g. Sterling Bank Virtual Account Upgrades">
+        </div>
+        <div class="form-group">
+          <label for="inputAnnContent" class="form-label">Message Content</label>
+          <textarea id="inputAnnContent" class="form-input" rows="5" placeholder="Write your broadcast content here..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="inputAnnStatus" class="form-label">Status</label>
+          <select id="inputAnnStatus" class="form-input">
+            <option value="DRAFT">DRAFT</option>
+            <option value="PUBLISHED">PUBLISHED</option>
+            <option value="ARCHIVED">ARCHIVED</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="btnSaveAnn">Save & Settle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!SUBAUtils.retrieve('token')) {
+        window.location.href = '../login.html';
+        return;
+      }
+
+      let editMode = false;
+
+      async function loadAnnouncementsDashboard() {
+        try {
+          const res = await SUBAApi.request('/admin/announcements', { method: 'GET' });
+
+          const tbody = document.getElementById('announcementsTableBody');
+          if (!res || res.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">No announcements published yet.</td></tr>';
+          } else {
+            tbody.innerHTML = res.map(ann => {
+              const statusClass = ann.status === 'PUBLISHED' ? 'badge-success' : (ann.status === 'DRAFT' ? 'badge-pending' : 'badge-failed');
+              const contentSnippet = ann.content.length > 80 ? ann.content.substring(0, 80) + '...' : ann.content;
+              return `
+                <tr>
+                  <td><span style="font-weight:700">${ann.title}</span></td>
+                  <td>${contentSnippet}</td>
+                  <td><span class="badge ${statusClass}">${ann.status}</span></td>
+                  <td>${new Date(ann.created_at).toLocaleString()}</td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-secondary btn-sm" onclick="editAnn('${ann.id}')">📋 Edit</button>
+                      <button class="btn btn-danger btn-sm" style="background:#EF4444; border-color:#EF4444" onclick="deleteAnn('${ann.id}')">🗑️ Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+            
+            // Cache announcements globally for edits
+            window.activeAnnouncements = res;
+          }
+
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Fetch Error',
+            message: 'Could not load announcements board.',
+            type: 'error'
+          });
+        }
+      }
+
+      await loadAnnouncementsDashboard();
+
+      // Open new announcement modal
+      document.getElementById('btnOpenNewAnnModal').addEventListener('click', () => {
+        editMode = false;
+        document.getElementById('modalTitle').textContent = 'Write Announcement';
+        document.getElementById('inputAnnId').value = '';
+        document.getElementById('inputAnnTitle').value = '';
+        document.getElementById('inputAnnContent').value = '';
+        document.getElementById('inputAnnStatus').value = 'DRAFT';
+        
+        SUBAComponents.openModal('annEditModal');
+      });
+
+      // Edit announcement trigger
+      window.editAnn = function(id) {
+        editMode = true;
+        const ann = window.activeAnnouncements.find(a => a.id === id);
+        if (!ann) return;
+
+        document.getElementById('modalTitle').textContent = 'Edit Announcement';
+        document.getElementById('inputAnnId').value = ann.id;
+        document.getElementById('inputAnnTitle').value = ann.title;
+        document.getElementById('inputAnnContent').value = ann.content;
+        document.getElementById('inputAnnStatus').value = ann.status;
+
+        SUBAComponents.openModal('annEditModal');
+      };
+
+      // Save announcement
+      document.getElementById('btnSaveAnn').addEventListener('click', async () => {
+        const annId = document.getElementById('inputAnnId').value;
+        const payload = {
+          title: document.getElementById('inputAnnTitle').value.trim(),
+          content: document.getElementById('inputAnnContent').value.trim(),
+          status: document.getElementById('inputAnnStatus').value
+        };
+
+        if (!payload.title || !payload.content) {
+          SUBAComponents.showToast({ title: 'Validation Error', message: 'Title and content are required.', type: 'error' });
+          return;
+        }
+
+        try {
+          const btn = document.getElementById('btnSaveAnn');
+          btn.classList.add('is-loading');
+
+          if (editMode) {
+            await SUBAApi.request(`/admin/announcements/${annId}`, {
+              method: 'PATCH',
+              body: JSON.stringify(payload)
+            });
+            SUBAComponents.showToast({ title: 'Announcement Saved', message: 'Broadcast updated successfully.', type: 'success' });
+          } else {
+            await SUBAApi.request('/admin/announcements', {
+              method: 'POST',
+              body: JSON.stringify(payload)
+            });
+            SUBAComponents.showToast({ title: 'Announcement Created', message: 'Broadcast published successfully.', type: 'success' });
+          }
+
+          SUBAComponents.closeModal('annEditModal');
+          await loadAnnouncementsDashboard();
+        } catch (err) {
+          SUBAComponents.showToast({ title: 'Error Saving', message: err.message, type: 'error' });
+        } finally {
+          document.getElementById('btnSaveAnn').classList.remove('is-loading');
+        }
+      });
+
+      // Delete announcement trigger
+      window.deleteAnn = async function(id) {
+        if (!confirm('Are you sure you want to delete this announcement broadcast?')) return;
+
+        try {
+          await SUBAApi.request(`/admin/announcements/${id}`, { method: 'DELETE' });
+          SUBAComponents.showToast({ title: 'Announcement Deleted', message: 'Broadcast removed successfully.', type: 'success' });
+          await loadAnnouncementsDashboard();
+        } catch (err) {
+          SUBAComponents.showToast({ title: 'Error Deleting', message: err.message, type: 'error' });
+        }
+      };
+
+    });
+  </script>
+</body>
+</html>

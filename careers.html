@@ -200,8 +200,7 @@
             container.innerHTML = `
               <div class="empty-jobs-card">
                 <div class="empty-jobs-icon">📁</div>
-                <h4>No job openings available currently.</h4>
-                <p>We are not actively recruiting for core developer positions, but feel free to check back later.</p>
+                <p>There are no career opportunities available at the moment. Please check back later.</p>
               </div>
             `;
             return;
@@ -229,12 +228,11 @@
           `).join('');
 
         } catch (err) {
-          console.error("Failed to load jobs board from API", err.message);
+          console.error("Failed to load jobs board from API", err);
           container.innerHTML = `
             <div class="empty-jobs-card">
-              <div class="empty-jobs-icon">⚠️</div>
-              <h4>Could not load careers board</h4>
-              <p>The backend node is offline or unreachable. Please try again shortly.</p>
+              <div class="empty-jobs-icon">📁</div>
+              <p>There are no career opportunities available at the moment. Please check back later.</p>
             </div>
           `;
         }

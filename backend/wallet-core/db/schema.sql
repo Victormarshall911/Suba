@@ -247,12 +247,14 @@ CREATE TABLE IF NOT EXISTS commissions (
 CREATE TABLE IF NOT EXISTS jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    requirements TEXT NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    employment_type VARCHAR(50) NOT NULL,
     location VARCHAR(100) NOT NULL,
-    employment_type VARCHAR(50) NOT NULL, -- Full-time, Part-time, Contract, Internship
+    description TEXT NOT NULL,
+    responsibilities TEXT NOT NULL,
+    requirements TEXT NOT NULL,
     deadline TIMESTAMP WITH TIME ZONE NOT NULL,
-    status job_status_enum NOT NULL DEFAULT 'OPEN',
+    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -285,5 +287,45 @@ CREATE TABLE IF NOT EXISTS announcements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. SB Points Table
+CREATE TABLE IF NOT EXISTS sb_points (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    current_points INTEGER NOT NULL DEFAULT 0,
+    total_earned INTEGER NOT NULL DEFAULT 0,
+    total_redeemed INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_sb_points_user_id ON sb_points(user_id);
+
+-- 16. Point History Table
+CREATE TABLE IF NOT EXISTS point_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
+    points_earned INTEGER NOT NULL DEFAULT 0,
+    points_redeemed INTEGER NOT NULL DEFAULT 0,
+    reason TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS ix_point_hist_user_id ON point_history(user_id);
+
+-- 17. System Configs Table
+CREATE TABLE IF NOT EXISTS system_configs (
+    key VARCHAR(100) PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed default values
+INSERT INTO system_configs (key, value) 
+VALUES ('points_earning_rate', '100'), ('points_redemption_rate', '0.05')
+ON CONFLICT (key) DO NOTHING;

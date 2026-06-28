@@ -6,6 +6,7 @@ import { FraudService } from '../services/fraud-service.js';
 import { GrowthService } from '../services/growth-service.js';
 import { WalletService } from '../services/wallet-service.js';
 import { sendToUser, broadcastToAdmins } from '../services/websocket-service.js';
+import { RewardService } from '../services/reward-service.js';
 
 export async function handlePaystackWebhook(req, res) {
   const signature = req.headers['x-paystack-signature'];
@@ -204,6 +205,9 @@ export async function handlePaystackWebhook(req, res) {
         // Calculate Ambassador Commission (if referred)
         await GrowthService.calculateCommission(user.id, txn.id, amountNaira, client);
         
+        // Award SB Points (only on successful completed purchases)
+        await RewardService.awardPointsForTransaction(user.id, txn.id, amountNaira, client);
+        
         // Settle commission status
         await GrowthService.settleCommissions(txn.id, true, client);
 
@@ -225,6 +229,9 @@ export async function handlePaystackWebhook(req, res) {
         // Transition to FAILED and REVERSED
         txn = await TransactionStateMachine.transitionTo(txn.id, States.FAILED, null, 'Fulfillment engine call failed', client);
         txn = await TransactionStateMachine.transitionTo(txn.id, States.REVERSED, null, 'Simulated payment gateway reversal completed', client);
+
+        // Reverse points in case they were logged
+        await RewardService.reversePointsForTransaction(user.id, txn.id, client);
 
         await GrowthService.settleCommissions(txn.id, false, client);
 

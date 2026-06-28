@@ -97,6 +97,16 @@ export class AuthService {
       expiresIn: '24h'
     });
 
+    const walletResult = await db.query('SELECT balance FROM wallets WHERE user_id = $1', [user.id]);
+    const balance = walletResult.rowCount > 0 ? parseFloat(walletResult.rows[0].balance) : 0.00;
+
+    const pointsResult = await db.query('SELECT current_points, total_earned, total_redeemed FROM sb_points WHERE user_id = $1', [user.id]);
+    const sb_points = pointsResult.rowCount > 0 ? {
+      current_points: parseInt(pointsResult.rows[0].current_points),
+      total_earned: parseInt(pointsResult.rows[0].total_earned),
+      total_redeemed: parseInt(pointsResult.rows[0].total_redeemed)
+    } : { current_points: 0, total_earned: 0, total_redeemed: 0 };
+
     const ambResult = await db.query('SELECT referral_code FROM ambassadors WHERE user_id = $1', [user.id]);
     const referral_code = ambResult.rowCount > 0 ? ambResult.rows[0].referral_code : null;
 
@@ -112,7 +122,9 @@ export class AuthService {
         virtual_account_number,
         bank_name,
         virtual_reference,
-        referral_code
+        referral_code,
+        balance,
+        sb_points
       }
     };
   }
@@ -136,6 +148,16 @@ export class AuthService {
     const bank_name = fundRef ? fundRef.bank_name : 'Sterling Bank';
     const virtual_reference = fundRef ? fundRef.reference : `REF-VA-${user.id.substring(0, 8).toUpperCase()}`;
 
+    const walletResult = await db.query('SELECT balance FROM wallets WHERE user_id = $1', [user.id]);
+    const balance = walletResult.rowCount > 0 ? parseFloat(walletResult.rows[0].balance) : 0.00;
+
+    const pointsResult = await db.query('SELECT current_points, total_earned, total_redeemed FROM sb_points WHERE user_id = $1', [user.id]);
+    const sb_points = pointsResult.rowCount > 0 ? {
+      current_points: parseInt(pointsResult.rows[0].current_points),
+      total_earned: parseInt(pointsResult.rows[0].total_earned),
+      total_redeemed: parseInt(pointsResult.rows[0].total_redeemed)
+    } : { current_points: 0, total_earned: 0, total_redeemed: 0 };
+
     const ambResult = await db.query('SELECT referral_code FROM ambassadors WHERE user_id = $1', [user.id]);
     const referral_code = ambResult.rowCount > 0 ? ambResult.rows[0].referral_code : null;
 
@@ -151,7 +173,9 @@ export class AuthService {
       virtual_account_number,
       bank_name,
       virtual_reference,
-      referral_code
+      referral_code,
+      balance,
+      sb_points
     };
   }
 }

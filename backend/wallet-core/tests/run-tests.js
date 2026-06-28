@@ -272,11 +272,14 @@ async function runTests() {
     console.log("\n10. Testing Careers Board job posting and CV submission...");
     const job = await ReconciliationService.createJob({
       title: 'VTU Operations Analyst',
+      department: 'Engineering',
       description: 'Review provider performance logs and audit ledger entries daily.',
+      responsibilities: 'Monitor API health metrics and resolve daily ledger imbalances.',
       requirements: 'Attention to detail, experience with finance reconciliation tools.',
       location: 'Remote, Nigeria',
       employment_type: 'Full-time',
-      deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+      deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      status: 'PUBLISHED'
     });
     console.log(`    ✅ Job opening published: ${job.title} (${job.id})`);
 
@@ -292,6 +295,75 @@ async function runTests() {
       coverLetter: 'Interested in VTU audits and finance execution engines.'
     });
     console.log(`    ✅ CV application submitted successfully. Current Status: ${application.status}`);
+
+    // -------------------------------------------------------------------------
+    // TEST 11: SB Points System & Loyalty Actions
+    // -------------------------------------------------------------------------
+    console.log("\n11. Testing SB Points Loyalty Earning, Reversal, and Redemption...");
+    const { RewardService } = await import('../services/reward-service.js');
+
+    // Reset referred user points state
+    await db.query('DELETE FROM sb_points WHERE user_id = $1', [referredUser.id]);
+    await db.query('DELETE FROM point_history WHERE user_id = $1', [referredUser.id]);
+
+
+
+    // Make sure configs are seeded in the database
+    await db.query(
+      `INSERT INTO system_configs (key, value, updated_at) VALUES ('points_earning_rate', '100', NOW())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`
+    );
+    await db.query(
+      `INSERT INTO system_configs (key, value, updated_at) VALUES ('points_redemption_rate', '0.5', NOW())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`
+    );
+
+    // Initial check (should be 0)
+    let pointsStats = await RewardService.getPointsByUser(referredUser.id);
+    console.log(`    ✅ Initial points for referred user: ${pointsStats.current_points}`);
+
+    // Award points for transaction (Naira transaction value 1000 => 10 points)
+    await RewardService.awardPointsForTransaction(referredUser.id, initiateTxn.id, purchaseAmount);
+    pointsStats = await RewardService.getPointsByUser(referredUser.id);
+    console.log(`    ✅ Awarded points for transaction: ${pointsStats.current_points} (expected: 10)`);
+    if (pointsStats.current_points !== 10) {
+      throw new Error(`Expected 10 points, got ${pointsStats.current_points}`);
+    }
+
+    // Reverse points
+    await RewardService.reversePointsForTransaction(referredUser.id, initiateTxn.id);
+    pointsStats = await RewardService.getPointsByUser(referredUser.id);
+    console.log(`    ✅ Reversed points for transaction: ${pointsStats.current_points} (expected: 0)`);
+    if (pointsStats.current_points !== 0) {
+      throw new Error(`Expected 0 points after reversal, got ${pointsStats.current_points}`);
+    }
+
+    // Manual award
+    await RewardService.manualAwardPoints(referredUser.email, 100, 'Test manual award');
+    pointsStats = await RewardService.getPointsByUser(referredUser.id);
+    console.log(`    ✅ Manually awarded points: ${pointsStats.current_points} (expected: 100)`);
+    if (pointsStats.current_points !== 100) {
+      throw new Error(`Expected 100 points, got ${pointsStats.current_points}`);
+    }
+
+    // Load initial wallet balance
+    const walletRes = await db.query('SELECT balance FROM wallets WHERE user_id = $1', [referredUser.id]);
+    const initialBalance = parseFloat(walletRes.rows[0]?.balance || 0);
+
+    // Redeem points (100 points * 0.5 = 50 Naira cashback discount)
+    await RewardService.redeemPoints(referredUser.id, 100, 'Test redemption');
+    pointsStats = await RewardService.getPointsByUser(referredUser.id);
+    console.log(`    ✅ Points after redemption: ${pointsStats.current_points} (expected: 0)`);
+    if (pointsStats.current_points !== 0) {
+      throw new Error(`Expected 0 points after redemption, got ${pointsStats.current_points}`);
+    }
+
+    const postRedeemWallet = await db.query('SELECT balance FROM wallets WHERE user_id = $1', [referredUser.id]);
+    const finalBalance = parseFloat(postRedeemWallet.rows[0]?.balance || 0);
+    console.log(`    ✅ User wallet balance: Initial ₦${initialBalance} -> Final ₦${finalBalance} (cashback: ₦${finalBalance - initialBalance})`);
+    if (finalBalance - initialBalance !== 50.00) {
+      throw new Error(`Expected ₦50.00 wallet cashback, got ₦${finalBalance - initialBalance}`);
+    }
 
     console.log("\n🌟 All test checks passed successfully! Suba Transaction + Asset + Growth System is 100% compliant.");
     

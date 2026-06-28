@@ -2,6 +2,7 @@ import * as db from '../db/index.js';
 import { TransactionStateMachine, States } from './state-machine.js';
 import { WalletService } from './wallet-service.js';
 import { sendToUser } from './websocket-service.js';
+import { RewardService } from './reward-service.js';
 
 export class ReconciliationService {
   /**
@@ -193,6 +194,11 @@ export class ReconciliationService {
         // Transition: VALIDATING -> SUCCESSFUL
         await TransactionStateMachine.transitionTo(txn.id, States.SUCCESSFUL, adminId, 'Fulfillment override processed', client);
 
+        if (txn.type !== 'DEPOSIT') {
+          // Award SB Points (only on successful completed purchases)
+          await RewardService.awardPointsForTransaction(txn.user_id, txn.id, txn.amount, client);
+        }
+
         // Notify user via WebSocket
         sendToUser(txn.user_id, {
           type: 'notification',
@@ -203,6 +209,9 @@ export class ReconciliationService {
       } else {
         // Settle transaction FAILED
         await TransactionStateMachine.transitionTo(txn.id, States.FAILED, adminId, `Decline Override: ${reason}`, client);
+
+        // Reverse points in case they were logged
+        await RewardService.reversePointsForTransaction(txn.user_id, txn.id, client);
 
         sendToUser(txn.user_id, {
           type: 'notification',
@@ -233,19 +242,21 @@ export class ReconciliationService {
   // ADMIN CAREER / JOBS BOARD MANAGEMENT
   // ===========================================================================
 
-  static async createJob({ title, description, requirements, location, employment_type, deadline }) {
+  static async createJob({ title, department, employment_type, location, description, responsibilities, requirements, deadline, status }) {
     const result = await db.query(
-      `INSERT INTO jobs (title, description, requirements, location, employment_type, deadline, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'OPEN') RETURNING *`,
-      [title, description, requirements, location, employment_type, new Date(deadline)]
+      `INSERT INTO jobs (title, department, employment_type, location, description, responsibilities, requirements, deadline, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [title, department, employment_type, location, description, responsibilities, requirements, new Date(deadline), status || 'DRAFT']
     );
     return result.rows[0];
   }
 
-  static async updateJob(jobId, { status }) {
+  static async updateJob(jobId, { title, department, employment_type, location, description, responsibilities, requirements, deadline, status }) {
     const result = await db.query(
-      `UPDATE jobs SET status = $1 WHERE id = $2 RETURNING *`,
-      [status, jobId]
+      `UPDATE jobs 
+       SET title = $1, department = $2, employment_type = $3, location = $4, description = $5, responsibilities = $6, requirements = $7, deadline = $8, status = $9
+       WHERE id = $10 RETURNING *`,
+      [title, department, employment_type, location, description, responsibilities, requirements, new Date(deadline), status, jobId]
     );
     return result.rows[0];
   }
@@ -265,7 +276,7 @@ export class ReconciliationService {
   }
 
   static async getOpenJobs() {
-    const result = await db.query("SELECT * FROM jobs WHERE status = 'OPEN' ORDER BY created_at DESC");
+    const result = await db.query("SELECT * FROM jobs WHERE status = 'PUBLISHED' ORDER BY created_at DESC");
     return result.rows;
   }
 }

@@ -85,7 +85,31 @@
         <!-- Left Side Widgets -->
         <div class="dashboard-left">
           
-          <!-- Wallet Card Widget -->
+          <!-- Card 1: Wallet Balance -->
+          <div class="card wallet-card" style="padding: var(--space-5); margin-bottom: var(--space-4); background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-primary-dark) 100%); color: white; border: none; border-radius: var(--radius-lg); box-shadow: var(--shadow-md)">
+            <div style="font-size: var(--text-sm); opacity: 0.85; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px">Wallet Balance</div>
+            <div id="walletBalanceVal" style="font-size: 32px; font-weight: 800; margin-top: var(--space-2)">₦0.00</div>
+          </div>
+
+          <!-- Card 2: SB Points -->
+          <div class="card points-card" style="padding: var(--space-5); margin-bottom: var(--space-5); border-radius: var(--radius-lg)">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3)">
+              <h4 style="font-weight: 700; color: var(--clr-text-primary); margin: 0">SB Points 🎖️</h4>
+              <span id="currentPointsVal" style="font-size: 20px; font-weight: 800; color: var(--clr-primary)">0 Points</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); border-top: 1px solid var(--clr-border-light); padding-top: var(--space-3); margin-top: var(--space-3)">
+              <div>
+                <div style="font-size: 10px; color: var(--clr-text-secondary); text-transform: uppercase; font-weight: 600">Total Points Earned</div>
+                <div id="totalPointsEarnedVal" style="font-size: 14px; font-weight: 700; color: var(--clr-text-primary); margin-top: 2px">0</div>
+              </div>
+              <div>
+                <div style="font-size: 10px; color: var(--clr-text-secondary); text-transform: uppercase; font-weight: 600">Total Points Redeemed</div>
+                <div id="totalPointsRedeemedVal" style="font-size: 14px; font-weight: 700; color: var(--clr-text-primary); margin-top: 2px">0</div>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm btn-block" style="margin-top: var(--space-4)" id="openRedeemPointsBtn">Redeem Points for Discount</button>
+          </div>
+
           <!-- Asset Inventory Card Widget -->
           <div class="card" style="padding: var(--space-5); margin-bottom: var(--space-5);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4)">
@@ -373,6 +397,44 @@
     </div>
   </div>
 
+  <!-- Points Redemption Modal -->
+  <div class="modal-backdrop" id="redeemPointsModal">
+    <div class="modal" style="max-width: 400px">
+      <div class="modal-header">
+        <h3>Redeem SB Points</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('redeemPointsModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: var(--text-sm); color: var(--clr-text-secondary); margin-bottom: var(--space-4)">
+          Select the point reward package you would like to redeem for instant Naira cashback:
+        </p>
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4)">
+          <div class="reward-card-option" style="border: 1px solid var(--clr-border-light); padding: var(--space-4); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; cursor: pointer" onclick="selectRedemptionPackage(100)">
+            <div>
+              <div style="font-weight: 700; font-size: var(--text-sm)">₦50 Airtime/Data Discount</div>
+              <div style="font-size: 11px; color: var(--clr-text-tertiary); margin-top:2px">Cost: 100 Points</div>
+            </div>
+            <button class="btn btn-primary btn-sm">Redeem</button>
+          </div>
+          <div class="reward-card-option" style="border: 1px solid var(--clr-border-light); padding: var(--space-4); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; cursor: pointer" onclick="selectRedemptionPackage(200)">
+            <div>
+              <div style="font-weight: 700; font-size: var(--text-sm)">₦100 Airtime/Data Discount</div>
+              <div style="font-size: 11px; color: var(--clr-text-tertiary); margin-top:2px">Cost: 200 Points</div>
+            </div>
+            <button class="btn btn-primary btn-sm">Redeem</button>
+          </div>
+          <div class="reward-card-option" style="border: 1px solid var(--clr-border-light); padding: var(--space-4); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; cursor: pointer" onclick="selectRedemptionPackage(500)">
+            <div>
+              <div style="font-weight: 700; font-size: var(--text-sm)">₦250 Airtime/Data Discount</div>
+              <div style="font-size: 11px; color: var(--clr-text-tertiary); margin-top:2px">Cost: 500 Points</div>
+            </div>
+            <button class="btn btn-primary btn-sm">Redeem</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/utils.js"></script>
   <script src="js/components.js"></script>
@@ -428,6 +490,26 @@
         document.getElementById('desktopUserName').textContent = fullName;
         document.getElementById('greetingMessage').textContent = `Hey, ${firstName} 👋`;
         
+        // Populate Wallet Balance Card
+        const balanceEl = document.getElementById('walletBalanceVal');
+        if (balanceEl) {
+          balanceEl.textContent = `₦${SUBAUtils.formatNumber(user.balance || 0)}`;
+        }
+
+        // Populate SB Points Card
+        const currentPointsEl = document.getElementById('currentPointsVal');
+        const earnedPointsEl = document.getElementById('totalPointsEarnedVal');
+        const redeemedPointsEl = document.getElementById('totalPointsRedeemedVal');
+        if (currentPointsEl) {
+          currentPointsEl.textContent = `${user.sb_points?.current_points || 0} Points`;
+        }
+        if (earnedPointsEl) {
+          earnedPointsEl.textContent = user.sb_points?.total_earned || 0;
+        }
+        if (redeemedPointsEl) {
+          redeemedPointsEl.textContent = user.sb_points?.total_redeemed || 0;
+        }
+
         const bankEl = document.getElementById('fundBankName');
         const accEl = document.getElementById('fundAccountNumber');
         const refEl = document.getElementById('fundReference');
@@ -622,6 +704,36 @@
 
       // Initial page data load
       await loadDashboardData();
+
+      // SB Points Redemption modal trigger
+      const openRedeemPointsBtn = document.getElementById('openRedeemPointsBtn');
+      if (openRedeemPointsBtn) {
+        openRedeemPointsBtn.addEventListener('click', () => {
+          SUBAComponents.openModal('redeemPointsModal');
+        });
+      }
+
+      window.selectRedemptionPackage = async (points) => {
+        try {
+          const res = await SUBAApi.request('/users/points/redeem', {
+            method: 'POST',
+            body: JSON.stringify({ points })
+          });
+          SUBAComponents.closeModal('redeemPointsModal');
+          SUBAComponents.showToast({
+            title: 'Redemption Complete! 🎉',
+            message: `Successfully redeemed ${points} SB Points for discount cash.`,
+            type: 'success'
+          });
+          await loadDashboardData();
+        } catch (err) {
+          SUBAComponents.showToast({
+            title: 'Redemption Failed',
+            message: err.message || 'Could not redeem points.',
+            type: 'error'
+          });
+        }
+      };
 
       // Fund Wallet / Buy Asset modal triggers
       const fundWalletBtn = document.getElementById('fundWalletBtn');
