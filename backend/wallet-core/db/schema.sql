@@ -9,7 +9,7 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE suba_txn_type_enum AS ENUM ('AIRTIME', 'DATA', 'BILL_PAYMENT');
+    CREATE TYPE suba_txn_type_enum AS ENUM ('DEPOSIT', 'AIRTIME', 'DATA', 'BILL_PAYMENT');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -17,10 +17,10 @@ END $$;
 DO $$ BEGIN
     CREATE TYPE suba_txn_status_enum AS ENUM (
         'INITIATED',
-        'PAYMENT_PENDING',
-        'PAYMENT_CONFIRMED',
-        'PROCESSING',
-        'FULFILLED',
+        'PENDING_PAYMENT',
+        'PAYMENT_RECEIVED',
+        'VALIDATING',
+        'SUCCESSFUL',
         'FAILED',
         'REVERSED',
         'FLAGGED_FRAUD',
@@ -29,6 +29,7 @@ DO $$ BEGIN
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
+
 
 DO $$ BEGIN
     CREATE TYPE asset_type_enum AS ENUM ('AIRTIME', 'DATA', 'VOUCHER');
@@ -102,6 +103,48 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 CREATE INDEX IF NOT EXISTS ix_tx_reference ON transactions(external_reference);
 CREATE INDEX IF NOT EXISTS ix_tx_user_id ON transactions(user_id);
+
+-- 1b. Wallets Table
+CREATE TABLE IF NOT EXISTS wallets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    pin_hash TEXT,
+    is_frozen BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_wallets_user_id ON wallets(user_id);
+
+-- 1c. Ledger Entries Table
+CREATE TABLE IF NOT EXISTS ledger_entries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+    wallet_id UUID REFERENCES wallets(id) ON DELETE SET NULL,
+    account_type VARCHAR(50) NOT NULL, -- e.g., 'user_wallet', 'system_bank_asset', 'system_revenue'
+    type VARCHAR(10) NOT NULL, -- 'DEBIT' or 'CREDIT'
+    amount NUMERIC(12, 2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_ledger_entries_wallet_id ON ledger_entries(wallet_id);
+CREATE INDEX IF NOT EXISTS ix_ledger_entries_transaction_id ON ledger_entries(transaction_id);
+
+-- 1d. Funding References Table (Virtual Accounts)
+CREATE TABLE IF NOT EXISTS funding_references (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    virtual_account VARCHAR(50) UNIQUE NOT NULL,
+    bank_name VARCHAR(100) NOT NULL,
+    reference VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_funding_refs_user_id ON funding_references(user_id);
+CREATE INDEX IF NOT EXISTS ix_funding_refs_ref ON funding_references(reference);
+
 
 -- 3. Payment Events Table
 CREATE TABLE IF NOT EXISTS payment_events (

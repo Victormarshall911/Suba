@@ -53,7 +53,10 @@ export const mockDb = {
   job_applications: [],
   transaction_status_history: [],
   webhook_logs: [],
-  announcements: []
+  announcements: [],
+  wallets: [],
+  ledger_entries: [],
+  funding_references: []
 };
 
 // Check if we should fallback to mock mode
@@ -158,6 +161,51 @@ function queryMock(text, params) {
   // ==========================================
   // INSERTS
   // ==========================================
+  
+  // 0a. INSERT INTO wallets
+  if (normalized.startsWith('INSERT INTO wallets')) {
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const balance = parseFloat(params[1]) || 0.00;
+    const pin_hash = params[2] || null;
+    const is_frozen = params[3] === true || params[3] === 'true' || false;
+    const created_at = new Date();
+    const updated_at = new Date();
+    const wallet = { id, user_id, balance, pin_hash, is_frozen, created_at, updated_at };
+    mockDb.wallets = mockDb.wallets || [];
+    mockDb.wallets.push(wallet);
+    return { rows: [wallet], rowCount: 1 };
+  }
+
+  // 0b. INSERT INTO ledger_entries
+  if (normalized.startsWith('INSERT INTO ledger_entries')) {
+    const id = crypto.randomUUID();
+    const transaction_id = params[0];
+    const wallet_id = params[1];
+    const account_type = params[2];
+    const type = params[3];
+    const amount = parseFloat(params[4]);
+    const created_at = new Date();
+    const entry = { id, transaction_id, wallet_id, account_type, type, amount, created_at };
+    mockDb.ledger_entries = mockDb.ledger_entries || [];
+    mockDb.ledger_entries.push(entry);
+    return { rows: [entry], rowCount: 1 };
+  }
+
+  // 0c. INSERT INTO funding_references
+  if (normalized.startsWith('INSERT INTO funding_references')) {
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const virtual_account = params[1];
+    const bank_name = params[2];
+    const reference = params[3];
+    const created_at = new Date();
+    const updated_at = new Date();
+    const fr = { id, user_id, virtual_account, bank_name, reference, created_at, updated_at };
+    mockDb.funding_references = mockDb.funding_references || [];
+    mockDb.funding_references.push(fr);
+    return { rows: [fr], rowCount: 1 };
+  }
   
   // 0. INSERT INTO announcements
   if (normalized.startsWith('INSERT INTO announcements')) {
@@ -383,6 +431,35 @@ function queryMock(text, params) {
   // ==========================================
   // UPDATES
   // ==========================================
+
+  // UPDATE wallets SET is_frozen = ?
+  if (normalized.startsWith('UPDATE wallets SET is_frozen =')) {
+    const isFrozen = params[0] === true || params[0] === 'true';
+    const id = params[1];
+    mockDb.wallets = mockDb.wallets || [];
+    const idx = mockDb.wallets.findIndex(w => w.id === id);
+    if (idx !== -1) {
+      mockDb.wallets[idx].is_frozen = isFrozen;
+      mockDb.wallets[idx].updated_at = new Date();
+      return { rows: [mockDb.wallets[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE wallets SET balance = ?
+  if (normalized.startsWith('UPDATE wallets SET balance =')) {
+    const balance = parseFloat(params[0]);
+    const updatedAt = params[1];
+    const id = params[2];
+    mockDb.wallets = mockDb.wallets || [];
+    const idx = mockDb.wallets.findIndex(w => w.id === id);
+    if (idx !== -1) {
+      mockDb.wallets[idx].balance = balance;
+      mockDb.wallets[idx].updated_at = updatedAt;
+      return { rows: [mockDb.wallets[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
   
   // UPDATE users SET role = ? WHERE id = ?
   // UPDATE users SET is_active = ? WHERE id = ?
@@ -518,6 +595,41 @@ function queryMock(text, params) {
   // ==========================================
   // SELECTS
   // ==========================================
+
+  // SELECT FROM wallets
+  if (normalized.includes('FROM wallets')) {
+    const val = params[0];
+    mockDb.wallets = mockDb.wallets || [];
+    const res = mockDb.wallets.filter(w => w.user_id === val || w.id === val);
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM ledger_entries
+  if (normalized.includes('FROM ledger_entries')) {
+    mockDb.ledger_entries = mockDb.ledger_entries || [];
+    if (normalized.includes('total_debits') && normalized.includes('total_credits')) {
+      const totalDebits = mockDb.ledger_entries.filter(e => e.type === 'DEBIT').reduce((sum, e) => sum + e.amount, 0);
+      const totalCredits = mockDb.ledger_entries.filter(e => e.type === 'CREDIT').reduce((sum, e) => sum + e.amount, 0);
+      return { rows: [{ total_debits: totalDebits.toString(), total_credits: totalCredits.toString() }], rowCount: 1 };
+    }
+    if (normalized.includes('computed_balance') || normalized.includes('total_balance') || normalized.includes('SUM')) {
+      const walletId = params[0];
+      const filtered = mockDb.ledger_entries.filter(e => e.wallet_id === walletId);
+      const total = filtered.reduce((sum, e) => {
+        return sum + (e.type === 'CREDIT' ? e.amount : -e.amount);
+      }, 0.00);
+      const fieldName = normalized.includes('computed_balance') ? 'computed_balance' : 'total_balance';
+      return { rows: [{ [fieldName]: total.toString() }], rowCount: 1 };
+    }
+  }
+
+  // SELECT FROM funding_references
+  if (normalized.includes('FROM funding_references')) {
+    const val = params[0];
+    mockDb.funding_references = mockDb.funding_references || [];
+    const res = mockDb.funding_references.filter(fr => fr.user_id === val || fr.reference === val);
+    return { rows: res, rowCount: res.length };
+  }
   
   // SELECT FROM users
   if (normalized.includes('FROM users')) {
@@ -581,10 +693,21 @@ function queryMock(text, params) {
 
   // SELECT FROM transactions WHERE reference/id = ?
   if (normalized.includes('FROM transactions')) {
+    // SUM aggregate parsing
+    if (normalized.includes('SUM(amount)')) {
+      if (normalized.includes('CURRENT_DATE')) {
+        const list = mockDb.transactions.filter(t => (t.type === 'AIRTIME' || t.type === 'DEPOSIT') && t.status === 'SUCCESSFUL');
+        const total = list.reduce((sum, t) => sum + t.amount, 0);
+        return { rows: [{ total, count: list.length }] };
+      }
+      const total = mockDb.transactions.filter(t => t.status === 'SUCCESSFUL').reduce((sum, t) => sum + t.amount, 0);
+      return { rows: [{ total }] };
+    }
+
     // COUNT aggregate parsing
     if (normalized.includes('COUNT(*)')) {
       if (normalized.includes('INITIATED')) {
-        let list = mockDb.transactions.filter(t => ['INITIATED', 'PAYMENT_PENDING', 'PROCESSING', 'PAYMENT_CONFIRMED'].includes(t.status));
+        let list = mockDb.transactions.filter(t => ['INITIATED', 'PENDING_PAYMENT', 'VALIDATING', 'PAYMENT_RECEIVED'].includes(t.status));
         if (params.length > 0) {
           list = list.filter(t => t.user_id === params[0]);
         }
@@ -616,16 +739,6 @@ function queryMock(text, params) {
         }
       }
       return { rows: [{ count: list.length.toString() }] };
-    }
-    // SUM aggregate parsing
-    if (normalized.includes('SUM(amount)')) {
-      if (normalized.includes('CURRENT_DATE')) {
-        const list = mockDb.transactions.filter(t => t.type === 'AIRTIME' && t.status === 'FULFILLED');
-        const total = list.reduce((sum, t) => sum + t.amount, 0);
-        return { rows: [{ total, count: list.length }] };
-      }
-      const total = mockDb.transactions.filter(t => t.status === 'FULFILLED').reduce((sum, t) => sum + t.amount, 0);
-      return { rows: [{ total }] };
     }
 
     const val = params[0];
