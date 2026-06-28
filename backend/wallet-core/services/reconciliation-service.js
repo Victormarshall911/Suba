@@ -1,5 +1,6 @@
 import * as db from '../db/index.js';
 import { TransactionStateMachine, States } from './state-machine.js';
+import { WalletService } from './wallet-service.js';
 import { sendToUser } from './websocket-service.js';
 
 export class ReconciliationService {
@@ -26,7 +27,7 @@ export class ReconciliationService {
 
     // 1. Fetch pending, failed, and review transactions count
     const pendingRes = await db.query(
-      `SELECT COUNT(*) FROM transactions WHERE status IN ('INITIATED', 'PAYMENT_PENDING', 'PROCESSING', 'PAYMENT_CONFIRMED') ${userFilterSql} ${dateFilterSql}`,
+      `SELECT COUNT(*) FROM transactions WHERE status IN ('INITIATED', 'PENDING_PAYMENT', 'VALIDATING', 'PAYMENT_RECEIVED') ${userFilterSql} ${dateFilterSql}`,
       queryParams
     );
     const failedRes = await db.query(
@@ -53,16 +54,20 @@ export class ReconciliationService {
     const dailyFundingRes = await db.query(
       `SELECT COALESCE(SUM(amount), 0.00) as total, COUNT(*) as count 
        FROM transactions 
-       WHERE type = 'AIRTIME' AND status = 'FULFILLED' AND created_at >= CURRENT_DATE`
+       WHERE (type = 'DEPOSIT' OR type = 'AIRTIME') AND status = 'SUCCESSFUL' AND created_at >= CURRENT_DATE`
     );
 
-    // 4. Double-entry ledger imbalance check (re-adapted to sum value of total assets allocated vs transactions paid)
-    const assetSumRes = await db.query("SELECT COALESCE(SUM(value_denomination), 0.00) as total FROM assets");
-    const txnSumRes = await db.query("SELECT COALESCE(SUM(amount), 0.00) as total FROM transactions WHERE status = 'FULFILLED'");
+    // 4. Double-entry ledger imbalance check
+    const balanceRes = await db.query(
+      `SELECT 
+         COALESCE(SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END), 0.00) AS total_debits,
+         COALESCE(SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END), 0.00) AS total_credits
+       FROM ledger_entries`
+    );
 
-    const totalAssets = parseFloat(assetSumRes.rows[0].total);
-    const totalPayments = parseFloat(txnSumRes.rows[0].total);
-    const imbalanceAmount = Math.abs(totalAssets - totalPayments);
+    const totalDebits = parseFloat(balanceRes.rows[0].total_debits);
+    const totalCredits = parseFloat(balanceRes.rows[0].total_credits);
+    const imbalanceAmount = Math.abs(totalDebits - totalCredits);
     const isImbalanced = imbalanceAmount > 0.01;
 
     // 5. Fraud flags
@@ -83,8 +88,8 @@ export class ReconciliationService {
         count: parseInt(dailyFundingRes.rows[0]?.count || 0)
       },
       ledgerAudit: {
-        totalDebits: totalPayments, // Representing total fiat payments
-        totalCredits: totalAssets,   // Representing total digital assets delivered
+        totalDebits: totalDebits, // Sum of system debits
+        totalCredits: totalCredits, // Sum of system credits
         imbalance: imbalanceAmount,
         isImbalanced
       },
@@ -159,18 +164,34 @@ export class ReconciliationService {
           [txn.user_id]
         );
 
-        // Transition: MANUAL_REVIEW -> PROCESSING
-        await TransactionStateMachine.transitionTo(txn.id, States.PROCESSING, adminId, `Override: ${reason}`, client);
+        // Transition: MANUAL_REVIEW -> VALIDATING
+        await TransactionStateMachine.transitionTo(txn.id, States.VALIDATING, adminId, `Override: ${reason}`, client);
 
-        // Deliver asset
-        await client.query(
-          `INSERT INTO assets (user_id, asset_type, value_denomination, status)
-           VALUES ($1, $2, $3, 'AVAILABLE')`,
-          [txn.user_id, txn.type === 'DATA' ? 'DATA' : 'AIRTIME', txn.amount]
-        );
+        // Find user's wallet
+        const walletRes = await client.query('SELECT id FROM wallets WHERE user_id = $1', [txn.user_id]);
+        const wallet = walletRes.rows[0];
+        if (!wallet) {
+          throw new Error("User wallet not found.");
+        }
 
-        // Settle transaction FULFILLED
-        await TransactionStateMachine.transitionTo(txn.id, States.FULFILLED, adminId, 'Fulfillment override processed', client);
+        // Post double-entry ledger credit (DEBIT system_bank_asset, CREDIT user_wallet)
+        await WalletService.postLedgerTransaction(txn.id, 'system_bank_asset', 'user_wallet', wallet.id, txn.amount, client);
+
+        if (txn.type === 'DEPOSIT') {
+          // It's just a deposit, we are done
+        } else {
+          // It's a purchase (AIRTIME / DATA), perform debit and allocate asset
+          await WalletService.postLedgerTransaction(txn.id, 'user_wallet', 'system_revenue', wallet.id, txn.amount, client);
+          
+          await client.query(
+            `INSERT INTO assets (user_id, asset_type, value_denomination, status)
+             VALUES ($1, $2, $3, 'AVAILABLE')`,
+            [txn.user_id, txn.type === 'DATA' ? 'DATA' : 'AIRTIME', txn.amount]
+          );
+        }
+
+        // Transition: VALIDATING -> SUCCESSFUL
+        await TransactionStateMachine.transitionTo(txn.id, States.SUCCESSFUL, adminId, 'Fulfillment override processed', client);
 
         // Notify user via WebSocket
         sendToUser(txn.user_id, {
@@ -199,7 +220,7 @@ export class ReconciliationService {
 
       await client.query('COMMIT');
       console.log(`👮 [ADMIN OVERRIDE] Settle manual review completed: ${transactionId}`);
-      return { success: true, newStatus: approve ? States.FULFILLED : States.FAILED };
+      return { success: true, newStatus: approve ? States.SUCCESSFUL : States.FAILED };
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
