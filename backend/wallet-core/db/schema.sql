@@ -415,6 +415,66 @@ CREATE TABLE IF NOT EXISTS in_app_notifications (
 
 CREATE INDEX IF NOT EXISTS ix_in_app_notif_user_id ON in_app_notifications(user_id);
 
+-- ============================================================
+-- RATING & REVIEW SYSTEM TABLES
+-- ============================================================
+
+-- 24. User Ratings Table
+CREATE TABLE IF NOT EXISTS user_ratings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    title VARCHAR(150),
+    comment TEXT,
+    improvement_feedback TEXT,
+    device_type VARCHAR(50),
+    app_version VARCHAR(20),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_user_ratings_user_id ON user_ratings(user_id);
+CREATE INDEX IF NOT EXISTS ix_user_ratings_rating ON user_ratings(rating);
+CREATE INDEX IF NOT EXISTS ix_user_ratings_created_at ON user_ratings(created_at);
+
+-- 25. Rating Popup History Table
+CREATE TABLE IF NOT EXISTS rating_popup_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    shown_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    action VARCHAR(20), -- 'rate_now' | 'remind_later' | 'never_show' | NULL (dismissed)
+    trigger_event VARCHAR(50) -- 'post_transaction' | 'days_active' | 'nth_transaction'
+);
+
+CREATE INDEX IF NOT EXISTS ix_rating_popup_user_id ON rating_popup_history(user_id);
+
+-- 26. Rating Analytics Cache Table
+CREATE TABLE IF NOT EXISTS rating_analytics_cache (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+    total_ratings INTEGER NOT NULL DEFAULT 0,
+    star_1 INTEGER NOT NULL DEFAULT 0,
+    star_2 INTEGER NOT NULL DEFAULT 0,
+    star_3 INTEGER NOT NULL DEFAULT 0,
+    star_4 INTEGER NOT NULL DEFAULT 0,
+    star_5 INTEGER NOT NULL DEFAULT 0,
+    last_updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed empty analytics cache row
+INSERT INTO rating_analytics_cache (id, avg_rating, total_ratings, star_1, star_2, star_3, star_4, star_5)
+VALUES (1, 0, 0, 0, 0, 0, 0, 0)
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed rating popup system config defaults
+INSERT INTO system_configs (key, value)
+VALUES
+    ('rating_popup_enabled', 'true'),
+    ('rating_popup_cooldown_days', '30'),
+    ('rating_popup_min_transactions', '3'),
+    ('rating_popup_remind_days', '7')
+ON CONFLICT (key) DO NOTHING;
+
 -- Seed default email templates
 INSERT INTO email_templates (name, subject, body) VALUES
 ('welcome', 'Welcome to Suba Wallet!', '<h1>Welcome, {{fullName}}!</h1><p>Thank you for signing up to Suba Wallet. We are excited to help you manage your virtual assets and wallet accounts.</p><p><a href="{{loginUrl}}" style="background-color: #5d5fef; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Login to Dashboard</a></p><p>Regards,<br>Suba Team</p>'),

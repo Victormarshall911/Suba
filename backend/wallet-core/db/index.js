@@ -159,7 +159,16 @@ export const mockDb = {
     }
   ],
   communication_preferences: [],
-  in_app_notifications: []
+  in_app_notifications: [],
+  user_ratings: [],
+  rating_popup_history: [],
+  rating_analytics_cache: [{
+    id: 1,
+    avg_rating: 0,
+    total_ratings: 0,
+    star_1: 0, star_2: 0, star_3: 0, star_4: 0, star_5: 0,
+    last_updated: new Date()
+  }]
 };
 
 // Check if we should fallback to mock mode
@@ -1730,6 +1739,146 @@ function queryMock(text, params) {
     return { rows: res, rowCount: res.length };
   }
 
+  // ==========================================
+  // RATING & REVIEW SYSTEM QUERIES
+  // ==========================================
+
+  // INSERT INTO user_ratings (upsert)
+  if (normalized.startsWith('INSERT INTO user_ratings')) {
+    mockDb.user_ratings = mockDb.user_ratings || [];
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const rating = parseInt(params[1]);
+    const title = params[2] || null;
+    const comment = params[3] || null;
+    const improvement_feedback = params[4] || null;
+    const device_type = params[5] || null;
+    const app_version = params[6] || null;
+    const now = new Date();
+    // Upsert: update if exists
+    const idx = mockDb.user_ratings.findIndex(r => r.user_id === user_id);
+    if (idx !== -1) {
+      mockDb.user_ratings[idx] = { ...mockDb.user_ratings[idx], rating, title, comment, improvement_feedback, device_type, app_version, updated_at: now };
+      // Refresh analytics cache
+      _refreshRatingCache();
+      return { rows: [mockDb.user_ratings[idx]], rowCount: 1 };
+    }
+    const row = { id, user_id, rating, title, comment, improvement_feedback, device_type, app_version, created_at: now, updated_at: now };
+    mockDb.user_ratings.push(row);
+    _refreshRatingCache();
+    return { rows: [row], rowCount: 1 };
+  }
+
+  // INSERT INTO rating_popup_history
+  if (normalized.startsWith('INSERT INTO rating_popup_history')) {
+    mockDb.rating_popup_history = mockDb.rating_popup_history || [];
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const action = params[1] || null;
+    const trigger_event = params[2] || null;
+    const row = { id, user_id, shown_at: new Date(), action, trigger_event };
+    mockDb.rating_popup_history.push(row);
+    return { rows: [row], rowCount: 1 };
+  }
+
+  // UPDATE rating_popup_history SET action
+  if (normalized.startsWith('UPDATE rating_popup_history')) {
+    mockDb.rating_popup_history = mockDb.rating_popup_history || [];
+    const action = params[0];
+    const user_id = params[1];
+    // Update the most recent popup record for user
+    const userRecords = mockDb.rating_popup_history.filter(r => r.user_id === user_id);
+    if (userRecords.length > 0) {
+      userRecords[userRecords.length - 1].action = action;
+    }
+    return { rows: [], rowCount: 1 };
+  }
+
+  // SELECT FROM user_ratings
+  if (normalized.includes('FROM user_ratings')) {
+    mockDb.user_ratings = mockDb.user_ratings || [];
+    // COUNT(*)
+    if (normalized.includes('COUNT(*)')) {
+      const count = mockDb.user_ratings.length;
+      return { rows: [{ count: count.toString() }], rowCount: 1 };
+    }
+    // AVG
+    if (normalized.includes('AVG(')) {
+      const total = mockDb.user_ratings.length;
+      const avg = total > 0 ? mockDb.user_ratings.reduce((s, r) => s + r.rating, 0) / total : 0;
+      return { rows: [{ avg_rating: avg.toFixed(2), total_ratings: total }], rowCount: 1 };
+    }
+    let res = [...mockDb.user_ratings];
+    if (params.length > 0) {
+      const val = params[0];
+      // Try filtering by user_id
+      const filtered = res.filter(r => r.user_id === val);
+      if (filtered.length > 0 || normalized.includes('WHERE ur.user_id') || normalized.includes('WHERE user_id')) {
+        res = filtered;
+      }
+    }
+    // Filter by rating
+    if (normalized.includes('rating = $') && params.length > 0) {
+      const ratingVal = parseInt(params[params.length - 1]);
+      if (!isNaN(ratingVal)) res = res.filter(r => r.rating === ratingVal);
+    }
+    res.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM rating_popup_history
+  if (normalized.includes('FROM rating_popup_history')) {
+    mockDb.rating_popup_history = mockDb.rating_popup_history || [];
+    let res = [...mockDb.rating_popup_history];
+    if (params.length > 0) {
+      const val = params[0];
+      res = res.filter(r => r.user_id === val);
+    }
+    res.sort((a, b) => new Date(b.shown_at) - new Date(a.shown_at));
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM rating_analytics_cache
+  if (normalized.includes('FROM rating_analytics_cache')) {
+    mockDb.rating_analytics_cache = mockDb.rating_analytics_cache || [{ id: 1, avg_rating: 0, total_ratings: 0, star_1: 0, star_2: 0, star_3: 0, star_4: 0, star_5: 0, last_updated: new Date() }];
+    return { rows: mockDb.rating_analytics_cache, rowCount: mockDb.rating_analytics_cache.length };
+  }
+
+  // INSERT INTO rating_analytics_cache (upsert)
+  if (normalized.startsWith('INSERT INTO rating_analytics_cache')) {
+    mockDb.rating_analytics_cache = mockDb.rating_analytics_cache || [];
+    const row = {
+      id: 1,
+      avg_rating: parseFloat(params[0]) || 0,
+      total_ratings: parseInt(params[1]) || 0,
+      star_1: parseInt(params[2]) || 0,
+      star_2: parseInt(params[3]) || 0,
+      star_3: parseInt(params[4]) || 0,
+      star_4: parseInt(params[5]) || 0,
+      star_5: parseInt(params[6]) || 0,
+      last_updated: new Date()
+    };
+    mockDb.rating_analytics_cache = [row];
+    return { rows: [row], rowCount: 1 };
+  }
+
   // Fallback default response
   return { rows: [], rowCount: 0 };
+}
+
+// Helper: rebuild analytics cache from user_ratings (mock mode)
+function _refreshRatingCache() {
+  const ratings = mockDb.user_ratings || [];
+  const total = ratings.length;
+  const avg = total > 0 ? ratings.reduce((s, r) => s + r.rating, 0) / total : 0;
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  ratings.forEach(r => { if (counts[r.rating] !== undefined) counts[r.rating]++; });
+  mockDb.rating_analytics_cache = [{
+    id: 1,
+    avg_rating: parseFloat(avg.toFixed(2)),
+    total_ratings: total,
+    star_1: counts[1], star_2: counts[2], star_3: counts[3],
+    star_4: counts[4], star_5: counts[5],
+    last_updated: new Date()
+  }];
 }

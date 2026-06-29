@@ -16,6 +16,7 @@ import * as db from './db/index.js';
 import { RewardService } from './services/reward-service.js';
 import { EmailService } from './services/email-service.js';
 import { NotificationService } from './services/notification-service.js';
+import { RatingService } from './services/rating-service.js';
 
 dotenv.config();
 
@@ -914,6 +915,105 @@ app.get('/api/v1/admin/communications/subscribers', authenticateJWT, requireAdmi
   try {
     const resSubs = await db.query('SELECT * FROM newsletter_subscribers ORDER BY created_at DESC');
     res.status(200).json(resSubs.rows);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// =============================================================================
+// RATING & REVIEW SYSTEM ROUTES
+// =============================================================================
+
+// User: Check rating status and popup eligibility
+app.get('/api/v1/ratings/status', authenticateJWT, async (req, res) => {
+  try {
+    const status = await RatingService.getRatingStatus(req.user.userId);
+    res.status(200).json(status);
+  } catch (err) {
+    console.error(`❌ [RATING] Status check failed: ${err.message}`);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// User: Submit or update a rating
+app.post('/api/v1/ratings', authenticateJWT, async (req, res) => {
+  try {
+    const { rating, title, comment, improvementFeedback, deviceType, appVersion } = req.body;
+    if (!rating) {
+      return res.status(400).json({ message: 'Validation failed: rating (1-5) is required.' });
+    }
+    const result = await RatingService.submitRating(req.user.userId, {
+      rating, title, comment, improvementFeedback, deviceType, appVersion
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    console.error(`❌ [RATING] Submit failed: ${err.message}`);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// User: Log popup shown event
+app.post('/api/v1/ratings/popup/shown', authenticateJWT, async (req, res) => {
+  try {
+    const { triggerEvent } = req.body;
+    const result = await RatingService.logPopupShown(req.user.userId, triggerEvent || 'manual');
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// User: Log popup action (rate_now / remind_later / never_show)
+app.post('/api/v1/ratings/popup/action', authenticateJWT, async (req, res) => {
+  try {
+    const { action } = req.body;
+    if (!action) {
+      return res.status(400).json({ message: 'Validation failed: action is required.' });
+    }
+    const result = await RatingService.logPopupAction(req.user.userId, action);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin: Get all ratings with filters
+app.get('/api/v1/admin/ratings', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { rating, startDate, endDate, search } = req.query;
+    const ratings = await RatingService.getAllRatings({ rating, startDate, endDate, search });
+    res.status(200).json(ratings);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin: Get analytics summary
+app.get('/api/v1/admin/ratings/analytics', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const analytics = await RatingService.getAnalytics();
+    res.status(200).json(analytics);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin: Get popup settings
+app.get('/api/v1/admin/ratings/settings', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const settings = await RatingService.getPopupSettings();
+    res.status(200).json(settings);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Admin: Save popup settings
+app.put('/api/v1/admin/ratings/settings', authenticateJWT, requireAdmin, async (req, res) => {
+  try {
+    const { enabled, cooldownDays, minTransactions, remindDays } = req.body;
+    const result = await RatingService.savePopupSettings({ enabled, cooldownDays, minTransactions, remindDays });
+    res.status(200).json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
