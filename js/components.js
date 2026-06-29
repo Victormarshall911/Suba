@@ -956,3 +956,405 @@ document.addEventListener('DOMContentLoaded', () => {
   SUBAComponents.initWebSocket();
 });
 
+
+/* ============================================
+   SUBA RATING POPUP SYSTEM
+   Smart, non-intrusive user rating & review
+   ============================================ */
+
+const SUBARatingPopup = {
+
+  STAR_LABELS: ['', 'Terrible 😞', 'Not Good 😕', 'Okay 😐', 'Good 😊', 'Excellent! 🤩'],
+  _selectedRating: 0,
+  _existingRating: null,
+  _overlay: null,
+
+  /**
+   * Check eligibility and show popup if appropriate.
+   * Call this after key actions (post-transaction, dashboard load).
+   */
+  async checkAndShow(triggerEvent = 'manual') {
+    // If no API (no token), skip silently
+    const token = (typeof SUBAUtils !== 'undefined') ? SUBAUtils.retrieve('token') : null;
+    if (!token) return;
+
+    try {
+      const status = await SUBAApi.request('/ratings/status');
+      if (!status || !status.shouldShow) return;
+
+      // Log popup shown
+      await SUBAApi.request('/ratings/popup/shown', {
+        method: 'POST',
+        body: JSON.stringify({ triggerEvent })
+      }).catch(() => {});
+
+      this._existingRating = status.existingRating || null;
+      this._show();
+    } catch (err) {
+      // Silent fail — rating popup is non-critical
+      console.debug('[RatingPopup] Eligibility check skipped:', err.message);
+    }
+  },
+
+  /**
+   * Build and show the popup overlay
+   */
+  _show() {
+    // Remove any existing instance
+    this._destroy();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'rating-popup-overlay';
+    overlay.id = 'subaRatingPopupOverlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Rate Suba');
+
+    overlay.innerHTML = `
+      <div class="rating-popup-card" id="subaRatingCard">
+        <!-- Progress dots -->
+        <div class="rating-progress-dots">
+          <span class="rating-dot active" id="rdot1"></span>
+          <span class="rating-dot" id="rdot2"></span>
+        </div>
+
+        <!-- Step 1: Star selection -->
+        <div id="ratingStep1">
+          <div class="rating-popup-header">
+            <div class="rating-popup-icon">⭐</div>
+            <button class="rating-popup-close" id="ratingCloseBtn" aria-label="Close rating popup">✕</button>
+          </div>
+          <h3 class="rating-popup-title">
+            ${this._existingRating ? 'Update Your Rating' : 'How are we doing?'}
+          </h3>
+          <p class="rating-popup-subtitle">
+            ${this._existingRating
+              ? `You last rated us ${'★'.repeat(this._existingRating.rating)}. Want to update?`
+              : 'Your feedback helps us make Suba better for everyone. It only takes 10 seconds!'}
+          </p>
+
+          <div class="rating-stars-row" id="ratingStarsRow" role="radiogroup" aria-label="Star rating">
+            ${[1,2,3,4,5].map(i => `
+              <button
+                class="rating-star-btn${this._existingRating && i <= this._existingRating.rating ? ' selected' : ''}"
+                data-value="${i}"
+                id="ratingStar${i}"
+                role="radio"
+                aria-checked="${this._existingRating && i <= this._existingRating.rating ? 'true' : 'false'}"
+                aria-label="${i} star${i > 1 ? 's' : ''}"
+              >★</button>
+            `).join('')}
+          </div>
+
+          <div class="rating-label-text" id="ratingLabelText">
+            ${this._existingRating ? this.STAR_LABELS[this._existingRating.rating] : 'Tap a star to rate'}
+          </div>
+
+          <div class="rating-popup-actions">
+            <div class="rating-action-row">
+              <button class="btn btn-primary" id="ratingNextBtn" disabled>
+                Next →
+              </button>
+            </div>
+            <div class="rating-tertiary-actions">
+              <button class="rating-tertiary-link" id="ratingRemindLaterBtn">Remind me later</button>
+              <button class="rating-tertiary-link" id="ratingNeverBtn">Never show again</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Review text + improvement feedback -->
+        <div id="ratingStep2" style="display:none;">
+          <div class="rating-popup-header">
+            <div class="rating-popup-icon" id="ratingStep2Icon">💬</div>
+            <button class="rating-popup-close" id="ratingCloseBtn2" aria-label="Close rating popup">✕</button>
+          </div>
+          <h3 class="rating-popup-title" id="ratingStep2Title">Tell us more (optional)</h3>
+          <p class="rating-popup-subtitle" id="ratingStep2Subtitle">Your thoughts help us improve Suba for you and other students.</p>
+
+          <!-- Low rating improvement section -->
+          <div id="ratingImprovementSection" style="display:none;">
+            <div class="rating-improvement-hint">
+              <span>⚠️</span>
+              <span>We're sorry to hear that! Please tell us what went wrong so we can fix it.</span>
+            </div>
+            <div style="margin-top: var(--space-3);">
+              <label for="ratingImprovementInput">What can we improve?</label>
+              <textarea id="ratingImprovementInput" rows="3" placeholder="e.g. The app was slow, transaction failed, etc." style="margin-top:6px;"></textarea>
+            </div>
+          </div>
+
+          <div class="rating-text-step visible" id="ratingTextFields">
+            <div>
+              <label for="ratingTitleInput">Review Title (optional)</label>
+              <input type="text" id="ratingTitleInput" placeholder="Summarize your experience in a few words..." maxlength="100">
+            </div>
+            <div>
+              <label for="ratingCommentInput">Your Review (optional)</label>
+              <textarea id="ratingCommentInput" rows="3" placeholder="What do you love most about Suba?"></textarea>
+            </div>
+          </div>
+
+          <div class="rating-popup-actions">
+            <div class="rating-action-row">
+              <button class="btn btn-ghost btn-sm" id="ratingBackBtn">← Back</button>
+              <button class="btn btn-primary" id="ratingSubmitBtn">Submit Rating</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Thank you -->
+        <div id="ratingStep3" class="rating-thankyou-step">
+          <span class="rating-thankyou-emoji" id="ratingThankyouEmoji">🎉</span>
+          <h3 class="rating-thankyou-title" id="ratingThankyouTitle">Thank you!</h3>
+          <p class="rating-thankyou-msg" id="ratingThankyouMsg">We're grateful for your feedback. It helps us make Suba better every day.</p>
+          <div id="ratingSharePromptWrap" style="display:none; margin-top: var(--space-4);">
+            <p style="font-size:var(--text-sm); color:var(--clr-text-secondary); margin-bottom:var(--space-3);">Since you love Suba, why not share it?</p>
+            <button class="rating-share-prompt" id="ratingShareBtn">📤 Share Suba with Friends</button>
+          </div>
+          <button class="btn btn-secondary" id="ratingDoneBtn" style="margin-top:var(--space-4); width:100%;">Done</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    this._overlay = overlay;
+    this._selectedRating = this._existingRating ? this._existingRating.rating : 0;
+
+    // Trigger animation after DOM paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        overlay.classList.add('active');
+      });
+    });
+
+    this._bindEvents(overlay);
+  },
+
+  _bindEvents(overlay) {
+    const self = this;
+
+    // Star hover & selection
+    const starBtns = overlay.querySelectorAll('.rating-star-btn');
+    const labelEl = overlay.getElementById ? overlay.getElementById('ratingLabelText') : document.getElementById('ratingLabelText');
+    const nextBtn = document.getElementById('ratingNextBtn');
+
+    starBtns.forEach(btn => {
+      const val = parseInt(btn.dataset.value);
+
+      btn.addEventListener('mouseenter', () => {
+        starBtns.forEach((b, i) => {
+          b.classList.toggle('hovered', i < val);
+          b.setAttribute('aria-checked', i < val ? 'true' : 'false');
+        });
+        document.getElementById('ratingLabelText').textContent = self.STAR_LABELS[val];
+      });
+
+      btn.addEventListener('mouseleave', () => {
+        starBtns.forEach((b, i) => {
+          b.classList.remove('hovered');
+          b.classList.toggle('selected', i < self._selectedRating);
+        });
+        document.getElementById('ratingLabelText').textContent = self._selectedRating
+          ? self.STAR_LABELS[self._selectedRating] : 'Tap a star to rate';
+      });
+
+      btn.addEventListener('click', () => {
+        self._selectedRating = val;
+        starBtns.forEach((b, i) => {
+          const isSelected = i < val;
+          b.classList.toggle('selected', isSelected);
+          b.classList.remove('hovered');
+          b.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+        });
+        document.getElementById('ratingLabelText').textContent = self.STAR_LABELS[val];
+        document.getElementById('ratingNextBtn').disabled = false;
+        document.getElementById('ratingNextBtn').textContent = 'Next →';
+      });
+    });
+
+    // Next button → go to step 2
+    document.getElementById('ratingNextBtn').addEventListener('click', () => {
+      if (!self._selectedRating) return;
+      self._goToStep2();
+    });
+
+    // Back button
+    document.getElementById('ratingBackBtn').addEventListener('click', () => {
+      self._goToStep1();
+    });
+
+    // Submit
+    document.getElementById('ratingSubmitBtn').addEventListener('click', () => {
+      self._submitRating();
+    });
+
+    // Close buttons
+    ['ratingCloseBtn', 'ratingCloseBtn2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', () => self._handleClose());
+    });
+
+    // Backdrop click to dismiss
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) self._handleClose();
+    });
+
+    // Remind later
+    document.getElementById('ratingRemindLaterBtn').addEventListener('click', () => {
+      self._handleAction('remind_later');
+    });
+
+    // Never show again
+    document.getElementById('ratingNeverBtn').addEventListener('click', () => {
+      if (confirm('Are you sure? We will not ask you to rate Suba again.')) {
+        self._handleAction('never_show');
+      }
+    });
+
+    // Done button
+    document.getElementById('ratingDoneBtn').addEventListener('click', () => self._destroy());
+
+    // Share button
+    document.getElementById('ratingShareBtn').addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Suba — Student VTU Platform',
+          text: 'I love using Suba for cheap data and airtime! Check it out:',
+          url: window.location.origin
+        });
+      } else {
+        // Fallback: copy link
+        navigator.clipboard.writeText(window.location.origin).then(() => {
+          if (typeof SUBAComponents !== 'undefined') {
+            SUBAComponents.showToast({ title: 'Link Copied!', message: 'Share Suba with your friends.', type: 'success' });
+          }
+        });
+      }
+    });
+  },
+
+  _goToStep1() {
+    document.getElementById('ratingStep1').style.display = '';
+    document.getElementById('ratingStep2').style.display = 'none';
+    document.getElementById('rdot1').classList.add('active');
+    document.getElementById('rdot2').classList.remove('active');
+  },
+
+  _goToStep2() {
+    document.getElementById('ratingStep1').style.display = 'none';
+    document.getElementById('ratingStep2').style.display = '';
+    document.getElementById('rdot1').classList.remove('active');
+    document.getElementById('rdot2').classList.add('active');
+
+    const isLow = this._selectedRating <= 3;
+    const impSection = document.getElementById('ratingImprovementSection');
+    const step2Title = document.getElementById('ratingStep2Title');
+    const step2Subtitle = document.getElementById('ratingStep2Subtitle');
+    const step2Icon = document.getElementById('ratingStep2Icon');
+    const textFields = document.getElementById('ratingTextFields');
+
+    if (isLow) {
+      impSection.style.display = '';
+      textFields.style.display = 'none';
+      step2Icon.textContent = '😔';
+      step2Title.textContent = 'What can we improve?';
+      step2Subtitle.textContent = 'We\'re sorry your experience wasn\'t great. Your feedback goes directly to our team.';
+    } else {
+      impSection.style.display = 'none';
+      textFields.style.display = '';
+      step2Icon.textContent = '💬';
+      step2Title.textContent = 'Tell us more (optional)';
+      step2Subtitle.textContent = 'Add a review to help other students. What do you love about Suba?';
+    }
+  },
+
+  async _submitRating() {
+    const submitBtn = document.getElementById('ratingSubmitBtn');
+    submitBtn.classList.add('is-loading');
+    submitBtn.textContent = 'Submitting...';
+
+    const title = (document.getElementById('ratingTitleInput')?.value || '').trim();
+    const comment = (document.getElementById('ratingCommentInput')?.value || '').trim();
+    const improvement = (document.getElementById('ratingImprovementInput')?.value || '').trim();
+    const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
+
+    try {
+      await SUBAApi.request('/ratings', {
+        method: 'POST',
+        body: JSON.stringify({
+          rating: this._selectedRating,
+          title: title || null,
+          comment: comment || null,
+          improvementFeedback: improvement || null,
+          deviceType,
+          appVersion: '1.0.0'
+        })
+      });
+
+      // Log action
+      await SUBAApi.request('/ratings/popup/action', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'rate_now' })
+      }).catch(() => {});
+
+      this._showThankYou();
+    } catch (err) {
+      submitBtn.classList.remove('is-loading');
+      submitBtn.textContent = 'Submit Rating';
+      if (typeof SUBAComponents !== 'undefined') {
+        SUBAComponents.showToast({ title: 'Submission Failed', message: err.message, type: 'error' });
+      }
+    }
+  },
+
+  _showThankYou() {
+    document.getElementById('ratingStep2').style.display = 'none';
+    const step3 = document.getElementById('ratingStep3');
+    step3.classList.add('visible');
+    document.querySelector('.rating-progress-dots').style.display = 'none';
+
+    const isHigh = this._selectedRating >= 4;
+    document.getElementById('ratingThankyouEmoji').textContent = isHigh ? '🎉' : '🙏';
+    document.getElementById('ratingThankyouTitle').textContent = isHigh ? 'We\'re glad you love Suba!' : 'Thank you for your honesty!';
+    document.getElementById('ratingThankyouMsg').textContent = isHigh
+      ? 'Your 5-star rating means the world to us. We\'ll keep making Suba even better!'
+      : 'We\'ve received your feedback and will work hard to improve your experience.';
+
+    // Show share prompt only for high ratings
+    if (isHigh) {
+      document.getElementById('ratingSharePromptWrap').style.display = '';
+    }
+  },
+
+  async _handleClose() {
+    await SUBAApi.request('/ratings/popup/action', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'remind_later' })
+    }).catch(() => {});
+    this._destroy();
+  },
+
+  async _handleAction(action) {
+    await SUBAApi.request('/ratings/popup/action', {
+      method: 'POST',
+      body: JSON.stringify({ action })
+    }).catch(() => {});
+
+    if (action === 'never_show' && typeof SUBAComponents !== 'undefined') {
+      SUBAComponents.showToast({ title: 'Understood', message: 'We won\'t ask you to rate Suba again.', type: 'info' });
+    }
+    this._destroy();
+  },
+
+  _destroy() {
+    const overlay = document.getElementById('subaRatingPopupOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 400);
+    this._overlay = null;
+  }
+};
+
+// Expose globally
+window.SUBARatingPopup = SUBARatingPopup;

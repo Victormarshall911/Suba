@@ -1129,6 +1129,14 @@
           SUBAComponents.openModal('loginSupportModal');
         }, 1500);
       }
+
+      // Check and show rating popup (smart, non-intrusive)
+      // Delay 5s so user settles on the dashboard first
+      setTimeout(() => {
+        if (typeof SUBARatingPopup !== 'undefined') {
+          SUBARatingPopup.checkAndShow('dashboard_load');
+        }
+      }, 5000);
     });
   </script>
 </body>

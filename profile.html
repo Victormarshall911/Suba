@@ -196,6 +196,42 @@
           </form>
         </div>
 
+
+        <!-- User Rating Section -->
+        <div class="card profile-rating-section" id="profileRatingCard" style="margin-bottom: var(--space-4)">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3)">
+            <div>
+              <h4 style="font-size: var(--text-base); font-weight: 700; margin-bottom: 2px">Your Rating</h4>
+              <p style="font-size: var(--text-xs); color: var(--clr-text-tertiary)">Help us improve Suba by sharing your experience.</p>
+            </div>
+            <span style="font-size: 22px">⭐</span>
+          </div>
+
+          <!-- Loading state -->
+          <div id="profileRatingLoading">
+            <div class="skeleton skeleton-text" style="width: 60%; height: 14px; margin-bottom: 8px;"></div>
+            <div class="skeleton skeleton-text" style="width: 40%; height: 12px;"></div>
+          </div>
+
+          <!-- No rating yet -->
+          <div id="profileRatingEmpty" style="display: none;">
+            <p style="font-size: var(--text-sm); color: var(--clr-text-secondary); margin-bottom: var(--space-3)">
+              You haven't rated Suba yet. Your feedback helps us improve!
+            </p>
+            <button class="btn btn-secondary btn-sm" id="profileRateNowBtn" onclick="openRatingFromProfile()">Rate Suba Now ★</button>
+          </div>
+
+          <!-- Existing rating -->
+          <div id="profileRatingExisting" style="display: none;">
+            <div class="profile-rating-stars" id="profileRatingStars">
+              <span class="profile-star">★</span><span class="profile-star">★</span><span class="profile-star">★</span><span class="profile-star">★</span><span class="profile-star">★</span>
+            </div>
+            <p style="font-size: var(--text-sm); color: var(--clr-text-secondary); margin-bottom: 2px;" id="profileRatingTitle"></p>
+            <p style="font-size: var(--text-xs); color: var(--clr-text-tertiary);" id="profileRatingDate"></p>
+            <button class="btn btn-ghost btn-sm" style="margin-top: var(--space-3);" onclick="openRatingFromProfile()">Update Rating</button>
+          </div>
+        </div>
+
         <!-- Logout Action Card -->
         <div class="card" style="border-color: var(--clr-error-light); padding: var(--space-5); display: flex; justify-content: space-between; align-items: center">
           <div>
@@ -204,6 +240,7 @@
           </div>
           <button class="btn btn-danger btn-sm" id="logoutBtn" style="background: var(--clr-error); border-color: var(--clr-error)">Log Out</button>
         </div>
+
 
       </div>
 
@@ -516,6 +553,66 @@
           window.location.href = 'login.html';
         }, 1000);
       });
+
+      // ── Profile Rating Section ──────────────────────────────────────
+      async function loadProfileRating() {
+        const loadingEl = document.getElementById('profileRatingLoading');
+        const emptyEl = document.getElementById('profileRatingEmpty');
+        const existingEl = document.getElementById('profileRatingExisting');
+        if (!loadingEl) return;
+
+        try {
+          const status = await SUBAApi.request('/ratings/status');
+          loadingEl.style.display = 'none';
+
+          if (status && status.existingRating) {
+            const r = status.existingRating;
+            existingEl.style.display = '';
+            emptyEl.style.display = 'none';
+
+            // Render stars
+            const starsContainer = document.getElementById('profileRatingStars');
+            if (starsContainer) {
+              starsContainer.innerHTML = [1,2,3,4,5].map(i =>
+                `<span class="profile-star${i <= r.rating ? ' filled' : ''}">★</span>`
+              ).join('');
+            }
+
+            // Render title/date
+            const titleEl = document.getElementById('profileRatingTitle');
+            const dateEl = document.getElementById('profileRatingDate');
+            if (titleEl) titleEl.textContent = r.title ? `"${r.title}"` : `${r.rating} Star${r.rating > 1 ? 's' : ''} Rating`;
+            if (dateEl) dateEl.textContent = `Last rated: ${new Date(r.updated_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+          } else {
+            emptyEl.style.display = '';
+            existingEl.style.display = 'none';
+          }
+        } catch (err) {
+          // Silently hide loading state on error
+          if (loadingEl) loadingEl.style.display = 'none';
+          if (emptyEl) emptyEl.style.display = '';
+        }
+      }
+
+      // Open rating popup from profile page
+      window.openRatingFromProfile = async function() {
+        try {
+          const status = await SUBAApi.request('/ratings/status');
+          if (typeof SUBARatingPopup !== 'undefined') {
+            SUBARatingPopup._existingRating = status?.existingRating || null;
+            SUBARatingPopup._show();
+          }
+        } catch (err) {
+          if (typeof SUBARatingPopup !== 'undefined') {
+            SUBARatingPopup._existingRating = null;
+            SUBARatingPopup._show();
+          }
+        }
+      };
+
+      // Load rating on page init
+      await loadProfileRating();
+
     });
   </script>
 </body>

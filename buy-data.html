@@ -731,6 +731,13 @@
               type: 'success'
             });
 
+            // Trigger rating popup after successful purchase (1 in 3 chance)
+            if (Math.random() < 0.33 && typeof SUBARatingPopup !== 'undefined') {
+              setTimeout(() => {
+                SUBARatingPopup.checkAndShow('post_transaction');
+              }, 3000);
+            }
+
           }, 2500);
 
         }, 1500);
