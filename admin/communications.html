@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Communications Management | SUBA — System Management</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <style>
+    .comms-tabs {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-5);
+      border-bottom: 1px solid var(--clr-border-light);
+      padding-bottom: var(--space-2);
+    }
+    .comms-tab {
+      padding: var(--space-2) var(--space-4);
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      color: var(--clr-text-secondary);
+      transition: all 0.2s ease;
+    }
+    .comms-tab.active {
+      background: var(--clr-primary);
+      color: white;
+    }
+    .comms-tab:hover:not(.active) {
+      background: var(--clr-bg-hover);
+      color: var(--clr-text-primary);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .editor-preview-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+    }
+    .html-preview-panel {
+      border: 1px solid var(--clr-border-light);
+      border-radius: var(--radius-md);
+      background: white;
+      color: #333;
+      padding: var(--space-4);
+      height: 350px;
+      overflow-y: auto;
+    }
+    .formatting-toolbar {
+      display: flex;
+      gap: 4px;
+      background: var(--clr-bg);
+      padding: 6px;
+      border-top-left-radius: var(--radius-md);
+      border-top-right-radius: var(--radius-md);
+      border: 1px solid var(--clr-border-light);
+      border-bottom: none;
+    }
+    .format-btn {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      padding: 3px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .format-btn:hover {
+      background: #f0f0f0;
+    }
+    textarea.body-textarea {
+      width: 100%;
+      height: 312px;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      font-family: monospace;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation (Admin Mode) -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview">
+          <span class="sidebar-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users">
+          <span class="sidebar-icon">👥</span>
+          <span>Users</span>
+        </a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
+          <span class="sidebar-icon">💸</span>
+          <span>Transactions</span>
+        </a>
+        <a href="reconciliation.html" class="sidebar-nav-item" data-page="reconciliation">
+          <span class="sidebar-icon">👛</span>
+          <span>Reconciliation</span>
+        </a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers">
+          <span class="sidebar-icon">🔌</span>
+          <span>Providers</span>
+        </a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
+          <span class="sidebar-icon">🤝</span>
+          <span>Ambassadors</span>
+        </a>
+        <a href="points.html" class="sidebar-nav-item" data-page="points">
+          <span class="sidebar-icon">🎖️</span>
+          <span>SB Points</span>
+        </a>
+        <a href="careers.html" class="sidebar-nav-item" data-page="careers">
+          <span class="sidebar-icon">💼</span>
+          <span>Careers</span>
+        </a>
+        <a href="announcements.html" class="sidebar-nav-item" data-page="announcements">
+          <span class="sidebar-icon">📢</span>
+          <span>Announcements</span>
+        </a>
+        <a href="communications.html" class="sidebar-nav-item active" data-page="communications">
+          <span class="sidebar-icon">✉️</span>
+          <span>Communications</span>
+        </a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
+          <span class="sidebar-icon">👤</span>
+          <span>Switch to User</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      
+      <!-- Top header bar -->
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Communications Hub</h3>
+          <p>Compose email campaigns, manage subscriber settings, check metrics, and review logs.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Production Node</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="admin-grid" style="margin-bottom: var(--space-5)">
+        <div class="card stat-card">
+          <div class="stat-icon">📩</div>
+          <div class="stat-value" id="statSent">0</div>
+          <div class="stat-label">TOTAL DISPATCHED</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="statDeliveryRate">100%</div>
+          <div class="stat-label">DELIVERY RATE</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">📖</div>
+          <div class="stat-value" id="statOpenRate">0%</div>
+          <div class="stat-label">OPEN RATE</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="statSubscribers">0</div>
+          <div class="stat-label">SUBSCRIBERS</div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="comms-tabs">
+        <div class="comms-tab active" onclick="switchTab('tab-compose')">✍️ Compose Campaign</div>
+        <div class="comms-tab" onclick="switchTab('tab-logs')">📑 Delivery Logs</div>
+        <div class="comms-tab" onclick="switchTab('tab-subscribers')">👥 Subscribers</div>
+        <div class="comms-tab" onclick="switchTab('tab-templates')">🎨 Templates Editor</div>
+      </div>
+
+      <!-- TAB 1: COMPOSE -->
+      <div id="tab-compose" class="tab-content active">
+        <div class="card">
+          <div class="card-header" style="border-bottom: 1px solid var(--clr-border-light)">
+            <h3>New Email Campaign</h3>
+          </div>
+          <div class="card-body" style="padding-top: var(--space-4)">
+            <form id="campaignForm">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+                
+                <div class="form-group">
+                  <label class="form-label" for="campaignSubject">Subject Line</label>
+                  <input type="text" id="campaignSubject" class="form-input" placeholder="e.g. Welcome to the new Suba Wallet!" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="recipientSegment">Recipient Segment</label>
+                  <select id="recipientSegment" class="form-input">
+                    <option value="ALL">All Users</option>
+                    <option value="SUBSCRIBERS">Subscribed Users Only</option>
+                    <option value="AMBASSADORS">Ambassadors Only</option>
+                    <option value="ROLE">By User Role</option>
+                    <option value="LOCATION">By Location</option>
+                    <option value="SPECIFIC">Specific User (ID/Email)</option>
+                    <option value="CUSTOM">Custom Email Addresses List</option>
+                  </select>
+                </div>
+
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-4)">
+                
+                <div class="form-group" id="filterGroup" style="display:none">
+                  <label class="form-label" for="recipientFilter" id="filterLabel">Segment Criteria</label>
+                  <input type="text" id="recipientFilter" class="form-input" placeholder="e.g. Lagos, Nigeria / USER / user@mail.com">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="emailType">Email Category (Granular Opt-in Type)</label>
+                  <select id="emailType" class="form-input">
+                    <option value="newsletter">Weekly Newsletter</option>
+                    <option value="product_update">Product Updates & Enhancements</option>
+                    <option value="promotion">Marketing & Promotional Deals</option>
+                    <option value="security_alert">Critical Security Notifications (Bypasses Preferences)</option>
+                    <option value="career_update">Career Announcements</option>
+                  </select>
+                </div>
+
+              </div>
+
+              <div style="margin-top: var(--space-4)">
+                <label class="form-label">Templates Library</label>
+                <div style="display:flex; gap: var(--space-2); flex-wrap: wrap; margin-top: 4px;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="loadTemplateIntoComposer('welcome')">Welcome</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="loadTemplateIntoComposer('verification')">Verification</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="loadTemplateIntoComposer('weekly_newsletter')">Newsletter</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="loadTemplateIntoComposer('product_updates')">Product Update</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="loadTemplateIntoComposer('maintenance_notice')">Maintenance</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="clearComposerBody()">Clear Body</button>
+                </div>
+              </div>
+
+              <div class="editor-preview-container">
+                <div>
+                  <label class="form-label">HTML Body Content (Supports place-holders: {{fullName}}, {{email}}, {{unsubscribeUrl}})</label>
+                  <div class="formatting-toolbar">
+                    <button type="button" class="format-btn" onclick="insertFormat('h1')">H1</button>
+                    <button type="button" class="format-btn" onclick="insertFormat('p')">Paragraph</button>
+                    <button type="button" class="format-btn" onclick="insertFormat('bold')">B</button>
+                    <button type="button" class="format-btn" onclick="insertFormat('link')">Link</button>
+                    <button type="button" class="format-btn" onclick="insertFormat('button')">CTA Button</button>
+                  </div>
+                  <textarea id="campaignBody" class="form-input body-textarea" placeholder="<h1>Write HTML here...</h1>" required></textarea>
+                </div>
+                <div>
+                  <label class="form-label">Interactive HTML Live Preview</label>
+                  <div id="htmlPreview" class="html-preview-panel">
+                    <p style="color:#aaa; font-style:italic">Live layout preview will update as you write...</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top: var(--space-5); display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-primary btn-lg" onclick="triggerSendVerification()">🚀 Queue Campaign</button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: LOGS -->
+      <div id="tab-logs" class="tab-content">
+        <div class="card" style="padding:0; overflow:hidden">
+          <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light)">
+            <h3>Campaign Logs & Delivery Auditing</h3>
+          </div>
+          <div class="admin-table-container" style="border:none; border-radius: 0">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Recipient</th>
+                  <th>Subject</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Message / Reason</th>
+                  <th>Dispatched Time</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody">
+                <!-- Javascript insertion -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: SUBSCRIBERS -->
+      <div id="tab-subscribers" class="tab-content">
+        <div class="card" style="padding:0; overflow:hidden">
+          <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light)">
+            <h3>Active Newsletter Subscribers</h3>
+          </div>
+          <div class="admin-table-container" style="border:none; border-radius: 0">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Subscriber Email</th>
+                  <th>Registered User?</th>
+                  <th>Status</th>
+                  <th>Date Joined</th>
+                </tr>
+              </thead>
+              <tbody id="subsTableBody">
+                <!-- Javascript insertion -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: TEMPLATES -->
+      <div id="tab-templates" class="tab-content">
+        <div class="card">
+          <div class="card-header" style="border-bottom: 1px solid var(--clr-border-light)">
+            <h3>Default Templates Editor</h3>
+          </div>
+          <div class="card-body" style="padding-top: var(--space-4)">
+            <div class="form-group">
+              <label class="form-label" for="templateSelector">Select Template to Edit</label>
+              <select id="templateSelector" class="form-input" onchange="loadSelectedTemplate()">
+                <!-- Populated via Javascript -->
+              </select>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr; gap: var(--space-4); margin-top: var(--space-4)">
+              <div class="form-group">
+                <label class="form-label" for="tplSubject">Template Subject</label>
+                <input type="text" id="tplSubject" class="form-input">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="tplBody">HTML Body</label>
+                <textarea id="tplBody" class="form-input" style="height: 300px; font-family:monospace"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top: var(--space-4); display:flex; justify-content:flex-end">
+              <button class="btn btn-primary" onclick="saveSelectedTemplate()">💾 Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Pre-Send Confirmation Modal -->
+  <div class="modal-backdrop" id="campaignConfirmModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Confirm Email Queueing</h3>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('campaignConfirmModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding-top: var(--space-2)">
+        <p id="confirmModalText" style="font-size:15px; line-height: 1.5; font-weight: 500; margin-bottom: var(--space-5)">
+          You are about to send this campaign to X users.
+        </p>
+        <div style="display:flex; justify-content: flex-end; gap: var(--space-3)">
+          <button class="btn btn-secondary" onclick="SUBAComponents.closeModal('campaignConfirmModal')">Cancel</button>
+          <button class="btn btn-primary" id="confirmQueueBtn" onclick="queueCampaignNow()">Confirm & Queue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script>
+    let templatesList = [];
+    const token = SUBAUtils.retrieve('token');
+
+    // Secure lockdown redirection if not ADMIN
+    const user = SUBAUtils.retrieve('user');
+    if (!user || user.role !== 'ADMIN' || user.email !== 'vitschisom00@gmail.com') {
+      window.location.href = '../login.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Toggle custom parameters input matching segment dropdown selection
+      document.getElementById('recipientSegment').addEventListener('change', (e) => {
+        const seg = e.target.value;
+        const filterGroup = document.getElementById('filterGroup');
+        const filterLabel = document.getElementById('filterLabel');
+        const filterInput = document.getElementById('recipientFilter');
+
+        if (seg === 'ROLE' || seg === 'LOCATION' || seg === 'SPECIFIC' || seg === 'CUSTOM') {
+          filterGroup.style.display = 'block';
+          if (seg === 'ROLE') {
+            filterLabel.textContent = 'Required Role (USER, ADMIN)';
+            filterInput.placeholder = 'e.g. USER';
+          } else if (seg === 'LOCATION') {
+            filterLabel.textContent = 'Location Filter (Exact text match)';
+            filterInput.placeholder = 'e.g. Lagos, Nigeria';
+          } else if (seg === 'SPECIFIC') {
+            filterLabel.textContent = 'User ID or Email';
+            filterInput.placeholder = 'e.g. user@domain.com';
+          } else if (seg === 'CUSTOM') {
+            filterLabel.textContent = 'Comma Separated Emails List';
+            filterInput.placeholder = 'e.g. first@mail.com, second@mail.com';
+          }
+        } else {
+          filterGroup.style.display = 'none';
+        }
+      });
+
+      // Preview Live update
+      document.getElementById('campaignBody').addEventListener('input', (e) => {
+        document.getElementById('htmlPreview').innerHTML = e.target.value || '<p style="color:#aaa; font-style:italic">Live layout preview will update as you write...</p>';
+      });
+
+      // Load analytics stats, logs, templates, subscribers list
+      loadReportStats();
+      loadLogs();
+      loadSubscribers();
+      loadTemplates();
+    });
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.comms-tab').forEach(t => t.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    async function loadReportStats() {
+      try {
+        const res = await fetch('/api/v1/admin/communications/reports', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const stats = await res.json();
+          document.getElementById('statSent').textContent = stats.totalEmailsSent;
+          document.getElementById('statDeliveryRate').textContent = stats.deliveryRate + '%';
+          document.getElementById('statOpenRate').textContent = stats.openRate + '%';
+          document.getElementById('statSubscribers').textContent = stats.newsletterGrowth;
+        }
+      } catch (err) {
+        console.error("Failed to load statistics:", err.message);
+      }
+    }
+
+    async function loadLogs() {
+      try {
+        const res = await fetch('/api/v1/admin/communications/logs', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const logs = await res.json();
+          const body = document.getElementById('logsTableBody');
+          if (logs.length === 0) {
+            body.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#aaa; padding: 20px">No logs recorded yet.</td></tr>`;
+            return;
+          }
+          body.innerHTML = logs.map(l => {
+            const statusClass = l.status === 'DELIVERED' ? 'badge-success' : 'badge-failed';
+            return `
+              <tr>
+                <td><span style="font-weight:700">${l.recipient}</span></td>
+                <td>${l.subject}</td>
+                <td><span class="badge badge-dark">${l.email_type || 'system'}</span></td>
+                <td><span class="badge ${statusClass}">${l.status}</span></td>
+                <td style="font-size:12px; color:#aaa">${l.error_message || 'N/A'}</td>
+                <td>${SUBAUtils.formatDate(l.created_at || l.sent_at)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadSubscribers() {
+      try {
+        const res = await fetch('/api/v1/admin/communications/subscribers', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const subs = await res.json();
+          const body = document.getElementById('subsTableBody');
+          if (subs.length === 0) {
+            body.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#aaa; padding: 20px">No subscribers yet.</td></tr>`;
+            return;
+          }
+          body.innerHTML = subs.map(s => {
+            const statusClass = s.status === 'SUBSCRIBED' ? 'badge-success' : 'badge-failed';
+            return `
+              <tr>
+                <td><span style="font-weight:700">${s.email}</span></td>
+                <td>${s.is_user ? '✅ Yes' : '❌ Guest'}</td>
+                <td><span class="badge ${statusClass}">${s.status}</span></td>
+                <td>${SUBAUtils.formatShortDate(s.created_at)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/api/v1/admin/communications/templates', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          templatesList = await res.json();
+          const selector = document.getElementById('templateSelector');
+          selector.innerHTML = templatesList.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+          loadSelectedTemplate();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function loadSelectedTemplate() {
+      const name = document.getElementById('templateSelector').value;
+      const tpl = templatesList.find(t => t.name === name);
+      if (tpl) {
+        document.getElementById('tplSubject').value = tpl.subject;
+        document.getElementById('tplBody').value = tpl.body;
+      }
+    }
+
+    async function saveSelectedTemplate() {
+      const name = document.getElementById('templateSelector').value;
+      const subject = document.getElementById('tplSubject').value;
+      const body = document.getElementById('tplBody').value;
+
+      try {
+        const res = await fetch(`/api/v1/admin/communications/templates/${name}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ subject, body })
+        });
+        if (res.ok) {
+          SUBAComponents.showToast({
+            title: 'Template Updated',
+            message: `Template '${name}' saved successfully.`,
+            type: 'success'
+          });
+          loadTemplates();
+        } else {
+          const err = await res.json();
+          SUBAComponents.showToast({ title: 'Error', message: err.message, type: 'error' });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function loadTemplateIntoComposer(name) {
+      const tpl = templatesList.find(t => t.name === name);
+      if (tpl) {
+        document.getElementById('campaignSubject').value = tpl.subject;
+        document.getElementById('campaignBody').value = tpl.body;
+        document.getElementById('htmlPreview').innerHTML = tpl.body;
+      } else {
+        // Fallback local mockup if templatesList failed load
+        const localTemplates = {
+          welcome: '<h1>Welcome, {{fullName}}!</h1><p>Thanks for joining Suba Wallet. Your virtual account is ready.</p>',
+          verification: '<h1>Verify Email</h1><p>Please click verification link: <a href="{{verificationUrl}}">Verify Now</a></p>',
+          weekly_newsletter: '<h1>Weekly Digest</h1><p>Hi {{fullName}}, here are the latest updates from Suba...</p>',
+          product_updates: '<h1>Product Update</h1><p>We released loyalty SB points conversions!</p>',
+          maintenance_notice: '<h1>Scheduled Maintenance</h1><p>We are upgrading our payment nodes on Sunday.</p>'
+        };
+        const body = localTemplates[name] || '';
+        document.getElementById('campaignBody').value = body;
+        document.getElementById('htmlPreview').innerHTML = body;
+      }
+    }
+
+    function clearComposerBody() {
+      document.getElementById('campaignBody').value = '';
+      document.getElementById('htmlPreview').innerHTML = '<p style="color:#aaa; font-style:italic">Live layout preview will update as you write...</p>';
+    }
+
+    function insertFormat(type) {
+      const textarea = document.getElementById('campaignBody');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const selected = text.substring(start, end);
+      
+      let formatted = '';
+      if (type === 'h1') formatted = `<h1>${selected || 'Heading'}</h1>`;
+      else if (type === 'p') formatted = `<p>${selected || 'Paragraph content...'}</p>`;
+      else if (type === 'bold') formatted = `<strong>${selected || 'Bold text'}</strong>`;
+      else if (type === 'link') formatted = `<a href="${selected || 'https://suba.ng'}">${selected || 'Link text'}</a>`;
+      else if (type === 'button') formatted = `<a href="https://suba.ng/login" style="background-color: #5d5fef; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">${selected || 'Action Button'}</a>`;
+
+      textarea.value = text.substring(0, start) + formatted + text.substring(end);
+      textarea.dispatchEvent(new Event('input'));
+    }
+
+    async function triggerSendVerification() {
+      const subject = document.getElementById('campaignSubject').value;
+      const body = document.getElementById('campaignBody').value;
+      if (!subject || !body) {
+        SUBAComponents.showToast({ title: 'Validation Failed', message: 'Subject and campaign body are required.', type: 'error' });
+        return;
+      }
+
+      const segment = document.getElementById('recipientSegment').value;
+      const filter = document.getElementById('recipientFilter').value;
+
+      try {
+        // Call the API endpoint to get a live resolved count of recipient targets
+        const res = await fetch(`/api/v1/admin/communications/target-count?segment=${segment}&filter=${encodeURIComponent(filter)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Verbatim pre-send confirmation check string required by constraints: "You are about to send this campaign to X users."
+          document.getElementById('confirmModalText').textContent = `You are about to send this campaign to ${data.count} users.`;
+          SUBAComponents.openModal('campaignConfirmModal');
+        } else {
+          document.getElementById('confirmModalText').textContent = `You are about to send this campaign. Please confirm.`;
+          SUBAComponents.openModal('campaignConfirmModal');
+        }
+      } catch (err) {
+        document.getElementById('confirmModalText').textContent = `You are about to send this campaign. Please confirm.`;
+        SUBAComponents.openModal('campaignConfirmModal');
+      }
+    }
+
+    async function queueCampaignNow() {
+      SUBAComponents.closeModal('campaignConfirmModal');
+      
+      const subject = document.getElementById('campaignSubject').value;
+      const body = document.getElementById('campaignBody').value;
+      const email_type = document.getElementById('emailType').value;
+      const recipient_segment = document.getElementById('recipientSegment').value;
+      const recipient_filter = document.getElementById('recipientFilter').value;
+
+      try {
+        const res = await fetch('/api/v1/admin/communications/campaigns', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ subject, body, email_type, recipient_segment, recipient_filter })
+        });
+
+        if (res.ok) {
+          // Confirm with Verbatim confirmation toast constraint: "Campaign has been queued successfully."
+          SUBAComponents.showToast({
+            title: 'Campaign Queued',
+            message: 'Campaign has been queued successfully.',
+            type: 'success'
+          });
+          
+          // Clear inputs and reload stats/logs
+          document.getElementById('campaignSubject').value = '';
+          clearComposerBody();
+          loadReportStats();
+          loadLogs();
+        } else {
+          const err = await res.json();
+          SUBAComponents.showToast({ title: 'Queue Failed', message: err.message, type: 'error' });
+        }
+      } catch (err) {
+        SUBAComponents.showToast({ title: 'Error', message: 'Network error queueing campaign.', type: 'error' });
+      }
+    }
+  </script>
+</body>
+</html>

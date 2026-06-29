@@ -8,6 +8,7 @@ export function initializeWebSocket(server) {
   wss = new WebSocketServer({ server });
   
   console.log("🔌 WebSocket Server initialized on the shared HTTP port.");
+  global.sendWebSocketNotification = sendToUser;
 
   wss.on('connection', (ws, req) => {
     console.log("🔌 WebSocket client connected.");

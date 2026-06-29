@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS users (
     role user_role_enum NOT NULL DEFAULT 'USER',
     kyc_level INTEGER NOT NULL DEFAULT 1,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    location VARCHAR(100) DEFAULT 'Lagos, Nigeria',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -329,3 +330,102 @@ CREATE TABLE IF NOT EXISTS system_configs (
 INSERT INTO system_configs (key, value) 
 VALUES ('points_earning_rate', '100'), ('points_redemption_rate', '0.05')
 ON CONFLICT (key) DO NOTHING;
+
+-- 18. Email Campaigns Table
+CREATE TABLE IF NOT EXISTS email_campaigns (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    subject VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    email_type VARCHAR(50) NOT NULL,
+    recipient_segment VARCHAR(50) NOT NULL DEFAULT 'ALL',
+    recipient_filter TEXT,
+    scheduled_at TIMESTAMP WITH TIME ZONE,
+    sent_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 19. Email Logs Table
+CREATE TABLE IF NOT EXISTS email_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    campaign_id UUID REFERENCES email_campaigns(id) ON DELETE SET NULL,
+    subject VARCHAR(255) NOT NULL,
+    sender VARCHAR(255) NOT NULL,
+    recipient VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'QUEUED',
+    error_message TEXT,
+    opened_at TIMESTAMP WITH TIME ZONE,
+    clicked_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sent_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS ix_email_logs_recipient ON email_logs(recipient);
+CREATE INDEX IF NOT EXISTS ix_email_logs_campaign_id ON email_logs(campaign_id);
+
+-- 20. Newsletter Subscribers Table
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    is_user BOOLEAN NOT NULL DEFAULT FALSE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'SUBSCRIBED',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_news_subscribers_email ON newsletter_subscribers(email);
+
+-- 21. Email Templates Table
+CREATE TABLE IF NOT EXISTS email_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 22. Communication Preferences Table
+CREATE TABLE IF NOT EXISTS communication_preferences (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    newsletter BOOLEAN NOT NULL DEFAULT TRUE,
+    marketing BOOLEAN NOT NULL DEFAULT TRUE,
+    product_updates BOOLEAN NOT NULL DEFAULT TRUE,
+    security BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_comm_pref_user_id ON communication_preferences(user_id);
+
+-- 23. In-App Notifications Table
+CREATE TABLE IF NOT EXISTS in_app_notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_in_app_notif_user_id ON in_app_notifications(user_id);
+
+-- Seed default email templates
+INSERT INTO email_templates (name, subject, body) VALUES
+('welcome', 'Welcome to Suba Wallet!', '<h1>Welcome, {{fullName}}!</h1><p>Thank you for signing up to Suba Wallet. We are excited to help you manage your virtual assets and wallet accounts.</p><p><a href="{{loginUrl}}" style="background-color: #5d5fef; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Login to Dashboard</a></p><p>Regards,<br>Suba Team</p>'),
+('verification', 'Verify your Suba Email Address', '<h1>Hi {{fullName}},</h1><p>Please click the button below to verify your email address and activate your account:</p><p><a href="{{verificationUrl}}" style="background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p><p>If you did not request this, please ignore this email.</p>'),
+('password_reset', 'Reset your Suba Password', '<h1>Reset Password Request</h1><p>Hi {{fullName}},</p><p>We received a request to reset your password. Click below to choose a new password:</p><p><a href="{{resetUrl}}" style="background-color: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p><p>This link is valid for 24 hours.</p>'),
+('weekly_newsletter', 'Suba Weekly Highlights', '<h1>Suba Weekly Newsletter</h1><p>Hi {{fullName}},</p><p>Here are the top updates and stories from Suba this week. Stay ahead with fintech insights!</p>'),
+('product_updates', 'New Product Enhancements on Suba', '<h1>Product Update</h1><p>Hi {{fullName}},</p><p>We have released new features to improve your transaction speeds and double-entry reconciliation views. Read the patch notes on our website.</p>'),
+('feature_release', 'Feature Release Notice', '<h1>New Feature Launch!</h1><p>Hi {{fullName}},</p><p>We are thrilled to launch support for the SB Points Loyalty Program! Convert points to wallet cash discount with 1 click.</p>'),
+('ambassador_approval', 'Your Ambassador Application has been Approved!', '<h1>Congratulations! 🚀</h1><p>Hi {{fullName}},</p><p>Your Ambassador Application was reviewed and approved by the Suba team. Your referral code is now active.</p>'),
+('career_announcement', 'New Career Openings at Suba', '<h1>We are Hiring!</h1><p>Hi {{fullName}},</p><p>We have posted new opportunities on our Career Board. Apply today to join a fast-growing fintech engineering team.</p>'),
+('maintenance_notice', 'Scheduled System Maintenance', '<h1>Maintenance Advisory ⚠️</h1><p>Please note that Suba will undergo scheduled system upgrades on Sunday from 2 AM to 4 AM WAT. Services may be temporarily unavailable.</p>'),
+('job_application_received', 'Job Application Received - Suba', '<h1>Application Received</h1><p>Hi {{fullName}},</p><p>Thank you for applying to join Suba. We have received your CV and application details and will review them shortly.</p>'),
+('newsletter_confirmation', 'Newsletter Subscription Confirmed', '<h1>Subscription Confirmed</h1><p>Hi {{fullName}},</p><p>You have successfully subscribed to the Suba weekly newsletter and product updates.</p>')
+ON CONFLICT (name) DO NOTHING;

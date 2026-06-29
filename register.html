@@ -501,13 +501,13 @@
 
           SUBAComponents.showToast({
             title: 'Account Created!',
-            message: 'Redirecting to your dashboard...',
+            message: 'Setting up preferences...',
             type: 'success'
           });
 
           setTimeout(() => {
-            window.location.href = 'dashboard.html';
-          }, 1000);
+            SUBAComponents.openModal('newsletterPromptModal');
+          }, 800);
         } catch (err) {
           referralError.textContent = err.message || 'Registration failed.';
           referralError.classList.remove('hidden');
@@ -551,6 +551,64 @@
         }
       }
     });
+
+    window.newsletterChoice = async function(subscribe) {
+      const token = SUBAUtils.retrieve('token');
+      const user = SUBAUtils.retrieve('user');
+      
+      try {
+        if (subscribe) {
+          await fetch('/api/v1/newsletter/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ email: user.email, subscribe: true })
+          });
+        } else {
+          await fetch('/api/v1/user/preferences', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ newsletter: false, marketing: false, product_updates: false })
+          });
+          await fetch('/api/v1/newsletter/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ email: user.email, subscribe: false })
+          });
+        }
+      } catch (err) {
+        console.error("Failed to save newsletter registration choice:", err.message);
+      } finally {
+        SUBAComponents.closeModal('newsletterPromptModal');
+        window.location.href = 'dashboard.html';
+      }
+    };
   </script>
+
+  <!-- Newsletter Prompt Modal -->
+  <div class="modal-backdrop" id="newsletterPromptModal">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>Stay Updated! 📬</h3>
+      </div>
+      <div class="modal-body" style="padding-top: var(--space-2)">
+        <p style="font-size:14px; line-height: 1.5; font-weight: 500; margin-bottom: var(--space-5)">
+          Would you like to receive Suba newsletters, product updates, exclusive offers and important announcements by email?
+        </p>
+        <div style="display:flex; flex-direction: column; gap: var(--space-2)">
+          <button class="btn btn-primary btn-block" onclick="newsletterChoice(true)">Yes, subscribe me</button>
+          <button class="btn btn-secondary btn-block" onclick="newsletterChoice(false)">No, thanks</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import * as db from '../db/index.js';
 import { WalletService } from './wallet-service.js';
+import { EmailService } from './email-service.js';
 
 export class AuthService {
   /**
@@ -49,7 +50,24 @@ export class AuthService {
         [user.id, virtualAccount, bankName, reference]
       );
 
+      // 2c. Seed default communication preferences
+      await client.query(
+        `INSERT INTO communication_preferences (user_id, newsletter, marketing, product_updates, security)
+         VALUES ($1, true, true, true, true)`,
+        [user.id]
+      );
+
       await client.query('COMMIT');
+
+      // Dispatch automated welcome and verification emails asynchronously
+      try {
+        await EmailService.sendAutomatedEmail(user.id, 'welcome');
+        await EmailService.sendAutomatedEmail(user.id, 'verification', {
+          verificationUrl: `https://suba.ng/verify?email=${encodeURIComponent(user.email)}`
+        });
+      } catch (emailErr) {
+        console.warn("⚠️ [REGISTRATION] Automated emails failed to queue:", emailErr.message);
+      }
       
       console.log(`[AUTH SERVICE] Registered new user ${emailLower}. Assigned Virtual Account: ${virtualAccount}`);
       return { ...user, virtualAccount, bankName, reference };

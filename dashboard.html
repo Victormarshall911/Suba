@@ -435,6 +435,27 @@
     </div>
   </div>
 
+  <!-- Notification Center Modal -->
+  <div class="modal-backdrop" id="notificationCenterModal">
+    <div class="modal" style="max-width: 500px">
+      <div class="modal-header" style="display:flex; align-items:center;">
+        <h3>Alerts & Feeds</h3>
+        <button class="btn btn-secondary btn-sm" onclick="markAllNotificationsAsRead()" style="margin-left: auto; margin-right: var(--space-3); font-size:11px; padding: 4px 8px">Mark all read</button>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('notificationCenterModal')" style="margin-left: 0">✕</button>
+      </div>
+      <div class="modal-body" style="padding-top: var(--space-4)">
+        <div id="notificationListContainer" style="display: flex; flex-direction: column; gap: var(--space-3); max-height: 400px; overflow-y: auto; padding-right: 4px;">
+          <!-- Populated via JS -->
+        </div>
+        <div id="notificationEmptyState" class="empty-state hidden" style="padding: var(--space-6) 0">
+          <span style="font-size: 32px">🔔</span>
+          <h4 style="margin-top: var(--space-2)">Clean Inbox!</h4>
+          <p>No notifications or updates are waiting for you.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/utils.js"></script>
   <script src="js/components.js"></script>
@@ -1010,6 +1031,96 @@
           window.location.href = 'buy-data.html';
         });
       });
+
+      // Notifications Center Integration
+      const badge = document.querySelector('.bell-badge');
+      const listContainer = document.getElementById('notificationListContainer');
+      const emptyState = document.getElementById('notificationEmptyState');
+
+      async function loadNotifications() {
+        try {
+          const notifs = await SUBAApi.request('/user/notifications', { method: 'GET' });
+          
+          // Compute unread count
+          const unread = notifs.filter(n => !n.is_read);
+          if (unread.length > 0) {
+            badge.textContent = unread.length;
+            badge.style.display = 'flex';
+          } else {
+            badge.style.display = 'none';
+          }
+
+          if (!notifs || notifs.length === 0) {
+            listContainer.innerHTML = '';
+            emptyState.classList.remove('hidden');
+          } else {
+            emptyState.classList.add('hidden');
+            
+            const catEmoji = (cat) => {
+              const map = { announcement: '📢', product_update: '⚙️', promotion: '🎁', security: '🔒', career: '💼' };
+              return map[cat] || '🔔';
+            };
+
+            listContainer.innerHTML = notifs.map(n => `
+              <div class="notification-item" id="notif-row-${n.id}" style="background: var(--clr-bg); border: 1px solid var(--clr-border-light); padding: var(--space-3); border-radius: var(--radius-md); position: relative; display: flex; gap: var(--space-3); align-items: start; transition: all 0.2s ease;">
+                <span style="font-size: 20px;">${catEmoji(n.category)}</span>
+                <div style="flex: 1">
+                  <h5 style="margin: 0; font-weight: 700; font-size: 13px; color: var(--clr-text-primary); display: flex; align-items: center; gap: var(--space-2)">
+                    ${n.title}
+                    ${!n.is_read ? '<span class="unread-dot" style="width: 6px; height: 6px; border-radius: 50%; background: var(--clr-primary); display: inline-block;"></span>' : ''}
+                  </h5>
+                  <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--clr-text-secondary); line-height: 1.4;">${n.message}</p>
+                  <span style="font-size: 9px; color: var(--clr-text-tertiary); display: block; margin-top: 6px">${SUBAUtils.timeAgo(n.created_at)}</span>
+                </div>
+                <button onclick="deleteNotificationNow('${n.id}')" style="background: transparent; border: none; color: var(--clr-text-tertiary); cursor: pointer; font-size: 14px; padding: 0 4px;" title="Delete">✕</button>
+              </div>
+            `).join('');
+          }
+        } catch (err) {
+          console.error("Failed to load notifications:", err.message);
+        }
+      }
+
+      window.markAllNotificationsAsRead = async () => {
+        try {
+          await SUBAApi.request('/user/notifications/read', { method: 'POST' });
+          SUBAComponents.showToast({ title: 'Notifications Read', message: 'All notifications marked as read.', type: 'success' });
+          
+          // Clear dots and badge count
+          document.querySelectorAll('.unread-dot').forEach(el => el.remove());
+          badge.style.display = 'none';
+          
+          // Reload
+          await loadNotifications();
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      window.deleteNotificationNow = async (id) => {
+        try {
+          const success = await SUBAApi.request(`/user/notifications/${id}`, { method: 'DELETE' });
+          if (success) {
+            document.getElementById(`notif-row-${id}`).remove();
+            SUBAComponents.showToast({ title: 'Alert Removed', message: 'Notification deleted.', type: 'info' });
+            await loadNotifications();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      // Handle Bell Click to open modal
+      document.getElementById('notificationBtn').addEventListener('click', () => {
+        SUBAComponents.openModal('notificationCenterModal');
+        loadNotifications();
+      });
+
+      // Initial Notifications Check
+      await loadNotifications();
+
+      // Trigger periodic checking
+      setInterval(() => loadNotifications(), 15000);
 
       // Check if we should show the support prompt
       if (localStorage.getItem('suba_show_support_prompt') === 'true') {

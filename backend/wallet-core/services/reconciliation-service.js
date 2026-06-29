@@ -272,6 +272,15 @@ export class ReconciliationService {
        VALUES ($1, $2, $3, $4, 'RECEIVED') RETURNING *`,
       [jobId, userId, cvUrl, coverLetter]
     );
+
+    // Dispatch automated confirmation email
+    try {
+      const { EmailService } = await import('./email-service.js');
+      await EmailService.sendAutomatedEmail(userId, 'job_application_received');
+    } catch (emailErr) {
+      console.warn("⚠️ [RECONCILIATION SERVICE] Automated job application email failed to queue:", emailErr.message);
+    }
+
     return result.rows[0];
   }
 

@@ -365,7 +365,111 @@ async function runTests() {
       throw new Error(`Expected ₦50.00 wallet cashback, got ₦${finalBalance - initialBalance}`);
     }
 
-    console.log("\n🌟 All test checks passed successfully! Suba Transaction + Asset + Growth System is 100% compliant.");
+    // TEST 12: Communication System (Campaigns, Queue Workers, Preferences & Notifications)
+    // -------------------------------------------------------------------------
+    console.log("\n12. Testing Suba Communication Campaigns, Queue worker, and Preferences filtering...");
+    const { EmailService } = await import('../services/email-service.js');
+    const { NotificationService } = await import('../services/notification-service.js');
+
+    // Register user A (newsletter = true) and user B (newsletter = false)
+    const userA = await AuthService.register({
+      email: 'suba_subscribed@suba.ng',
+      phone_number: '08111111111',
+      full_name: 'Subscriber User',
+      password: 'Password123'
+    });
+
+    const userB = await AuthService.register({
+      email: 'suba_opted_out@suba.ng',
+      phone_number: '08222222222',
+      full_name: 'Opt-out User',
+      password: 'Password123'
+    });
+
+    // Update User B preference to opt-out
+    await db.query(
+      `UPDATE communication_preferences 
+       SET newsletter = false, marketing = false, product_updates = false 
+       WHERE user_id = $1`,
+      [userB.id]
+    );
+
+    // Create Newsletter subscriber records
+    await db.query(
+      `INSERT INTO newsletter_subscribers (email, is_user, user_id, status)
+       VALUES ('suba_subscribed@suba.ng', true, $1, 'SUBSCRIBED')`,
+      [userA.id]
+    );
+    await db.query(
+      `INSERT INTO newsletter_subscribers (email, is_user, user_id, status)
+       VALUES ('suba_opted_out@suba.ng', true, $2, 'UNSUBSCRIBED')`,
+      [userB.id]
+    );
+
+    // Insert Campaign row of type 'newsletter'
+    const campaignRes = await db.query(
+      `INSERT INTO email_campaigns (subject, body, email_type, recipient_segment, status)
+       VALUES ('Weekly Digest Test', 'Hello {{fullName}}, welcome to weekly updates!', 'newsletter', 'ALL', 'PENDING')
+       RETURNING id`
+    );
+    const campaignId = campaignRes.rows[0].id;
+
+    // Queue Campaign
+    await EmailService.queueCampaign(campaignId);
+
+    // Poll database for background queue completion
+    let campaignStatus = 'PENDING';
+    for (let i = 0; i < 100; i++) {
+      const statusRes = await db.query('SELECT status FROM email_campaigns WHERE id = $1', [campaignId]);
+      campaignStatus = statusRes.rows[0]?.status;
+      if (campaignStatus === 'COMPLETED' || campaignStatus === 'FAILED') break;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    console.log(`    ✅ Campaign status after queue worker execution: ${campaignStatus}`);
+    if (campaignStatus !== 'COMPLETED') {
+      throw new Error(`Campaign processing failed or timed out. Status: ${campaignStatus}`);
+    }
+
+    // Verify User A received the email log
+    const logARes = await db.query("SELECT id FROM email_logs WHERE campaign_id = $1 AND recipient = $2", [campaignId, 'suba_subscribed@suba.ng']);
+    console.log(`    ✅ User A (Subscribed) email delivery logs rowCount: ${logARes.rowCount} (expected: 1)`);
+    if (logARes.rowCount !== 1) {
+      throw new Error(`Expected 1 email log for subscribed user, got ${logARes.rowCount}`);
+    }
+
+    // Verify User B did NOT receive the email log (since newsletter = false)
+    const logBRes = await db.query("SELECT id FROM email_logs WHERE campaign_id = $1 AND recipient = $2", [campaignId, 'suba_opted_out@suba.ng']);
+    console.log(`    ✅ User B (Opted-out) email delivery logs rowCount: ${logBRes.rowCount} (expected: 0)`);
+    if (logBRes.rowCount !== 0) {
+      throw new Error(`Expected 0 email logs for opted-out user, got ${logBRes.rowCount}`);
+    }
+
+    // Test In-App Notification Center triggers
+    // Create direct notifications
+    const notif = await NotificationService.createNotification(userA.id, 'Test Alert Title', 'Test Alert Message text', 'announcement');
+    let unreadCount = await NotificationService.getUnreadCount(userA.id);
+    console.log(`    ✅ Unread notifications count for User A: ${unreadCount} (expected: 1)`);
+    if (unreadCount !== 1) {
+      throw new Error(`Expected 1 unread notification, got ${unreadCount}`);
+    }
+
+    // Mark all as read
+    await NotificationService.markAllAsRead(userA.id);
+    unreadCount = await NotificationService.getUnreadCount(userA.id);
+    console.log(`    ✅ Unread count after marking read: ${unreadCount} (expected: 0)`);
+    if (unreadCount !== 0) {
+      throw new Error(`Expected 0 unread notifications after markAllAsRead, got ${unreadCount}`);
+    }
+
+    // Delete notification
+    const deleted = await NotificationService.deleteNotification(userA.id, notif.id);
+    console.log(`    ✅ Notification deleted successfully: ${deleted.success}`);
+    if (!deleted.success) {
+      throw new Error("Failed to delete notification");
+    }
+
+    console.log("\n🌟 All test checks passed successfully! Suba Transaction + Asset + Growth + Communication System is 100% compliant.");
     
   } catch (error) {
     console.error("\n❌ Verification Test Suite FAILED:", error);

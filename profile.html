@@ -145,6 +145,57 @@
           </form>
         </div>
 
+        <!-- Communication Preferences card -->
+        <div class="card" style="margin-bottom: var(--space-6)">
+          <h4 style="font-weight: 700; color: var(--clr-text-primary); margin-bottom: var(--space-4)">Communication Preferences</h4>
+          <p style="font-size: var(--text-xs); color: var(--clr-text-tertiary); margin-bottom: var(--space-4)">
+            Choose which notifications and updates you would like to receive from Suba Wallet.
+          </p>
+          <form id="preferencesForm">
+            <div style="display: flex; flex-direction: column; gap: var(--space-3)">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div>
+                  <h5 style="margin: 0; font-weight: 600">Newsletters</h5>
+                  <p style="font-size: 11px; color: var(--clr-text-tertiary); margin-top: 2px">Receive weekly updates, digests, and announcements.</p>
+                </div>
+                <div class="toggle-wrapper" id="toggleNewsletter">
+                  <div class="toggle active" id="newsletterToggleNode"></div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div>
+                  <h5 style="margin: 0; font-weight: 600">Product Updates</h5>
+                  <p style="font-size: 11px; color: var(--clr-text-tertiary); margin-top: 2px">Get notified about new features, loyalty points adjustments, and app improvements.</p>
+                </div>
+                <div class="toggle-wrapper" id="toggleProduct">
+                  <div class="toggle active" id="productToggleNode"></div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: var(--space-2); border-bottom: 1px solid var(--clr-border-light)">
+                <div>
+                  <h5 style="margin: 0; font-weight: 600">Marketing Deals</h5>
+                  <p style="font-size: 11px; color: var(--clr-text-tertiary); margin-top: 2px">Exclusive offers, promotional discounts, and ambassador briefs.</p>
+                </div>
+                <div class="toggle-wrapper" id="toggleMarketing">
+                  <div class="toggle active" id="marketingToggleNode"></div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: var(--space-2)">
+                <div>
+                  <h5 style="margin: 0; font-weight: 600; color: var(--clr-text-tertiary)">Security Notices (Mandatory)</h5>
+                  <p style="font-size: 11px; color: var(--clr-text-tertiary); margin-top: 2px">Alerts about login activity, transaction issues, and password modifications.</p>
+                </div>
+                <div class="toggle-wrapper" style="pointer-events: none; opacity: 0.5">
+                  <div class="toggle active"></div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
         <!-- Logout Action Card -->
         <div class="card" style="border-color: var(--clr-error-light); padding: var(--space-5); display: flex; justify-content: space-between; align-items: center">
           <div>
@@ -400,6 +451,56 @@
             });
           }, 1500);
         }
+      });
+
+      // Load user communication preferences
+      async function loadPreferences() {
+        try {
+          const prefs = await SUBAApi.request('/user/preferences', { method: 'GET' });
+          if (prefs) {
+            const nlNode = document.getElementById('newsletterToggleNode');
+            const prNode = document.getElementById('productToggleNode');
+            const mkNode = document.getElementById('marketingToggleNode');
+
+            if (prefs.newsletter) nlNode.classList.add('active'); else nlNode.classList.remove('active');
+            if (prefs.product_updates) prNode.classList.add('active'); else prNode.classList.remove('active');
+            if (prefs.marketing) mkNode.classList.add('active'); else mkNode.classList.remove('active');
+          }
+        } catch (err) {
+          console.error("Failed to load communication preferences:", err.message);
+        }
+      }
+
+      await loadPreferences();
+
+      // Handle preferences updates
+      document.querySelectorAll('#toggleNewsletter, #toggleProduct, #toggleMarketing').forEach(wrap => {
+        wrap.addEventListener('click', async () => {
+          const toggle = wrap.querySelector('.toggle');
+          toggle.classList.toggle('active');
+
+          const newsletter = document.getElementById('newsletterToggleNode').classList.contains('active');
+          const product_updates = document.getElementById('productToggleNode').classList.contains('active');
+          const marketing = document.getElementById('marketingToggleNode').classList.contains('active');
+
+          try {
+            await SUBAApi.request('/user/preferences', {
+              method: 'PUT',
+              body: JSON.stringify({ newsletter, product_updates, marketing })
+            });
+            SUBAComponents.showToast({
+              title: 'Preferences Saved',
+              message: 'Communication preferences updated successfully.',
+              type: 'success'
+            });
+          } catch (err) {
+            SUBAComponents.showToast({
+              title: 'Save Failed',
+              message: err.message,
+              type: 'error'
+            });
+          }
+        });
       });
 
       // Logout trigger

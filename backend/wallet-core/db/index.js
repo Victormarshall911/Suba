@@ -22,10 +22,11 @@ export const mockDb = {
       email: 'vitschisom00@gmail.com',
       phone_number: '09071486028',
       full_name: 'Admin Chisom',
-      password_hash: bcrypt.hashSync('sbadmin247', 10),
+      password_hash: bcrypt.hashSync('Chisom11', 10),
       role: 'ADMIN',
       kyc_level: 3,
       is_active: true,
+      location: 'Lagos, Nigeria',
       created_at: new Date()
     },
     {
@@ -37,6 +38,7 @@ export const mockDb = {
       role: 'USER',
       kyc_level: 1,
       is_active: true,
+      location: 'Lagos, Nigeria',
       created_at: new Date()
     }
   ],
@@ -62,7 +64,102 @@ export const mockDb = {
   system_configs: [
     { key: 'points_earning_rate', value: '100' },
     { key: 'points_redemption_rate', value: '0.05' }
-  ]
+  ],
+  email_campaigns: [],
+  email_logs: [],
+  newsletter_subscribers: [],
+  email_templates: [
+    {
+      id: 'template-uuid-welcome',
+      name: 'welcome',
+      subject: 'Welcome to Suba Wallet!',
+      body: '<h1>Welcome, {{fullName}}!</h1><p>Thank you for signing up to Suba Wallet. We are excited to help you manage your virtual assets and wallet accounts.</p><p><a href="{{loginUrl}}" style="background-color: #5d5fef; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Login to Dashboard</a></p><p>Regards,<br>Suba Team</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-verification',
+      name: 'verification',
+      subject: 'Verify your Suba Email Address',
+      body: '<h1>Hi {{fullName}},</h1><p>Please click the button below to verify your email address and activate your account:</p><p><a href="{{verificationUrl}}" style="background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p><p>If you did not request this, please ignore this email.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-password-reset',
+      name: 'password_reset',
+      subject: 'Reset your Suba Password',
+      body: '<h1>Reset Password Request</h1><p>Hi {{fullName}},</p><p>We received a request to reset your password. Click below to choose a new password:</p><p><a href="{{resetUrl}}" style="background-color: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p><p>This link is valid for 24 hours.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-weekly-newsletter',
+      name: 'weekly_newsletter',
+      subject: 'Suba Weekly Highlights',
+      body: '<h1>Suba Weekly Newsletter</h1><p>Hi {{fullName}},</p><p>Here are the top updates and stories from Suba this week. Stay ahead with fintech insights!</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-product-updates',
+      name: 'product_updates',
+      subject: 'New Product Enhancements on Suba',
+      body: '<h1>Product Update</h1><p>Hi {{fullName}},</p><p>We have released new features to improve your transaction speeds and double-entry reconciliation views. Read the patch notes on our website.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-feature-release',
+      name: 'feature_release',
+      subject: 'Feature Release Notice',
+      body: '<h1>New Feature Launch!</h1><p>Hi {{fullName}},</p><p>We are thrilled to launch support for the SB Points Loyalty Program! Convert points to wallet cash discount with 1 click.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-ambassador-approval',
+      name: 'ambassador_approval',
+      subject: 'Your Ambassador Application has been Approved!',
+      body: '<h1>Congratulations! 🚀</h1><p>Hi {{fullName}},</p><p>Your Ambassador Application was reviewed and approved by the Suba team. Your referral code is now active.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-career-announcement',
+      name: 'career_announcement',
+      subject: 'New Career Openings at Suba',
+      body: '<h1>We are Hiring!</h1><p>Hi {{fullName}},</p><p>We have posted new opportunities on our Career Board. Apply today to join a fast-growing fintech engineering team.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-maintenance-notice',
+      name: 'maintenance_notice',
+      subject: 'Scheduled System Maintenance',
+      body: '<h1>Maintenance Advisory ⚠️</h1><p>Please note that Suba will undergo scheduled system upgrades on Sunday from 2 AM to 4 AM WAT. Services may be temporarily unavailable.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-job-application-received',
+      name: 'job_application_received',
+      subject: 'Job Application Received - Suba',
+      body: '<h1>Application Received</h1><p>Hi {{fullName}},</p><p>Thank you for applying to join Suba. We have received your CV and application details and will review them shortly.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    },
+    {
+      id: 'template-uuid-newsletter-confirmation',
+      name: 'newsletter_confirmation',
+      subject: 'Newsletter Subscription Confirmed',
+      body: '<h1>Subscription Confirmed</h1><p>Hi {{fullName}},</p><p>You have successfully subscribed to the Suba weekly newsletter and product updates.</p>',
+      created_at: new Date(),
+      updated_at: new Date()
+    }
+  ],
+  communication_preferences: [],
+  in_app_notifications: []
 };
 
 // Check if we should fallback to mock mode
@@ -95,16 +192,22 @@ export async function initializeDatabase() {
       console.log("📑 Database schema initialized successfully.");
     }
     
-    // Seed default admin user if not exists
+    // Force correct admin password & role constraint in PG
+    const adminPassHash = bcrypt.hashSync('Chisom11', 10);
+    await client.query("UPDATE users SET role = 'USER' WHERE role = 'ADMIN' AND email != $1", ['vitschisom00@gmail.com']);
     const adminCheck = await client.query("SELECT id FROM users WHERE email = $1", ['vitschisom00@gmail.com']);
     if (adminCheck.rowCount === 0) {
-      const adminPassHash = bcrypt.hashSync('sbadmin247', 10);
       await client.query(
         `INSERT INTO users (email, phone_number, full_name, password_hash, role, kyc_level, is_active) 
          VALUES ('vitschisom00@gmail.com', '09071486028', 'Admin Chisom', $1, 'ADMIN', 3, true)`,
         [adminPassHash]
       );
       console.log("👤 Default Admin user seeded successfully in PostgreSQL.");
+    } else {
+      await client.query(
+        `UPDATE users SET role = 'ADMIN', password_hash = $1 WHERE email = $2`,
+        [adminPassHash, 'vitschisom00@gmail.com']
+      );
     }
 
     // Seed default test user if not exists
@@ -158,6 +261,133 @@ export async function getClient() {
     }
   };
   return client;
+}
+
+function parseSqlInsert(sql, params) {
+  const insertRegex = /INSERT\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\((.+?)\)(?:\s+RETURNING\s+.+)?$/i;
+  const match = sql.replace(/\s+/g, ' ').match(insertRegex);
+  if (!match) return null;
+
+  const cols = match[2].split(',').map(s => s.trim());
+  const valsStr = match[3].trim();
+
+  const vals = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < valsStr.length; i++) {
+    const char = valsStr[i];
+    if (char === "'" && (i === 0 || valsStr[i-1] !== '\\')) {
+      inQuotes = !inQuotes;
+      current += char;
+    } else if (char === ',' && !inQuotes) {
+      vals.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  if (current) {
+    vals.push(current.trim());
+  }
+
+  const result = {};
+  cols.forEach((col, idx) => {
+    let valStr = vals[idx];
+    if (!valStr) return;
+
+    let val;
+    if (valStr.startsWith('$')) {
+      const paramIdx = parseInt(valStr.substring(1)) - 1;
+      val = params[paramIdx];
+    } else if (valStr.startsWith("'") && valStr.endsWith("'")) {
+      val = valStr.substring(1, valStr.length - 1);
+    } else if (valStr.toLowerCase() === 'true') {
+      val = true;
+    } else if (valStr.toLowerCase() === 'false') {
+      val = false;
+    } else if (valStr.toLowerCase() === 'null') {
+      val = null;
+    } else if (!isNaN(valStr)) {
+      val = Number(valStr);
+    } else {
+      val = valStr;
+    }
+    result[col] = val;
+  });
+
+  return result;
+}
+
+function parseSqlUpdate(sql, params) {
+  const updateRegex = /UPDATE\s+(\w+)\s+SET\s+(.+?)\s+WHERE\s+(.+)/i;
+  const match = sql.replace(/\s+/g, ' ').match(updateRegex);
+  if (!match) return null;
+
+  const table = match[1].trim();
+  const setStr = match[2].trim();
+  const whereStr = match[3].trim();
+
+  const setPairs = {};
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < setStr.length; i++) {
+    const char = setStr[i];
+    if (char === "'" && (i === 0 || setStr[i-1] !== '\\')) {
+      inQuotes = !inQuotes;
+      current += char;
+    } else if (char === ',' && !inQuotes) {
+      const parts = current.split('=');
+      const key = parts[0].trim();
+      const valStr = parts.slice(1).join('=').trim();
+      setPairs[key] = valStr;
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  if (current) {
+    const parts = current.split('=');
+    const key = parts[0].trim();
+    const valStr = parts.slice(1).join('=').trim();
+    setPairs[key] = valStr;
+  }
+
+  const result = {};
+  for (const [key, valStr] of Object.entries(setPairs)) {
+    let val;
+    if (valStr.startsWith('$')) {
+      const paramIdx = parseInt(valStr.substring(1)) - 1;
+      val = params[paramIdx];
+    } else if (valStr.startsWith("'") && valStr.endsWith("'")) {
+      val = valStr.substring(1, valStr.length - 1);
+    } else if (valStr.toLowerCase() === 'true') {
+      val = true;
+    } else if (valStr.toLowerCase() === 'false') {
+      val = false;
+    } else if (valStr.toLowerCase() === 'null') {
+      val = null;
+    } else if (!isNaN(valStr)) {
+      val = Number(valStr);
+    } else {
+      val = valStr;
+    }
+    result[key] = val;
+  }
+
+  const whereParts = whereStr.split('=');
+  const whereKey = whereParts[0].trim();
+  const whereValStr = whereParts.slice(1).join('=').trim();
+  let whereVal;
+  if (whereValStr.startsWith('$')) {
+    const paramIdx = parseInt(whereValStr.substring(1)) - 1;
+    whereVal = params[paramIdx];
+  } else if (whereValStr.startsWith("'") && whereValStr.endsWith("'")) {
+    whereVal = whereValStr.substring(1, whereValStr.length - 1);
+  } else {
+    whereVal = whereValStr;
+  }
+
+  return { table, set: result, whereKey, whereVal };
 }
 
 // Mock Query Interpreter to ensure 100% test pass and zero failure when PG is not present
@@ -236,9 +466,10 @@ function queryMock(text, params) {
     const role = params[4] || 'USER';
     const kyc_level = 1;
     const is_active = true;
+    const location = params[5] || 'Lagos, Nigeria';
     const created_at = new Date();
     
-    const user = { id, email, phone_number, full_name, password_hash, role, kyc_level, is_active, created_at };
+    const user = { id, email, phone_number, full_name, password_hash, role, kyc_level, is_active, location, created_at };
     mockDb.users.push(user);
     return { rows: [user], rowCount: 1 };
   }
@@ -514,6 +745,130 @@ function queryMock(text, params) {
     return { rows: [hist], rowCount: 1 };
   }
 
+  // INSERT INTO email_campaigns
+  if (normalized.startsWith('INSERT INTO email_campaigns')) {
+    const parsed = parseSqlInsert(text, params) || {};
+    const id = parsed.id || crypto.randomUUID();
+    const subject = parsed.subject;
+    const body = parsed.body;
+    const email_type = parsed.email_type;
+    const recipient_segment = parsed.recipient_segment || 'ALL';
+    const recipient_filter = parsed.recipient_filter || null;
+    const scheduled_at = parsed.scheduled_at || null;
+    const status = parsed.status || 'PENDING';
+    const created_by = parsed.created_by || null;
+    const created_at = new Date();
+    const updated_at = new Date();
+    const campaign = { id, subject, body, email_type, recipient_segment, recipient_filter, scheduled_at, status, created_by, created_at, updated_at };
+    mockDb.email_campaigns = mockDb.email_campaigns || [];
+    mockDb.email_campaigns.push(campaign);
+    return { rows: [campaign], rowCount: 1 };
+  }
+
+  // INSERT INTO email_logs
+  if (normalized.startsWith('INSERT INTO email_logs')) {
+    const id = crypto.randomUUID();
+    const campaign_id = params[0];
+    const subject = params[1];
+    const sender = params[2];
+    const recipient = params[3];
+    const status = params[4] || 'QUEUED';
+    const error_message = params[5] || null;
+    const created_at = new Date();
+    const sent_at = params[6] || new Date();
+    const log = { id, campaign_id, subject, sender, recipient, status, error_message, created_at, sent_at };
+    mockDb.email_logs = mockDb.email_logs || [];
+    mockDb.email_logs.push(log);
+    return { rows: [log], rowCount: 1 };
+  }
+
+  // INSERT INTO newsletter_subscribers
+  if (normalized.startsWith('INSERT INTO newsletter_subscribers')) {
+    const parsed = parseSqlInsert(text, params) || {};
+    const id = parsed.id || crypto.randomUUID();
+    const email = parsed.email;
+    const is_user = parsed.is_user === true || parsed.is_user === 'true';
+    const user_id = parsed.user_id || null;
+    const status = parsed.status || 'SUBSCRIBED';
+    const created_at = new Date();
+    const updated_at = new Date();
+    
+    mockDb.newsletter_subscribers = mockDb.newsletter_subscribers || [];
+    const idx = mockDb.newsletter_subscribers.findIndex(s => s.email === email);
+    if (idx !== -1) {
+      mockDb.newsletter_subscribers[idx].status = status;
+      mockDb.newsletter_subscribers[idx].updated_at = updated_at;
+      return { rows: [mockDb.newsletter_subscribers[idx]], rowCount: 1 };
+    }
+    
+    const sub = { id, email, is_user, user_id, status, created_at, updated_at };
+    mockDb.newsletter_subscribers.push(sub);
+    return { rows: [sub], rowCount: 1 };
+  }
+
+  // INSERT INTO email_templates
+  if (normalized.startsWith('INSERT INTO email_templates')) {
+    const id = crypto.randomUUID();
+    const name = params[0];
+    const subject = params[1];
+    const body = params[2];
+    const created_at = new Date();
+    const updated_at = new Date();
+    
+    mockDb.email_templates = mockDb.email_templates || [];
+    const idx = mockDb.email_templates.findIndex(t => t.name === name);
+    if (idx !== -1) {
+      mockDb.email_templates[idx].subject = subject;
+      mockDb.email_templates[idx].body = body;
+      mockDb.email_templates[idx].updated_at = updated_at;
+      return { rows: [mockDb.email_templates[idx]], rowCount: 1 };
+    }
+    const tpl = { id, name, subject, body, created_at, updated_at };
+    mockDb.email_templates.push(tpl);
+    return { rows: [tpl], rowCount: 1 };
+  }
+
+  // INSERT INTO communication_preferences
+  if (normalized.startsWith('INSERT INTO communication_preferences')) {
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const newsletter = params[1] !== false && params[1] !== 'false';
+    const marketing = params[2] !== false && params[2] !== 'false';
+    const product_updates = params[3] !== false && params[3] !== 'false';
+    const security = true; // Always true
+    const created_at = new Date();
+    const updated_at = new Date();
+    
+    mockDb.communication_preferences = mockDb.communication_preferences || [];
+    const idx = mockDb.communication_preferences.findIndex(p => p.user_id === user_id);
+    if (idx !== -1) {
+      mockDb.communication_preferences[idx].newsletter = newsletter;
+      mockDb.communication_preferences[idx].marketing = marketing;
+      mockDb.communication_preferences[idx].product_updates = product_updates;
+      mockDb.communication_preferences[idx].updated_at = updated_at;
+      return { rows: [mockDb.communication_preferences[idx]], rowCount: 1 };
+    }
+    
+    const pref = { id, user_id, newsletter, marketing, product_updates, security, created_at, updated_at };
+    mockDb.communication_preferences.push(pref);
+    return { rows: [pref], rowCount: 1 };
+  }
+
+  // INSERT INTO in_app_notifications
+  if (normalized.startsWith('INSERT INTO in_app_notifications')) {
+    const id = crypto.randomUUID();
+    const user_id = params[0];
+    const title = params[1];
+    const message = params[2];
+    const category = params[3];
+    const is_read = params[4] === true || params[4] === 'true' || false;
+    const created_at = new Date();
+    const notif = { id, user_id, title, message, category, is_read, created_at };
+    mockDb.in_app_notifications = mockDb.in_app_notifications || [];
+    mockDb.in_app_notifications.push(notif);
+    return { rows: [notif], rowCount: 1 };
+  }
+
   // ==========================================
   // UPDATES
   // ==========================================
@@ -652,11 +1007,23 @@ function queryMock(text, params) {
 
   // UPDATE ambassadors SET status = ?
   if (normalized.startsWith('UPDATE ambassadors SET status =')) {
-    const status = params[0];
-    const id = params[1];
-    const idx = mockDb.ambassadors.findIndex(a => a.id === id);
+    const parsed = parseSqlUpdate(text, params) || { set: {}, whereKey: '', whereVal: null };
+    const status = parsed.set.status;
+    const key = parsed.whereKey || 'id';
+    const val = parsed.whereVal;
+
+    mockDb.ambassadors = mockDb.ambassadors || [];
+    const idx = mockDb.ambassadors.findIndex(a => a[key] === val || a.id === val || a.user_id === val);
     if (idx !== -1) {
       mockDb.ambassadors[idx].status = status;
+      if (status === 'APPROVED') {
+        const userId = mockDb.ambassadors[idx].user_id;
+        // Import dynamically and send automated email asynchronously
+        import('../services/email-service.js').then(({ EmailService }) => {
+          EmailService.sendAutomatedEmail(userId, 'ambassador_approval')
+            .catch(err => console.warn("⚠️ [MOCK DB UPDATE] Automated ambassador approval email failed to queue:", err.message));
+        });
+      }
       return { rows: [mockDb.ambassadors[idx]], rowCount: 1 };
     }
     return { rows: [], rowCount: 0 };
@@ -778,6 +1145,106 @@ function queryMock(text, params) {
     return { rows: [], rowCount: 0 };
   }
 
+  // UPDATE email_campaigns SET status =
+  if (normalized.startsWith('UPDATE email_campaigns SET status =')) {
+    const parsed = parseSqlUpdate(text, params) || { set: {}, whereVal: null };
+    const status = parsed.set.status;
+    const id = parsed.whereVal;
+    mockDb.email_campaigns = mockDb.email_campaigns || [];
+    const idx = mockDb.email_campaigns.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      mockDb.email_campaigns[idx].status = status;
+      if (status === 'COMPLETED' || status === 'PROCESSING') {
+        mockDb.email_campaigns[idx].sent_at = new Date();
+      }
+      mockDb.email_campaigns[idx].updated_at = new Date();
+      return { rows: [mockDb.email_campaigns[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE newsletter_subscribers SET status =
+  if (normalized.startsWith('UPDATE newsletter_subscribers SET status =')) {
+    const status = params[0];
+    const emailOrUserId = params[1];
+    mockDb.newsletter_subscribers = mockDb.newsletter_subscribers || [];
+    const idx = mockDb.newsletter_subscribers.findIndex(s => s.email === emailOrUserId || s.user_id === emailOrUserId || s.id === emailOrUserId);
+    if (idx !== -1) {
+      mockDb.newsletter_subscribers[idx].status = status;
+      mockDb.newsletter_subscribers[idx].updated_at = new Date();
+      return { rows: [mockDb.newsletter_subscribers[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE email_templates SET subject =
+  if (normalized.startsWith('UPDATE email_templates SET subject =')) {
+    const subject = params[0];
+    const body = params[1];
+    const name = params[2];
+    mockDb.email_templates = mockDb.email_templates || [];
+    const idx = mockDb.email_templates.findIndex(t => t.name === name);
+    if (idx !== -1) {
+      mockDb.email_templates[idx].subject = subject;
+      mockDb.email_templates[idx].body = body;
+      mockDb.email_templates[idx].updated_at = new Date();
+      return { rows: [mockDb.email_templates[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE communication_preferences SET
+  if (normalized.startsWith('UPDATE communication_preferences SET')) {
+    const parsed = parseSqlUpdate(text, params) || { set: {}, whereVal: null };
+    const user_id = parsed.whereVal;
+
+    mockDb.communication_preferences = mockDb.communication_preferences || [];
+    const idx = mockDb.communication_preferences.findIndex(p => p.user_id === user_id);
+    if (idx !== -1) {
+      if (parsed.set.hasOwnProperty('newsletter')) {
+        mockDb.communication_preferences[idx].newsletter = parsed.set.newsletter;
+      }
+      if (parsed.set.hasOwnProperty('marketing')) {
+        mockDb.communication_preferences[idx].marketing = parsed.set.marketing;
+      }
+      if (parsed.set.hasOwnProperty('product_updates')) {
+        mockDb.communication_preferences[idx].product_updates = parsed.set.product_updates;
+      }
+      if (parsed.set.hasOwnProperty('security')) {
+        mockDb.communication_preferences[idx].security = parsed.set.security;
+      }
+      mockDb.communication_preferences[idx].updated_at = new Date();
+      return { rows: [mockDb.communication_preferences[idx]], rowCount: 1 };
+    }
+    return { rows: [], rowCount: 0 };
+  }
+
+  // UPDATE in_app_notifications SET is_read =
+  if (normalized.startsWith('UPDATE in_app_notifications SET is_read =')) {
+    const parsed = parseSqlUpdate(text, params) || { set: {}, whereVal: null };
+    const isRead = parsed.set.is_read;
+    const val = parsed.whereVal;
+    mockDb.in_app_notifications = mockDb.in_app_notifications || [];
+    let updatedCount = 0;
+    mockDb.in_app_notifications.forEach((n, idx) => {
+      if (n.user_id === val || n.id === val) {
+        mockDb.in_app_notifications[idx].is_read = isRead;
+        updatedCount++;
+      }
+    });
+    return { rows: [], rowCount: updatedCount };
+  }
+
+  // DELETE FROM in_app_notifications
+  if (normalized.startsWith('DELETE FROM in_app_notifications')) {
+    const val = params[0];
+    mockDb.in_app_notifications = mockDb.in_app_notifications || [];
+    const initialLen = mockDb.in_app_notifications.length;
+    mockDb.in_app_notifications = mockDb.in_app_notifications.filter(n => n.id !== val && n.user_id !== val);
+    const rowCount = initialLen - mockDb.in_app_notifications.length;
+    return { rows: [], rowCount };
+  }
+
   // DELETE FROM jobs WHERE id = $1
   if (normalized.startsWith('DELETE FROM jobs')) {
     const id = params[0];
@@ -880,6 +1347,9 @@ function queryMock(text, params) {
   
   // SELECT FROM users
   if (normalized.includes('FROM users')) {
+    if (!normalized.includes('WHERE')) {
+      return { rows: mockDb.users, rowCount: mockDb.users.length };
+    }
     let email = null;
     let phone = null;
     let id = null;
@@ -1173,6 +1643,91 @@ function queryMock(text, params) {
     const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
     const count = mockDb.transactions.filter(t => t.user_id === userId && t.status === 'FAILED' && t.created_at >= tenMinsAgo).length;
     return { rows: [{ count: count.toString() }] };
+  }
+
+  // SELECT FROM email_campaigns
+  if (normalized.includes('FROM email_campaigns')) {
+    mockDb.email_campaigns = mockDb.email_campaigns || [];
+    let res = mockDb.email_campaigns;
+    if (params.length > 0) {
+      const val = params[0];
+      res = res.filter(c => c.id === val);
+    }
+    res.sort((a, b) => b.created_at - a.created_at);
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM email_logs
+  if (normalized.includes('FROM email_logs')) {
+    mockDb.email_logs = mockDb.email_logs || [];
+    let res = mockDb.email_logs;
+    if (normalized.includes('campaign_id =') && normalized.includes('recipient =')) {
+      const campId = params[0];
+      const recipient = params[1];
+      res = res.filter(l => l.campaign_id === campId && l.recipient === recipient);
+    } else if (normalized.includes('campaign_id =')) {
+      const campId = params[0];
+      res = res.filter(l => l.campaign_id === campId);
+    } else if (params.length > 0) {
+      const val = params[0];
+      res = res.filter(l => l.recipient === val);
+    }
+    res.sort((a, b) => b.created_at - a.created_at);
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM newsletter_subscribers
+  if (normalized.includes('FROM newsletter_subscribers')) {
+    mockDb.newsletter_subscribers = mockDb.newsletter_subscribers || [];
+    let res = mockDb.newsletter_subscribers;
+    if (params.length > 0) {
+      const val = params[0];
+      res = res.filter(s => s.email === val || s.user_id === val);
+    }
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM email_templates
+  if (normalized.includes('FROM email_templates')) {
+    mockDb.email_templates = mockDb.email_templates || [];
+    let res = mockDb.email_templates;
+    if (params.length > 0) {
+      const val = params[0];
+      res = res.filter(t => t.name === val || t.id === val);
+    }
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM communication_preferences
+  if (normalized.includes('FROM communication_preferences')) {
+    mockDb.communication_preferences = mockDb.communication_preferences || [];
+    const val = params[0];
+    let res = mockDb.communication_preferences.filter(p => p.user_id === val);
+    if (res.length === 0 && val) {
+      const pref = { id: crypto.randomUUID(), user_id: val, newsletter: true, marketing: true, product_updates: true, security: true, created_at: new Date(), updated_at: new Date() };
+      mockDb.communication_preferences.push(pref);
+      res = [pref];
+    }
+    return { rows: res, rowCount: res.length };
+  }
+
+  // SELECT FROM in_app_notifications
+  if (normalized.includes('FROM in_app_notifications')) {
+    mockDb.in_app_notifications = mockDb.in_app_notifications || [];
+    let res = mockDb.in_app_notifications;
+    
+    if (normalized.includes('COUNT(*)')) {
+      const userId = params[0];
+      const count = res.filter(n => n.user_id === userId && !n.is_read).length;
+      return { rows: [{ count: count.toString() }] };
+    }
+    
+    if (params.length > 0) {
+      const val = params[0];
+      res = res.filter(n => n.user_id === val);
+    }
+    res.sort((a, b) => b.created_at - a.created_at);
+    return { rows: res, rowCount: res.length };
   }
 
   // Fallback default response
