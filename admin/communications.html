@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Communications Management | SUBA — System Management</title>
+  <title>Communications Management | SUBA â€” System Management</title>
   
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="../css/design-system.css">
@@ -100,48 +100,52 @@
       </div>
       <nav class="sidebar-nav">
         <a href="index.html" class="sidebar-nav-item" data-page="overview">
-          <span class="sidebar-icon">📊</span>
+          <span class="sidebar-icon">ðŸ“Š</span>
           <span>Overview</span>
         </a>
         <a href="users.html" class="sidebar-nav-item" data-page="users">
-          <span class="sidebar-icon">👥</span>
+          <span class="sidebar-icon">ðŸ‘¥</span>
           <span>Users</span>
         </a>
         <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
-          <span class="sidebar-icon">💸</span>
+          <span class="sidebar-icon">ðŸ’¸</span>
           <span>Transactions</span>
         </a>
         <a href="reconciliation.html" class="sidebar-nav-item" data-page="reconciliation">
-          <span class="sidebar-icon">👛</span>
+          <span class="sidebar-icon">ðŸ‘›</span>
           <span>Reconciliation</span>
         </a>
         <a href="providers.html" class="sidebar-nav-item" data-page="providers">
-          <span class="sidebar-icon">🔌</span>
+          <span class="sidebar-icon">ðŸ”Œ</span>
           <span>Providers</span>
         </a>
         <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
-          <span class="sidebar-icon">🤝</span>
+          <span class="sidebar-icon">ðŸ¤</span>
           <span>Ambassadors</span>
         </a>
         <a href="points.html" class="sidebar-nav-item" data-page="points">
-          <span class="sidebar-icon">🎖️</span>
+          <span class="sidebar-icon">ðŸŽ–ï¸</span>
           <span>SB Points</span>
         </a>
-        <a href="careers.html" class="sidebar-nav-item" data-page="careers">
-          <span class="sidebar-icon">💼</span>
+                <a href="ratings.html" class="sidebar-nav-item" data-page="ratings">
+          <span class="sidebar-icon">⭐</span>
+          <span>Ratings</span>
+        </a>
+<a href="careers.html" class="sidebar-nav-item" data-page="careers">
+          <span class="sidebar-icon">ðŸ’¼</span>
           <span>Careers</span>
         </a>
         <a href="announcements.html" class="sidebar-nav-item" data-page="announcements">
-          <span class="sidebar-icon">📢</span>
+          <span class="sidebar-icon">ðŸ“¢</span>
           <span>Announcements</span>
         </a>
         <a href="communications.html" class="sidebar-nav-item active" data-page="communications">
-          <span class="sidebar-icon">✉️</span>
+          <span class="sidebar-icon">âœ‰ï¸</span>
           <span>Communications</span>
         </a>
         <div class="divider" style="margin-block: var(--space-2)"></div>
         <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
-          <span class="sidebar-icon">👤</span>
+          <span class="sidebar-icon">ðŸ‘¤</span>
           <span>Switch to User</span>
         </a>
       </nav>
@@ -172,22 +176,22 @@
       <!-- Stats Grid -->
       <div class="admin-grid" style="margin-bottom: var(--space-5)">
         <div class="card stat-card">
-          <div class="stat-icon">📩</div>
+          <div class="stat-icon">ðŸ“©</div>
           <div class="stat-value" id="statSent">0</div>
           <div class="stat-label">TOTAL DISPATCHED</div>
         </div>
         <div class="card stat-card">
-          <div class="stat-icon">✅</div>
+          <div class="stat-icon">âœ…</div>
           <div class="stat-value" id="statDeliveryRate">100%</div>
           <div class="stat-label">DELIVERY RATE</div>
         </div>
         <div class="card stat-card">
-          <div class="stat-icon">📖</div>
+          <div class="stat-icon">ðŸ“–</div>
           <div class="stat-value" id="statOpenRate">0%</div>
           <div class="stat-label">OPEN RATE</div>
         </div>
         <div class="card stat-card">
-          <div class="stat-icon">👥</div>
+          <div class="stat-icon">ðŸ‘¥</div>
           <div class="stat-value" id="statSubscribers">0</div>
           <div class="stat-label">SUBSCRIBERS</div>
         </div>
@@ -195,10 +199,10 @@
 
       <!-- Tab Navigation -->
       <div class="comms-tabs">
-        <div class="comms-tab active" onclick="switchTab('tab-compose')">✍️ Compose Campaign</div>
-        <div class="comms-tab" onclick="switchTab('tab-logs')">📑 Delivery Logs</div>
-        <div class="comms-tab" onclick="switchTab('tab-subscribers')">👥 Subscribers</div>
-        <div class="comms-tab" onclick="switchTab('tab-templates')">🎨 Templates Editor</div>
+        <div class="comms-tab active" onclick="switchTab('tab-compose')">âœï¸ Compose Campaign</div>
+        <div class="comms-tab" onclick="switchTab('tab-logs')">ðŸ“‘ Delivery Logs</div>
+        <div class="comms-tab" onclick="switchTab('tab-subscribers')">ðŸ‘¥ Subscribers</div>
+        <div class="comms-tab" onclick="switchTab('tab-templates')">ðŸŽ¨ Templates Editor</div>
       </div>
 
       <!-- TAB 1: COMPOSE -->
@@ -284,7 +288,7 @@
               </div>
 
               <div style="margin-top: var(--space-5); display: flex; justify-content: flex-end;">
-                <button type="button" class="btn btn-primary btn-lg" onclick="triggerSendVerification()">🚀 Queue Campaign</button>
+                <button type="button" class="btn btn-primary btn-lg" onclick="triggerSendVerification()">ðŸš€ Queue Campaign</button>
               </div>
 
             </form>
@@ -369,7 +373,7 @@
             </div>
 
             <div style="margin-top: var(--space-4); display:flex; justify-content:flex-end">
-              <button class="btn btn-primary" onclick="saveSelectedTemplate()">💾 Save Changes</button>
+              <button class="btn btn-primary" onclick="saveSelectedTemplate()">ðŸ’¾ Save Changes</button>
             </div>
           </div>
         </div>
@@ -384,7 +388,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3>Confirm Email Queueing</h3>
-        <button class="modal-close" onclick="SUBAComponents.closeModal('campaignConfirmModal')">✕</button>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('campaignConfirmModal')">âœ•</button>
       </div>
       <div class="modal-body" style="padding-top: var(--space-2)">
         <p id="confirmModalText" style="font-size:15px; line-height: 1.5; font-weight: 500; margin-bottom: var(--space-5)">
@@ -524,7 +528,7 @@
             return `
               <tr>
                 <td><span style="font-weight:700">${s.email}</span></td>
-                <td>${s.is_user ? '✅ Yes' : '❌ Guest'}</td>
+                <td>${s.is_user ? 'âœ… Yes' : 'âŒ Guest'}</td>
                 <td><span class="badge ${statusClass}">${s.status}</span></td>
                 <td>${SUBAUtils.formatShortDate(s.created_at)}</td>
               </tr>
@@ -709,3 +713,4 @@
   </script>
 </body>
 </html>
+

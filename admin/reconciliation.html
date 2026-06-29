@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ledger Reconciliation | SUBA — System Management</title>
+  <title>Ledger Reconciliation | SUBA â€” System Management</title>
   <meta name="description" content="Reconcile daily virtual account settlements and review double-entry ledger audits.">
   
   <!-- CSS Stylesheets -->
@@ -67,48 +67,52 @@
       </div>
       <nav class="sidebar-nav">
         <a href="index.html" class="sidebar-nav-item" data-page="overview">
-          <span class="sidebar-icon">📊</span>
+          <span class="sidebar-icon">ðŸ“Š</span>
           <span>Overview</span>
         </a>
         <a href="users.html" class="sidebar-nav-item" data-page="users">
-          <span class="sidebar-icon">👥</span>
+          <span class="sidebar-icon">ðŸ‘¥</span>
           <span>Users</span>
         </a>
         <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
-          <span class="sidebar-icon">💸</span>
+          <span class="sidebar-icon">ðŸ’¸</span>
           <span>Transactions</span>
         </a>
         <a href="reconciliation.html" class="sidebar-nav-item active" data-page="reconciliation">
-          <span class="sidebar-icon">👛</span>
+          <span class="sidebar-icon">ðŸ‘›</span>
           <span>Reconciliation</span>
         </a>
         <a href="providers.html" class="sidebar-nav-item" data-page="providers">
-          <span class="sidebar-icon">🔌</span>
+          <span class="sidebar-icon">ðŸ”Œ</span>
           <span>Providers</span>
         </a>
         <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
-          <span class="sidebar-icon">🤝</span>
+          <span class="sidebar-icon">ðŸ¤</span>
           <span>Ambassadors</span>
         </a>
         <a href="points.html" class="sidebar-nav-item" data-page="points">
-          <span class="sidebar-icon">🎖️</span>
+          <span class="sidebar-icon">ðŸŽ–ï¸</span>
           <span>SB Points</span>
         </a>
-        <a href="careers.html" class="sidebar-nav-item" data-page="careers">
-          <span class="sidebar-icon">💼</span>
+                <a href="ratings.html" class="sidebar-nav-item" data-page="ratings">
+          <span class="sidebar-icon">⭐</span>
+          <span>Ratings</span>
+        </a>
+<a href="careers.html" class="sidebar-nav-item" data-page="careers">
+          <span class="sidebar-icon">ðŸ’¼</span>
           <span>Careers</span>
         </a>
         <a href="announcements.html" class="sidebar-nav-item" data-page="announcements">
-          <span class="sidebar-icon">📢</span>
+          <span class="sidebar-icon">ðŸ“¢</span>
           <span>Announcements</span>
         </a>
         <a href="communications.html" class="sidebar-nav-item" data-page="communications">
-          <span class="sidebar-icon">✉️</span>
+          <span class="sidebar-icon">âœ‰ï¸</span>
           <span>Communications</span>
         </a>
         <div class="divider" style="margin-block: var(--space-2)"></div>
         <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
-          <span class="sidebar-icon">👤</span>
+          <span class="sidebar-icon">ðŸ‘¤</span>
           <span>Switch to User</span>
         </a>
       </nav>
@@ -146,7 +150,7 @@
             <button class="btn btn-primary btn-sm" id="btnApplyFilter">Apply Filter</button>
           </div>
           <div class="search-bar" style="margin-bottom:0; max-width: 280px">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon">ðŸ”</span>
             <input type="text" id="adminUserSearch" placeholder="Search by User ID...">
           </div>
         </div>
@@ -160,24 +164,24 @@
       <!-- Metric Grid -->
       <div class="metric-row">
         <div class="card stat-card">
-          <div class="stat-icon">💰</div>
-          <div class="stat-value" id="metricsDailyFunding">₦0.00</div>
+          <div class="stat-icon">ðŸ’°</div>
+          <div class="stat-value" id="metricsDailyFunding">â‚¦0.00</div>
           <div class="stat-label">TODAY'S BANK DEPOSITS</div>
           <span class="stat-trend up" id="metricsDailyCount">0 txns</span>
         </div>
         <div class="card stat-card">
-          <div class="stat-icon" style="background:#FFF9E6; color:#D9A300">⏳</div>
+          <div class="stat-icon" style="background:#FFF9E6; color:#D9A300">â³</div>
           <div class="stat-value" style="color:#D9A300" id="metricsPendingCount">0</div>
           <div class="stat-label">ACTIVE PENDING PAYMENTS</div>
         </div>
         <div class="card stat-card" style="border-color: var(--clr-error-light)">
-          <div class="stat-icon" style="background: var(--clr-error-light); color: var(--clr-error-dark)">⚠️</div>
+          <div class="stat-icon" style="background: var(--clr-error-light); color: var(--clr-error-dark)">âš ï¸</div>
           <div class="stat-value" style="color: var(--clr-error-dark)" id="metricsFailedCount">0</div>
           <div class="stat-label">FAILED TRANSACTIONS</div>
         </div>
         <div class="card stat-card">
-          <div class="stat-icon" style="background:#EAF9E6; color:#008A00">👛</div>
-          <div class="stat-value" style="color:#008A00" id="metricsLedgerSum">₦0.00</div>
+          <div class="stat-icon" style="background:#EAF9E6; color:#008A00">ðŸ‘›</div>
+          <div class="stat-value" style="color:#008A00" id="metricsLedgerSum">â‚¦0.00</div>
           <div class="stat-label">AUDITED LEDGER SUM</div>
         </div>
       </div>
@@ -263,7 +267,7 @@
       <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
         <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface); display: flex; justify-content: space-between; align-items: center;">
           <h4 style="font-weight: 700; color: var(--clr-text-primary)">Admin Announcements Board</h4>
-          <button class="btn btn-primary btn-sm" onclick="openCreateAnnouncementModal()">📢 Post Announcement</button>
+          <button class="btn btn-primary btn-sm" onclick="openCreateAnnouncementModal()">ðŸ“¢ Post Announcement</button>
         </div>
         <div class="admin-table-container" style="border: none; border-radius: 0">
           <table class="admin-table">
@@ -287,7 +291,7 @@
       <div class="reconciliation-card" style="padding: 0; overflow: hidden; margin-top: var(--space-5)">
         <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface); display: flex; justify-content: space-between; align-items: center;">
           <h4 style="font-weight: 700; color: var(--clr-text-primary)">Careers & Job Openings Board</h4>
-          <button class="btn btn-primary btn-sm" onclick="openCreateJobModal()">➕ Post New Job</button>
+          <button class="btn btn-primary btn-sm" onclick="openCreateJobModal()">âž• Post New Job</button>
         </div>
         <div class="admin-table-container" style="border: none; border-radius: 0">
           <table class="admin-table">
@@ -344,7 +348,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3>Post New Job Opening</h3>
-        <button class="modal-close" onclick="closeCreateJobModal()">✕</button>
+        <button class="modal-close" onclick="closeCreateJobModal()">âœ•</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -388,7 +392,7 @@
     <div class="modal" style="max-width: 450px;">
       <div class="modal-header">
         <h3>Publish New Announcement</h3>
-        <button class="modal-close" onclick="closeCreateAnnouncementModal()">✕</button>
+        <button class="modal-close" onclick="closeCreateAnnouncementModal()">âœ•</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -440,33 +444,33 @@
           const res = await SUBAApi.request(`/admin/reconciliation/dashboard${queryString}`, { method: 'GET' });
           if (res) {
             // Update metrics
-            document.getElementById('metricsDailyFunding').textContent = `₦${SUBAUtils.formatNumber(res.dailyFunding.total)}`;
+            document.getElementById('metricsDailyFunding').textContent = `â‚¦${SUBAUtils.formatNumber(res.dailyFunding.total)}`;
             document.getElementById('metricsDailyCount').textContent = `${res.dailyFunding.count} deposits`;
             document.getElementById('metricsPendingCount').textContent = res.pendingCount;
             document.getElementById('metricsFailedCount').textContent = res.failedCount;
             
             const ledgerSum = res.ledgerAudit.totalCredits;
-            document.getElementById('metricsLedgerSum').textContent = `₦${SUBAUtils.formatNumber(ledgerSum)}`;
+            document.getElementById('metricsLedgerSum').textContent = `â‚¦${SUBAUtils.formatNumber(ledgerSum)}`;
 
             // Render imbalance status
             const imbalanceContainer = document.getElementById('imbalanceAlertContainer');
             if (res.ledgerAudit.isImbalanced) {
               imbalanceContainer.innerHTML = `
                 <div class="imbalance-alert warning">
-                  <span style="font-size:20px">⚠️</span>
+                  <span style="font-size:20px">âš ï¸</span>
                   <div>
                     <h5 style="font-weight:700">Ledger Imbalance Detected</h5>
-                    <p style="font-size:12px; margin-top:2px">Debits sum (₦${SUBAUtils.formatNumber(res.ledgerAudit.totalDebits)}) does not equal Credits sum (₦${SUBAUtils.formatNumber(res.ledgerAudit.totalCredits)}). Discrepancy is <strong>₦${SUBAUtils.formatNumber(res.ledgerAudit.imbalance)}</strong>.</p>
+                    <p style="font-size:12px; margin-top:2px">Debits sum (â‚¦${SUBAUtils.formatNumber(res.ledgerAudit.totalDebits)}) does not equal Credits sum (â‚¦${SUBAUtils.formatNumber(res.ledgerAudit.totalCredits)}). Discrepancy is <strong>â‚¦${SUBAUtils.formatNumber(res.ledgerAudit.imbalance)}</strong>.</p>
                   </div>
                 </div>
               `;
             } else {
               imbalanceContainer.innerHTML = `
                 <div class="imbalance-alert healthy">
-                  <span style="font-size:20px">✅</span>
+                  <span style="font-size:20px">âœ…</span>
                   <div>
                     <h5 style="font-weight:700">Ledger Audits Balanced</h5>
-                    <p style="font-size:12px; margin-top:2px">All accounts reconcile. Debit and credit sums match exactly: <strong>₦${SUBAUtils.formatNumber(res.ledgerAudit.totalDebits)}</strong>.</p>
+                    <p style="font-size:12px; margin-top:2px">All accounts reconcile. Debit and credit sums match exactly: <strong>â‚¦${SUBAUtils.formatNumber(res.ledgerAudit.totalDebits)}</strong>.</p>
                   </div>
                 </div>
               `;
@@ -482,7 +486,7 @@
                   <td><span style="font-family: var(--font-mono); font-size:11px; font-weight:700">${item.reference}</span></td>
                   <td><strong>${item.full_name}</strong><br><span style="font-size:10px; color:var(--clr-text-secondary)">${item.email}</span></td>
                   <td><span class="badge badge-dark">${item.type}</span></td>
-                  <td><strong>₦${SUBAUtils.formatNumber(item.amount)}</strong></td>
+                  <td><strong>â‚¦${SUBAUtils.formatNumber(item.amount)}</strong></td>
                   <td><span class="badge-fraud">FRAUD LOCK</span></td>
                   <td>${new Date(item.created_at).toLocaleString()}</td>
                   <td>
@@ -605,7 +609,7 @@
                 <td><strong>${app.applicant_name}</strong><br><span style="font-size:10px; color:var(--clr-text-secondary)">${app.applicant_email}</span></td>
                 <td>${app.job_title}</td>
                 <td>
-                  <a href="${app.cv_url}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">📄 View CV</a>
+                  <a href="${app.cv_url}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">ðŸ“„ View CV</a>
                 </td>
                 <td>
                   <span style="font-size:12px; display:inline-block; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${app.cover_letter || ''}">
@@ -799,3 +803,4 @@
   </script>
 </body>
 </html>
+

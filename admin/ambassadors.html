@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ambassador Management | SUBA — System Management</title>
+  <title>Ambassador Management | SUBA â€” System Management</title>
   
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="../css/design-system.css">
@@ -24,48 +24,52 @@
       </div>
       <nav class="sidebar-nav">
         <a href="index.html" class="sidebar-nav-item" data-page="overview">
-          <span class="sidebar-icon">📊</span>
+          <span class="sidebar-icon">ðŸ“Š</span>
           <span>Overview</span>
         </a>
         <a href="users.html" class="sidebar-nav-item" data-page="users">
-          <span class="sidebar-icon">👥</span>
+          <span class="sidebar-icon">ðŸ‘¥</span>
           <span>Users</span>
         </a>
         <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
-          <span class="sidebar-icon">💸</span>
+          <span class="sidebar-icon">ðŸ’¸</span>
           <span>Transactions</span>
         </a>
         <a href="reconciliation.html" class="sidebar-nav-item" data-page="reconciliation">
-          <span class="sidebar-icon">👛</span>
+          <span class="sidebar-icon">ðŸ‘›</span>
           <span>Reconciliation</span>
         </a>
         <a href="providers.html" class="sidebar-nav-item" data-page="providers">
-          <span class="sidebar-icon">🔌</span>
+          <span class="sidebar-icon">ðŸ”Œ</span>
           <span>Providers</span>
         </a>
         <a href="ambassadors.html" class="sidebar-nav-item active" data-page="ambassadors">
-          <span class="sidebar-icon">🤝</span>
+          <span class="sidebar-icon">ðŸ¤</span>
           <span>Ambassadors</span>
         </a>
         <a href="points.html" class="sidebar-nav-item" data-page="points">
-          <span class="sidebar-icon">🎖️</span>
+          <span class="sidebar-icon">ðŸŽ–ï¸</span>
           <span>SB Points</span>
         </a>
-        <a href="careers.html" class="sidebar-nav-item" data-page="careers">
-          <span class="sidebar-icon">💼</span>
+                <a href="ratings.html" class="sidebar-nav-item" data-page="ratings">
+          <span class="sidebar-icon">⭐</span>
+          <span>Ratings</span>
+        </a>
+<a href="careers.html" class="sidebar-nav-item" data-page="careers">
+          <span class="sidebar-icon">ðŸ’¼</span>
           <span>Careers</span>
         </a>
         <a href="announcements.html" class="sidebar-nav-item" data-page="announcements">
-          <span class="sidebar-icon">📢</span>
+          <span class="sidebar-icon">ðŸ“¢</span>
           <span>Announcements</span>
         </a>
         <a href="communications.html" class="sidebar-nav-item" data-page="communications">
-          <span class="sidebar-icon">✉️</span>
+          <span class="sidebar-icon">âœ‰ï¸</span>
           <span>Communications</span>
         </a>
         <div class="divider" style="margin-block: var(--space-2)"></div>
         <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
-          <span class="sidebar-icon">👤</span>
+          <span class="sidebar-icon">ðŸ‘¤</span>
           <span>Switch to User</span>
         </a>
       </nav>
@@ -147,12 +151,12 @@
               <td><span style="font-weight:700">${a.name}</span></td>
               <td><span style="font-family:var(--font-mono); font-weight:700">${a.code}</span></td>
               <td>${a.signups} students</td>
-              <td><span style="font-weight:700">₦${SUBAUtils.formatNumber(a.earned)}</span></td>
-              <td><span style="font-weight:700; color:${a.pending > 0 ? 'var(--clr-primary)' : 'var(--clr-text-tertiary)'}">₦${SUBAUtils.formatNumber(a.pending)}</span></td>
+              <td><span style="font-weight:700">â‚¦${SUBAUtils.formatNumber(a.earned)}</span></td>
+              <td><span style="font-weight:700; color:${a.pending > 0 ? 'var(--clr-primary)' : 'var(--clr-text-tertiary)'}">â‚¦${SUBAUtils.formatNumber(a.pending)}</span></td>
               <td>
                 <div class="table-actions">
                   ${a.pending > 0 ? `
-                    <button class="btn btn-success btn-sm" onclick="approvePayout('${a.id}')">✓ Approve Cashout</button>
+                    <button class="btn btn-success btn-sm" onclick="approvePayout('${a.id}')">âœ“ Approve Cashout</button>
                   ` : `<span style="color:var(--clr-text-tertiary); font-size:12px">All cleared</span>`}
                 </div>
               </td>
@@ -170,14 +174,14 @@
 
         SUBAComponents.showToast({
           title: 'Processing Payout',
-          message: `Transferring ₦${amb.pending} commission to bank card...`,
+          message: `Transferring â‚¦${amb.pending} commission to bank card...`,
           type: 'info'
         });
 
         setTimeout(() => {
           SUBAComponents.showToast({
             title: 'Payout Dispatched',
-            message: `₦${amb.pending} commission cleared for ${amb.name}.`,
+            message: `â‚¦${amb.pending} commission cleared for ${amb.name}.`,
             type: 'success'
           });
           
@@ -191,3 +195,4 @@
   </script>
 </body>
 </html>
+

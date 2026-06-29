@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Management | SUBA — System Management</title>
+  <title>User Management | SUBA â€” System Management</title>
   
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="../css/design-system.css">
@@ -24,48 +24,52 @@
       </div>
       <nav class="sidebar-nav">
         <a href="index.html" class="sidebar-nav-item" data-page="overview">
-          <span class="sidebar-icon">📊</span>
+          <span class="sidebar-icon">ðŸ“Š</span>
           <span>Overview</span>
         </a>
         <a href="users.html" class="sidebar-nav-item active" data-page="users">
-          <span class="sidebar-icon">👥</span>
+          <span class="sidebar-icon">ðŸ‘¥</span>
           <span>Users</span>
         </a>
         <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
-          <span class="sidebar-icon">💸</span>
+          <span class="sidebar-icon">ðŸ’¸</span>
           <span>Transactions</span>
         </a>
         <a href="reconciliation.html" class="sidebar-nav-item" data-page="reconciliation">
-          <span class="sidebar-icon">👛</span>
+          <span class="sidebar-icon">ðŸ‘›</span>
           <span>Reconciliation</span>
         </a>
         <a href="providers.html" class="sidebar-nav-item" data-page="providers">
-          <span class="sidebar-icon">🔌</span>
+          <span class="sidebar-icon">ðŸ”Œ</span>
           <span>Providers</span>
         </a>
         <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
-          <span class="sidebar-icon">🤝</span>
+          <span class="sidebar-icon">ðŸ¤</span>
           <span>Ambassadors</span>
         </a>
         <a href="points.html" class="sidebar-nav-item" data-page="points">
-          <span class="sidebar-icon">🎖️</span>
+          <span class="sidebar-icon">ðŸŽ–ï¸</span>
           <span>SB Points</span>
         </a>
-        <a href="careers.html" class="sidebar-nav-item" data-page="careers">
-          <span class="sidebar-icon">💼</span>
+                <a href="ratings.html" class="sidebar-nav-item" data-page="ratings">
+          <span class="sidebar-icon">⭐</span>
+          <span>Ratings</span>
+        </a>
+<a href="careers.html" class="sidebar-nav-item" data-page="careers">
+          <span class="sidebar-icon">ðŸ’¼</span>
           <span>Careers</span>
         </a>
         <a href="announcements.html" class="sidebar-nav-item" data-page="announcements">
-          <span class="sidebar-icon">📢</span>
+          <span class="sidebar-icon">ðŸ“¢</span>
           <span>Announcements</span>
         </a>
         <a href="communications.html" class="sidebar-nav-item" data-page="communications">
-          <span class="sidebar-icon">✉️</span>
+          <span class="sidebar-icon">âœ‰ï¸</span>
           <span>Communications</span>
         </a>
         <div class="divider" style="margin-block: var(--space-2)"></div>
         <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
-          <span class="sidebar-icon">👤</span>
+          <span class="sidebar-icon">ðŸ‘¤</span>
           <span>Switch to User</span>
         </a>
       </nav>
@@ -99,7 +103,7 @@
         <!-- Search and header actions -->
         <div style="padding: var(--space-4); border-bottom: 1px solid var(--clr-border-light); background: var(--clr-surface)">
           <div class="search-bar">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon">ðŸ”</span>
             <input type="text" id="userSearchInput" placeholder="Search by name, phone number, or email...">
           </div>
         </div>
@@ -126,7 +130,7 @@
 
         <!-- Empty search state -->
         <div id="emptyUsersState" class="empty-state hidden">
-          <span class="empty-icon">👥</span>
+          <span class="empty-icon">ðŸ‘¥</span>
           <h4>No Users Match</h4>
           <p>We couldn't find any user accounts matching your criteria.</p>
         </div>
@@ -142,7 +146,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3>Adjust User Wallet</h3>
-        <button class="modal-close" onclick="SUBAComponents.closeModal('creditUserModal')">✕</button>
+        <button class="modal-close" onclick="SUBAComponents.closeModal('creditUserModal')">âœ•</button>
       </div>
       <div class="modal-body">
         <div style="background: var(--clr-bg); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-5)">
@@ -152,7 +156,7 @@
         </div>
 
         <div class="form-group">
-          <label for="creditAmountInput" class="form-label">Credit Amount (₦)</label>
+          <label for="creditAmountInput" class="form-label">Credit Amount (â‚¦)</label>
           <input type="number" id="creditAmountInput" class="form-input" placeholder="e.g. 500">
           <div class="form-hint" style="margin-top: 6px">To debit, enter a negative number (e.g. -500).</div>
         </div>
@@ -208,12 +212,12 @@
               <td><span style="font-weight:700">${u.name}</span></td>
               <td>${u.phone}</td>
               <td>${u.email}</td>
-              <td><span style="font-weight:700">₦${SUBAUtils.formatNumber(u.balance)}</span></td>
+              <td><span style="font-weight:700">â‚¦${SUBAUtils.formatNumber(u.balance)}</span></td>
               <td><span class="badge ${roleClass}">${u.role}</span></td>
               <td><span class="badge ${statusClass}">${statusText}</span></td>
               <td>
                 <div class="table-actions">
-                  <button class="btn btn-secondary btn-sm" onclick="triggerCredit('${u.id}')">👛 Balance</button>
+                  <button class="btn btn-secondary btn-sm" onclick="triggerCredit('${u.id}')">ðŸ‘› Balance</button>
                   <button class="btn ${u.isActive ? 'btn-danger' : 'btn-success'} btn-sm" style="${u.isActive ? 'background:#EF4444; border-color:#EF4444' : ''}" onclick="toggleBan('${u.id}')">
                     ${u.isActive ? 'Ban Account' : 'Activate'}
                   </button>
@@ -269,7 +273,7 @@
         SUBAComponents.closeModal('creditUserModal');
         SUBAComponents.showToast({
           title: 'Wallet Updated',
-          message: `${activeTargetUser.name} balance adjusted by ₦${val}.`,
+          message: `${activeTargetUser.name} balance adjusted by â‚¦${val}.`,
           type: 'success'
         });
         renderUsers();
@@ -292,3 +296,4 @@
   </script>
 </body>
 </html>
+

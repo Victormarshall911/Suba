@@ -1,0 +1,353 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ratings &amp; Reviews | SUBA Admin</title>
+  <meta name="description" content="Monitor user ratings, reviews and feedback analytics for Suba platform.">
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <a href="../index.html"><img src="../images/suba-logo.png" alt="SUBA Logo" class="site-logo-img"></a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="sidebar-nav-item" data-page="overview"><span class="sidebar-icon">📊</span><span>Overview</span></a>
+        <a href="users.html" class="sidebar-nav-item" data-page="users"><span class="sidebar-icon">👥</span><span>Users</span></a>
+        <a href="transactions.html" class="sidebar-nav-item" data-page="transactions"><span class="sidebar-icon">💸</span><span>Transactions</span></a>
+        <a href="reconciliation.html" class="sidebar-nav-item" data-page="reconciliation"><span class="sidebar-icon">👛</span><span>Reconciliation</span></a>
+        <a href="providers.html" class="sidebar-nav-item" data-page="providers"><span class="sidebar-icon">🔌</span><span>Providers</span></a>
+        <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors"><span class="sidebar-icon">🤝</span><span>Ambassadors</span></a>
+        <a href="points.html" class="sidebar-nav-item" data-page="points"><span class="sidebar-icon">🎖️</span><span>SB Points</span></a>
+        <a href="ratings.html" class="sidebar-nav-item active" data-page="ratings"><span class="sidebar-icon">⭐</span><span>Ratings</span></a>
+        <a href="careers.html" class="sidebar-nav-item" data-page="careers"><span class="sidebar-icon">💼</span><span>Careers</span></a>
+        <a href="announcements.html" class="sidebar-nav-item" data-page="announcements"><span class="sidebar-icon">📢</span><span>Announcements</span></a>
+        <a href="communications.html" class="sidebar-nav-item" data-page="communications"><span class="sidebar-icon">✉️</span><span>Communications</span></a>
+        <div class="divider" style="margin-block: var(--space-2)"></div>
+        <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view"><span class="sidebar-icon">👤</span><span>Switch to User</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar avatar-sm" style="background: var(--clr-secondary)">AD</div>
+        <div>
+          <div class="sidebar-user-name">Admin Control</div>
+          <div class="sidebar-user-role">Super Administrator</div>
+        </div>
+      </div>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-topbar">
+        <div class="user-greeting">
+          <h3>Ratings &amp; Reviews ⭐</h3>
+          <p>Monitor user feedback and satisfaction analytics.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="badge badge-dark">Analytics Module</span>
+          <a href="../dashboard.html" class="avatar" style="background: var(--clr-secondary)">AD</a>
+        </div>
+      </div>
+      <div class="ratings-tabs" role="tablist">
+        <button class="ratings-tab active" id="tabOverview" role="tab" aria-selected="true" onclick="switchTab('overview')">📊 Overview</button>
+        <button class="ratings-tab" id="tabReviews" role="tab" aria-selected="false" onclick="switchTab('reviews')">💬 All Reviews</button>
+        <button class="ratings-tab" id="tabSettings" role="tab" aria-selected="false" onclick="switchTab('settings')">⚙️ Popup Settings</button>
+      </div>
+      <!-- OVERVIEW TAB -->
+      <div id="panelOverview">
+        <div class="ratings-overview-grid" id="analyticsGrid">
+          <div class="rating-stat-card"><div class="skeleton skeleton-text" style="width:50%;height:2.2rem;margin:0 auto 8px"></div><div class="skeleton skeleton-text" style="width:70%;height:12px;margin:0 auto"></div></div>
+          <div class="rating-stat-card"><div class="skeleton skeleton-text" style="width:50%;height:2.2rem;margin:0 auto 8px"></div><div class="skeleton skeleton-text" style="width:70%;height:12px;margin:0 auto"></div></div>
+          <div class="rating-stat-card"><div class="skeleton skeleton-text" style="width:50%;height:2.2rem;margin:0 auto 8px"></div><div class="skeleton skeleton-text" style="width:70%;height:12px;margin:0 auto"></div></div>
+          <div class="rating-stat-card"><div class="skeleton skeleton-text" style="width:50%;height:2.2rem;margin:0 auto 8px"></div><div class="skeleton skeleton-text" style="width:70%;height:12px;margin:0 auto"></div></div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="dashboard-left">
+            <div class="card" style="padding:var(--space-5)">
+              <h4 style="font-size:var(--text-base);font-weight:700;margin-bottom:var(--space-4)">Overall Rating</h4>
+              <div class="admin-avg-star-display" id="avgStarDisplay">
+                <span class="admin-avg-number" id="avgRatingNumber">—</span>
+                <div>
+                  <div class="admin-avg-stars-row" id="avgStarsRow">
+                    <span class="admin-star">★</span><span class="admin-star">★</span><span class="admin-star">★</span><span class="admin-star">★</span><span class="admin-star">★</span>
+                  </div>
+                  <div style="font-size:var(--text-xs);color:var(--clr-text-tertiary);margin-top:4px" id="totalRatingsText">Loading...</div>
+                </div>
+              </div>
+              <div class="divider divider-sm"></div>
+              <div class="rating-distribution-bar" id="distributionBars">
+                <div class="dist-row"><span class="dist-label">5★</span><div class="dist-bar-track"><div class="dist-bar-fill" id="distBar5" style="width:0%"></div></div><span class="dist-count" id="distCount5">0</span></div>
+                <div class="dist-row"><span class="dist-label">4★</span><div class="dist-bar-track"><div class="dist-bar-fill" id="distBar4" style="width:0%"></div></div><span class="dist-count" id="distCount4">0</span></div>
+                <div class="dist-row"><span class="dist-label">3★</span><div class="dist-bar-track"><div class="dist-bar-fill" id="distBar3" style="width:0%"></div></div><span class="dist-count" id="distCount3">0</span></div>
+                <div class="dist-row"><span class="dist-label">2★</span><div class="dist-bar-track"><div class="dist-bar-fill" id="distBar2" style="width:0%"></div></div><span class="dist-count" id="distCount2">0</span></div>
+                <div class="dist-row"><span class="dist-label">1★</span><div class="dist-bar-track"><div class="dist-bar-fill" id="distBar1" style="width:0%"></div></div><span class="dist-count" id="distCount1">0</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-right">
+            <div class="card" style="padding:var(--space-5)">
+              <h4 style="font-size:var(--text-base);font-weight:700;margin-bottom:var(--space-4)">Monthly Rating Trend</h4>
+              <div class="trend-chart" id="trendChart">
+                <div style="text-align:center;color:var(--clr-text-tertiary);font-size:var(--text-sm);width:100%;padding:var(--space-6) 0">
+                  <div class="skeleton skeleton-text" style="width:80%;height:60px;margin:0 auto"></div>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="padding:var(--space-5);margin-top:var(--space-4)">
+              <h4 style="font-size:var(--text-base);font-weight:700;margin-bottom:var(--space-4)">Sentiment Split</h4>
+              <div style="display:flex;gap:var(--space-4)">
+                <div style="flex:1;text-align:center;background:var(--clr-success-light);border-radius:var(--radius-lg);padding:var(--space-4)">
+                  <div style="font-size:1.8rem;font-weight:800;color:var(--clr-success-dark)" id="positiveCount">—</div>
+                  <div style="font-size:var(--text-xs);color:var(--clr-success-dark);font-weight:600;margin-top:4px">Positive ⭐⭐⭐⭐+</div>
+                </div>
+                <div style="flex:1;text-align:center;background:var(--clr-error-light);border-radius:var(--radius-lg);padding:var(--space-4)">
+                  <div style="font-size:1.8rem;font-weight:800;color:var(--clr-error-dark)" id="negativeCount">—</div>
+                  <div style="font-size:var(--text-xs);color:var(--clr-error-dark);font-weight:600;margin-top:4px">Needs Work ⭐⭐⭐-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:var(--space-5);margin-top:var(--space-4)">
+          <div class="dash-section-title">
+            <h4>Recent Reviews</h4>
+            <a href="#" onclick="switchTab('reviews');return false">View All</a>
+          </div>
+          <div id="recentReviewsList">
+            <div class="skeleton skeleton-text" style="height:80px;border-radius:var(--radius-lg);margin-bottom:var(--space-3)"></div>
+            <div class="skeleton skeleton-text" style="height:80px;border-radius:var(--radius-lg);margin-bottom:var(--space-3)"></div>
+            <div class="skeleton skeleton-text" style="height:80px;border-radius:var(--radius-lg)"></div>
+          </div>
+        </div>
+      </div>
+      <!-- REVIEWS TAB -->
+      <div id="panelReviews" style="display:none">
+        <div class="card" style="padding:var(--space-4);margin-bottom:var(--space-4)">
+          <div class="ratings-filter-bar">
+            <select id="filterRating">
+              <option value="">All Stars</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="2">2 Stars</option>
+              <option value="1">1 Star</option>
+            </select>
+            <input type="date" id="filterStartDate" title="From date">
+            <input type="date" id="filterEndDate" title="To date">
+            <input type="text" id="filterSearch" placeholder="Search by name or email..." style="flex:1;min-width:180px">
+            <button class="btn btn-primary btn-sm" onclick="loadAllReviews()">Apply</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
+          </div>
+        </div>
+        <div id="allReviewsList">
+          <div class="skeleton skeleton-text" style="height:100px;border-radius:var(--radius-lg);margin-bottom:var(--space-3)"></div>
+          <div class="skeleton skeleton-text" style="height:100px;border-radius:var(--radius-lg)"></div>
+        </div>
+      </div>
+      <!-- SETTINGS TAB -->
+      <div id="panelSettings" style="display:none">
+        <div class="card" style="padding:var(--space-6);max-width:560px">
+          <h4 style="font-weight:700;margin-bottom:var(--space-2)">Rating Popup Configuration</h4>
+          <p style="font-size:var(--text-sm);color:var(--clr-text-secondary);margin-bottom:var(--space-5)">Control when and how the rating popup appears to users. Changes take effect immediately — no code changes required.</p>
+          <div class="popup-settings-form">
+            <div class="admin-setting-row">
+              <div class="admin-setting-info">
+                <h5>Enable Rating Popup</h5>
+                <p>Turn on/off the rating popup for all users globally.</p>
+              </div>
+              <div class="toggle-wrapper" id="popupEnabledToggle">
+                <div class="toggle active" id="popupEnabledDot"></div>
+              </div>
+            </div>
+            <div class="divider divider-sm"></div>
+            <div class="form-group">
+              <label for="settingCooldownDays" class="form-label">Cooldown Period (days)</label>
+              <input type="number" id="settingCooldownDays" class="form-input" min="1" max="365" value="30">
+              <span class="form-helper">Days before a rated user is prompted again.</span>
+            </div>
+            <div class="form-group">
+              <label for="settingMinTransactions" class="form-label">Minimum Successful Transactions</label>
+              <input type="number" id="settingMinTransactions" class="form-input" min="1" max="100" value="3">
+              <span class="form-helper">User must have at least this many successful transactions before seeing the popup.</span>
+            </div>
+            <div class="form-group">
+              <label for="settingRemindDays" class="form-label">Remind Later Snooze (days)</label>
+              <input type="number" id="settingRemindDays" class="form-input" min="1" max="60" value="7">
+              <span class="form-helper">Wait before re-showing popup after "Remind me later".</span>
+            </div>
+            <div style="display:flex;gap:var(--space-3);margin-top:var(--space-2)">
+              <button class="btn btn-primary" id="saveSettingsBtn" onclick="savePopupSettings()">Save Settings</button>
+              <button class="btn btn-ghost" onclick="loadPopupSettings()">Reload</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:var(--space-5);margin-top:var(--space-4);max-width:560px;background:var(--clr-primary-light);border-color:var(--clr-primary-subtle)">
+          <h5 style="font-weight:700;color:var(--clr-primary);margin-bottom:var(--space-2)">Popup Trigger Logic</h5>
+          <ul style="font-size:var(--text-sm);color:var(--clr-text-secondary);padding-left:var(--space-4);line-height:2">
+            <li>Appears 5s after dashboard load (if eligible)</li>
+            <li>Also triggered after every 10th successful transaction</li>
+            <li>Never shown during payment or registration flows</li>
+            <li>Fully respects "Never Show Again" and cooldown settings</li>
+            <li>One rating per user per cooldown window (updates allowed)</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/components.js"></script>
+  <script>
+    let popupEnabled = true;
+    function switchTab(tab) {
+      ['overview','reviews','settings'].forEach(t => {
+        document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? '' : 'none';
+        const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+        btn.classList.toggle('active', t === tab);
+        btn.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      if (tab === 'reviews') loadAllReviews();
+      if (tab === 'settings') loadPopupSettings();
+    }
+    function renderStars(rating, size) {
+      size = size || 14;
+      return [1,2,3,4,5].map(i => '<span class="review-star-mini' + (i <= rating ? ' filled' : '') + '" style="font-size:' + size + 'px">★</span>').join('');
+    }
+    function renderAvgStars(avg) {
+      const row = document.getElementById('avgStarsRow');
+      if (!row) return;
+      row.innerHTML = [1,2,3,4,5].map(i => {
+        const isFull = i <= Math.floor(avg);
+        const isHalf = !isFull && i <= avg + 0.5;
+        return '<span class="admin-star ' + (isFull ? 'filled' : isHalf ? 'half-filled' : '') + '">★</span>';
+      }).join('');
+    }
+    function fmtDate(ts) {
+      if (!ts) return '—';
+      return new Date(ts).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    function renderReviewCard(r) {
+      const initials = (r.full_name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      const isPositive = r.rating >= 4;
+      const badge = isPositive ? '<span class="rating-badge-positive">Positive</span>' : r.rating <= 2 ? '<span class="rating-badge-negative">Needs Work</span>' : '<span style="font-size:10px;color:var(--clr-text-tertiary);font-weight:600">Neutral</span>';
+      return '<div class="review-item"><div class="review-header"><div class="review-user-info"><div class="review-avatar">' + initials + '</div><div><div class="review-user-name">' + (r.full_name || 'Anonymous') + '</div><div class="review-user-email">' + (r.email || '') + '</div></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="review-stars-mini">' + renderStars(r.rating) + '</div><div class="review-date">' + fmtDate(r.updated_at) + '</div>' + badge + '</div></div>' + (r.title ? '<div class="review-title">"' + r.title + '"</div>' : '') + (r.comment ? '<div class="review-comment">' + r.comment + '</div>' : '') + (r.improvement_feedback ? '<div class="review-improvement"><strong>Improvement feedback:</strong> ' + r.improvement_feedback + '</div>' : '') + (r.device_type ? '<div style="font-size:10px;color:var(--clr-text-tertiary);margin-top:6px">Device: ' + r.device_type + ' v' + (r.app_version||'1.0.0') + '</div>' : '') + '</div>';
+    }
+    async function loadAnalytics() {
+      try {
+        const data = await SUBAApi.request('/admin/ratings/analytics');
+        const total = data.totalRatings || 0;
+        document.getElementById('analyticsGrid').innerHTML = '<div class="rating-stat-card"><div class="rating-stat-big" style="color:var(--clr-accent)">' + parseFloat(data.avgRating||0).toFixed(1) + '</div><div class="rating-stat-label">Avg Rating</div></div><div class="rating-stat-card"><div class="rating-stat-big">' + total.toLocaleString() + '</div><div class="rating-stat-label">Total Ratings</div></div><div class="rating-stat-card"><div class="rating-stat-big" style="color:var(--clr-success-dark)">' + (data.positiveCount||0).toLocaleString() + '</div><div class="rating-stat-label">Positive (4-5★)</div></div><div class="rating-stat-card"><div class="rating-stat-big" style="color:var(--clr-error-dark)">' + (data.negativeCount||0).toLocaleString() + '</div><div class="rating-stat-label">Needs Work (1-3★)</div></div>';
+        document.getElementById('avgRatingNumber').textContent = parseFloat(data.avgRating||0).toFixed(1);
+        document.getElementById('totalRatingsText').textContent = 'Based on ' + total.toLocaleString() + ' rating' + (total !== 1 ? 's' : '');
+        renderAvgStars(parseFloat(data.avgRating||0));
+        const dist = data.distribution || {};
+        [5,4,3,2,1].forEach(n => {
+          const count = dist['star' + n] || 0;
+          const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+          setTimeout(() => { const b = document.getElementById('distBar' + n); if (b) b.style.width = pct + '%'; }, 200);
+          const c = document.getElementById('distCount' + n);
+          if (c) c.textContent = count;
+        });
+        document.getElementById('positiveCount').textContent = (data.positiveCount||0).toLocaleString();
+        document.getElementById('negativeCount').textContent = (data.negativeCount||0).toLocaleString();
+        renderTrendChart(data.monthlyTrend || []);
+      } catch (err) {
+        document.getElementById('analyticsGrid').innerHTML = '<div class="rating-stat-card" style="grid-column:1/-1;text-align:center;padding:var(--space-8)"><div style="font-size:32px;margin-bottom:var(--space-3)">⚠️</div><p style="color:var(--clr-text-secondary)">Failed to load analytics: ' + err.message + '</p></div>';
+      }
+    }
+    function renderTrendChart(trend) {
+      const chart = document.getElementById('trendChart');
+      if (!trend || trend.length === 0) { chart.innerHTML = '<div style="text-align:center;color:var(--clr-text-tertiary);font-size:var(--text-sm);width:100%;padding:var(--space-6) 0">No trend data yet.</div>'; return; }
+      const maxAvg = Math.max.apply(null, trend.map(t => parseFloat(t.avg_rating)||0).concat([5]));
+      chart.innerHTML = trend.map(t => {
+        const avg = parseFloat(t.avg_rating)||0;
+        const height = Math.round((avg/maxAvg)*64);
+        return '<div class="trend-bar-wrap" title="' + t.month + ': ' + avg.toFixed(1) + 'star"><div class="trend-value">' + avg.toFixed(1) + '</div><div class="trend-bar" style="height:' + height + 'px"></div><div class="trend-label">' + t.month.split(' ')[0] + '</div></div>';
+      }).join('');
+    }
+    async function loadRecentReviews() {
+      try {
+        const reviews = await SUBAApi.request('/admin/ratings?limit=5');
+        const c = document.getElementById('recentReviewsList');
+        if (!reviews || reviews.length === 0) { c.innerHTML = '<div style="text-align:center;padding:var(--space-8);color:var(--clr-text-tertiary)"><div style="font-size:36px;margin-bottom:var(--space-3)">📭</div><p>No reviews yet.</p></div>'; return; }
+        c.innerHTML = reviews.map(renderReviewCard).join('');
+      } catch (err) {
+        document.getElementById('recentReviewsList').innerHTML = '<p style="color:var(--clr-text-tertiary);font-size:var(--text-sm)">Failed to load recent reviews.</p>';
+      }
+    }
+    async function loadAllReviews() {
+      const rating = document.getElementById('filterRating').value;
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+      const search = document.getElementById('filterSearch').value;
+      const params = new URLSearchParams();
+      if (rating) params.append('rating', rating);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (search) params.append('search', search);
+      const c = document.getElementById('allReviewsList');
+      c.innerHTML = '<div class="skeleton skeleton-text" style="height:100px;border-radius:var(--radius-lg);margin-bottom:var(--space-3)"></div><div class="skeleton skeleton-text" style="height:100px;border-radius:var(--radius-lg)"></div>';
+      try {
+        const qs = params.toString() ? '?' + params.toString() : '';
+        const reviews = await SUBAApi.request('/admin/ratings' + qs);
+        if (!reviews || reviews.length === 0) { c.innerHTML = '<div style="text-align:center;padding:var(--space-10);color:var(--clr-text-tertiary)"><div style="font-size:48px;margin-bottom:var(--space-3)">⭐</div><h5 style="font-weight:700;margin-bottom:var(--space-2)">No reviews found</h5><p>No ratings match your current filters.</p></div>'; return; }
+        c.innerHTML = reviews.map(renderReviewCard).join('');
+      } catch (err) {
+        c.innerHTML = '<div style="text-align:center;padding:var(--space-8);color:var(--clr-text-secondary)"><p>Failed to load reviews: ' + err.message + '</p></div>';
+      }
+    }
+    function clearFilters() {
+      document.getElementById('filterRating').value = '';
+      document.getElementById('filterStartDate').value = '';
+      document.getElementById('filterEndDate').value = '';
+      document.getElementById('filterSearch').value = '';
+      loadAllReviews();
+    }
+    async function loadPopupSettings() {
+      try {
+        const s = await SUBAApi.request('/admin/ratings/settings');
+        popupEnabled = s.enabled !== false;
+        document.getElementById('popupEnabledDot').classList.toggle('active', popupEnabled);
+        document.getElementById('settingCooldownDays').value = s.cooldownDays || 30;
+        document.getElementById('settingMinTransactions').value = s.minTransactions || 3;
+        document.getElementById('settingRemindDays').value = s.remindDays || 7;
+      } catch (err) {
+        SUBAComponents.showToast({ title: 'Load Failed', message: err.message, type: 'error' });
+      }
+    }
+    async function savePopupSettings() {
+      const btn = document.getElementById('saveSettingsBtn');
+      btn.classList.add('is-loading'); btn.textContent = 'Saving...';
+      try {
+        await SUBAApi.request('/admin/ratings/settings', {
+          method: 'PUT',
+          body: JSON.stringify({
+            enabled: popupEnabled,
+            cooldownDays: parseInt(document.getElementById('settingCooldownDays').value)||30,
+            minTransactions: parseInt(document.getElementById('settingMinTransactions').value)||3,
+            remindDays: parseInt(document.getElementById('settingRemindDays').value)||7
+          })
+        });
+        SUBAComponents.showToast({ title: 'Settings Saved', message: 'Popup configuration updated successfully.', type: 'success' });
+      } catch (err) {
+        SUBAComponents.showToast({ title: 'Save Failed', message: err.message, type: 'error' });
+      } finally {
+        btn.classList.remove('is-loading'); btn.textContent = 'Save Settings';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('popupEnabledToggle').addEventListener('click', () => {
+        popupEnabled = !popupEnabled;
+        document.getElementById('popupEnabledDot').classList.toggle('active', popupEnabled);
+        SUBAComponents.showToast({ title: popupEnabled ? 'Popup Enabled' : 'Popup Disabled', message: popupEnabled ? 'Rating popup will be shown to eligible users.' : 'Rating popup has been globally disabled.', type: popupEnabled ? 'success' : 'info' });
+      });
+      loadAnalytics();
+      loadRecentReviews();
+    });
+  </script>
+</body>
+</html>

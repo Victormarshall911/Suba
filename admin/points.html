@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SB Points Management | SUBA — System Management</title>
+  <title>SB Points Management | SUBA â€” System Management</title>
   <link rel="stylesheet" href="../css/design-system.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
@@ -22,48 +22,52 @@
       </div>
       <nav class="sidebar-nav">
         <a href="index.html" class="sidebar-nav-item" data-page="overview">
-          <span class="sidebar-icon">📊</span>
+          <span class="sidebar-icon">ðŸ“Š</span>
           <span>Overview</span>
         </a>
         <a href="users.html" class="sidebar-nav-item" data-page="users">
-          <span class="sidebar-icon">👥</span>
+          <span class="sidebar-icon">ðŸ‘¥</span>
           <span>Users</span>
         </a>
         <a href="transactions.html" class="sidebar-nav-item" data-page="transactions">
-          <span class="sidebar-icon">💸</span>
+          <span class="sidebar-icon">ðŸ’¸</span>
           <span>Transactions</span>
         </a>
         <a href="reconciliation.html" class="sidebar-nav-item" data-page="reconciliation">
-          <span class="sidebar-icon">👛</span>
+          <span class="sidebar-icon">ðŸ‘›</span>
           <span>Reconciliation</span>
         </a>
         <a href="providers.html" class="sidebar-nav-item" data-page="providers">
-          <span class="sidebar-icon">🔌</span>
+          <span class="sidebar-icon">ðŸ”Œ</span>
           <span>Providers</span>
         </a>
         <a href="ambassadors.html" class="sidebar-nav-item" data-page="ambassadors">
-          <span class="sidebar-icon">🤝</span>
+          <span class="sidebar-icon">ðŸ¤</span>
           <span>Ambassadors</span>
         </a>
         <a href="points.html" class="sidebar-nav-item active" data-page="points">
-          <span class="sidebar-icon">🎖️</span>
+          <span class="sidebar-icon">ðŸŽ–ï¸</span>
           <span>SB Points</span>
         </a>
-        <a href="careers.html" class="sidebar-nav-item" data-page="careers">
-          <span class="sidebar-icon">💼</span>
+                <a href="ratings.html" class="sidebar-nav-item" data-page="ratings">
+          <span class="sidebar-icon">⭐</span>
+          <span>Ratings</span>
+        </a>
+<a href="careers.html" class="sidebar-nav-item" data-page="careers">
+          <span class="sidebar-icon">ðŸ’¼</span>
           <span>Careers</span>
         </a>
         <a href="announcements.html" class="sidebar-nav-item" data-page="announcements">
-          <span class="sidebar-icon">📢</span>
+          <span class="sidebar-icon">ðŸ“¢</span>
           <span>Announcements</span>
         </a>
         <a href="communications.html" class="sidebar-nav-item" data-page="communications">
-          <span class="sidebar-icon">✉️</span>
+          <span class="sidebar-icon">âœ‰ï¸</span>
           <span>Communications</span>
         </a>
         <div class="divider" style="margin-block: var(--space-2)"></div>
         <a href="../dashboard.html" class="sidebar-nav-item" data-page="user-view">
-          <span class="sidebar-icon">👤</span>
+          <span class="sidebar-icon">ðŸ‘¤</span>
           <span>Switch to User</span>
         </a>
       </nav>
@@ -98,22 +102,22 @@
           <!-- Analytics Section -->
           <div class="grid-2">
             <div class="card stat-card">
-              <div class="stat-icon" style="background:var(--clr-primary-light); color:var(--clr-primary)">🎖️</div>
+              <div class="stat-icon" style="background:var(--clr-primary-light); color:var(--clr-primary)">ðŸŽ–ï¸</div>
               <div class="stat-value" id="statActivePoints">0</div>
               <div class="stat-label">ACTIVE SB POINTS</div>
             </div>
             <div class="card stat-card">
-              <div class="stat-icon" style="background:var(--clr-success-light); color:var(--clr-success-dark)">📈</div>
+              <div class="stat-icon" style="background:var(--clr-success-light); color:var(--clr-success-dark)">ðŸ“ˆ</div>
               <div class="stat-value" id="statTotalEarned">0</div>
               <div class="stat-label">TOTAL EARNED POINTS</div>
             </div>
             <div class="card stat-card">
-              <div class="stat-icon" style="background:var(--clr-error-light); color:var(--clr-error-dark)">📉</div>
+              <div class="stat-icon" style="background:var(--clr-error-light); color:var(--clr-error-dark)">ðŸ“‰</div>
               <div class="stat-value" id="statTotalRedeemed">0</div>
               <div class="stat-label">TOTAL REDEEMED POINTS</div>
             </div>
             <div class="card stat-card">
-              <div class="stat-icon" style="background:var(--clr-info-light); color:var(--clr-info)">👥</div>
+              <div class="stat-icon" style="background:var(--clr-info-light); color:var(--clr-info)">ðŸ‘¥</div>
               <div class="stat-value" id="statPointHolders">0</div>
               <div class="stat-label">TOTAL POINT HOLDERS</div>
             </div>
@@ -123,11 +127,11 @@
           <div class="card">
             <h4 style="font-weight:700; color:var(--clr-text-primary); margin-bottom:var(--space-4)">Loyalty Configs</h4>
             <div class="form-group">
-              <label for="inputEarningRate" class="form-label">Earning Rate (₦ spent per 1 point)</label>
+              <label for="inputEarningRate" class="form-label">Earning Rate (â‚¦ spent per 1 point)</label>
               <input type="number" id="inputEarningRate" class="form-input" placeholder="e.g. 100">
             </div>
             <div class="form-group">
-              <label for="inputRedemptionRate" class="form-label">Redemption Rate (₦ discount per 1 point)</label>
+              <label for="inputRedemptionRate" class="form-label">Redemption Rate (â‚¦ discount per 1 point)</label>
               <input type="number" id="inputRedemptionRate" class="form-input" placeholder="e.g. 0.5" step="0.01">
             </div>
             <button class="btn btn-primary btn-block" id="btnSaveConfig">Save Settings</button>
@@ -153,7 +157,7 @@
               <input type="text" id="inputReason" class="form-input" placeholder="Campaign promotion, goodwill reward etc.">
             </div>
             <div style="display:flex; gap:var(--space-3)">
-              <button class="btn btn-primary" id="btnManualAward" style="flex:1">🏆 Award Points</button>
+              <button class="btn btn-primary" id="btnManualAward" style="flex:1">ðŸ† Award Points</button>
               <button class="btn btn-secondary" id="btnManualDeduct" style="flex:1; border-color:var(--clr-error-dark); color:var(--clr-error-dark)">Deduct Points</button>
             </div>
           </div>
@@ -325,3 +329,4 @@
   </script>
 </body>
 </html>
+
