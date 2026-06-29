@@ -55,6 +55,15 @@
   --clr-text-inverse: #FFFFFF;
   --clr-text-link: #FF6B00;
 
+  /* --- Wallet Card Theme Tokens --- */
+  --wallet-card-bg: linear-gradient(135deg, #FFE8D6 0%, #FFFDFB 100%);
+  --wallet-card-border: 1px solid var(--clr-primary-subtle);
+  --wallet-card-shadow: var(--shadow-sm);
+  --wallet-label-color: #5C2D00;
+  --wallet-balance-amount-color: #CC4E00;
+  --wallet-circle-1: rgba(255, 107, 0, 0.04);
+  --wallet-circle-2: rgba(255, 107, 0, 0.03);
+
   /* --- Gradients --- */
   --gradient-primary: linear-gradient(135deg, #FF6B00 0%, #FFB547 100%);
   --gradient-primary-hover: linear-gradient(135deg, #E55F00 0%, #F5A623 100%);
@@ -408,6 +417,15 @@ strong { font-weight: var(--fw-semibold); }
 
   --gradient-card: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
   --gradient-primary-hover: linear-gradient(135deg, #FF7B1A 0%, #FFC557 100%);
+
+  /* --- Wallet Card Theme Tokens (Dark Mode) --- */
+  --wallet-card-bg: linear-gradient(135deg, #23120A 0%, #0F0804 100%);
+  --wallet-card-border: 1px solid #5C2D00;
+  --wallet-card-shadow: var(--shadow-md);
+  --wallet-label-color: #FFB076;
+  --wallet-balance-amount-color: #FF7E21;
+  --wallet-circle-1: rgba(255, 255, 255, 0.03);
+  --wallet-circle-2: rgba(255, 255, 255, 0.02);
 }
 
 .dark-theme .header.scrolled {
